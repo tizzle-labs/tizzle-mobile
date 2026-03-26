@@ -23,7 +23,7 @@ apiClient.interceptors.request.use(async (config) => {
 
 // 401 → clear token and logout
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   async (error) => {
     if (error.response?.status === 401) {
       await Storage.clearTokens()

@@ -1,6 +1,6 @@
-import { AppConfig } from '@/constants/app-config'
-import { Storage } from '@/lib/storage'
-import axios from 'axios'
+import { AppConfig } from '@/constants/app-config';
+import { Storage } from '@/lib/storage';
+import axios from 'axios';
 
 const authAxios = axios.create({
   baseURL: AppConfig.apiBaseUrl,
