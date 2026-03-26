@@ -10,6 +10,7 @@ import {
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { AppConfig } from '@/constants/app-config'
 import { generateNonce, verifySignature } from '@/lib/api/auth'
+import { setLogoutCallback } from '@/lib/api/client'
 import { Storage } from '@/lib/storage'
 import bs58 from 'bs58'
 
@@ -21,7 +22,7 @@ export interface AuthState {
   signOut: () => Promise<void>
 }
 
-const Context = createContext<AuthState>({} as AuthState)
+const Context = createContext<AuthState | null>(null)
 
 export function useAuth() {
   const value = use(Context)
@@ -40,19 +41,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [])
 
   const signIn = useCallback(async () => {
-    // 1. Connect wallet via MWA
-    await walletSignIn({ uri: AppConfig.uri })
-
-    // After walletSignIn, read the address from the current accounts snapshot.
-    // Note: due to React state batching, accounts may not be updated yet immediately
-    // after walletSignIn. The address is typically available synchronously from the
-    // MWA response, but we read from the state here as a best effort.
-    const address = accounts?.[0]?.address?.toString()
-    if (!address) {
-      // If accounts not yet updated, skip JWT step — user will need to sign in again.
-      // This is a known limitation with MWA + React state batching.
-      return
-    }
+    // 1. Connect wallet via MWA — read address from the returned result, not
+    //    stale React state (avoids React batching race condition).
+    const result = await walletSignIn({ uri: AppConfig.uri })
+    const address = result?.accounts?.[0]?.address?.toString()
+    if (!address) return
 
     // 2. Get nonce from backend
     const nonce = await generateNonce(address)
@@ -66,13 +59,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
     // 4. Verify with backend → stores JWT in SecureStore
     await verifySignature({ walletAddress: address, signature, message })
     setHasJwt(true)
-  }, [accounts, walletSignIn, signMessage])
+  }, [walletSignIn, signMessage])
 
   const signOut = useCallback(async () => {
     await disconnect()
     await Storage.clearTokens()
     setHasJwt(false)
   }, [disconnect])
+
+  // Propagate forced logout (e.g. refresh token expired) back into React state
+  useEffect(() => {
+    setLogoutCallback(() => setHasJwt(false))
+    return () => setLogoutCallback(() => {})
+  }, [])
 
   const value: AuthState = useMemo(
     () => ({

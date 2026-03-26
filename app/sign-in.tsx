@@ -35,10 +35,12 @@ export default function SignIn() {
             variant="filled"
             style={{ marginHorizontal: 16 }}
             onPress={async () => {
-              await signIn()
-              // Navigate after signing in. You may want to tweak this to ensure sign-in is
-              // successful before navigating.
-              router.replace('/')
+              try {
+                await signIn()
+                router.replace('/')
+              } catch (e) {
+                console.warn('Sign in failed:', e)
+              }
             }}
           >
             Connect

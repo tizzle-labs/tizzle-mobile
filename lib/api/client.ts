@@ -8,6 +8,12 @@ export const apiClient = axios.create({
   timeout: 15000,
 })
 
+let _onLogout: (() => void) | null = null
+
+export function setLogoutCallback(cb: () => void) {
+  _onLogout = cb
+}
+
 // Attach JWT to every request
 apiClient.interceptors.request.use(async (config) => {
   const token = await Storage.getAccessToken()
@@ -35,6 +41,7 @@ apiClient.interceptors.response.use(
         return apiClient(original)
       } catch {
         await Storage.clearTokens()
+        _onLogout?.()
       }
     }
     return Promise.reject(error)
