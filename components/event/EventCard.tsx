@@ -4,17 +4,7 @@ import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { EventStatusChip, deriveEventStatus } from './EventStatusChip'
-
-// Minimal interface — will be replaced by full Event type from lib/api/events in Task 5
-export interface EventCardEvent {
-  eventPda: string
-  title: string
-  imageUrl: string
-  startTime: string
-  endTime: string
-  unlockTime: string
-  isFeatured?: boolean
-}
+import type { Event } from '@/lib/api/events'
 
 function formatEventDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -25,7 +15,7 @@ function formatEventDate(iso: string): string {
 }
 
 interface EventCardProps {
-  event: EventCardEvent
+  event: Event
   onPress: () => void
   variant?: 'featured' | 'compact'
 }
