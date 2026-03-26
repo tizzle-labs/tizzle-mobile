@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "tizzle-ticket",
+    "name": "Tizzle Ticket",
     "slug": "tizzle-ticket",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -40,7 +40,14 @@
         }
       ],
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Tizzle Ticket needs camera access to scan ticket QR codes."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
