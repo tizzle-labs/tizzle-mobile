@@ -1,23 +1,24 @@
 import { Text, StyleSheet } from 'react-native'
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
+import { useWalletBalance } from '@/hooks/solana/use-wallet-balance'
 
-interface WalletBalanceProps {
+interface Props {
   mint: string
   symbol: string
 }
 
-// Placeholder — useWalletBalance hook is implemented in Task 6
-export function WalletBalance({ mint: _mint, symbol }: WalletBalanceProps) {
-  return (
-    <Text style={styles.text}>Balance: — {symbol}</Text>
-  )
+export function WalletBalance({ mint, symbol }: Props) {
+  const { data: balance } = useWalletBalance(mint)
+  const display = balance !== undefined ? `${balance.toFixed(4)} ${symbol}` : '...'
+
+  return <Text style={styles.balance}>Balance: {display}</Text>
 }
 
 const styles = StyleSheet.create({
-  text: {
-    fontFamily: Fonts.mono,
-    fontSize: 11,
-    color: Colors.text3,
+  balance: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
+    color: Colors.text2,
   },
 })
