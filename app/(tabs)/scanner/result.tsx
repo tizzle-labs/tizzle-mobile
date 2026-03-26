@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   usedBadge: {
     backgroundColor: 'rgba(0,0,0,0.2)',
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 6,
     borderRadius: 2,
   },

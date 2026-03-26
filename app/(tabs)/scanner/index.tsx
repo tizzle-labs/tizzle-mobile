@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
-import { useState, useCallback } from 'react'
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CameraView, useCameraPermissions } from 'expo-camera'
@@ -14,6 +14,7 @@ export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions()
   const checkIn = useCheckIn()
   const [scanned, setScanned] = useState(false)
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleBarcodeScan = useCallback(
     async ({ data }: { data: string }) => {
@@ -41,10 +42,16 @@ export default function Scanner() {
         })
       }
       // Allow re-scanning after 3s
-      setTimeout(() => setScanned(false), 3000)
+      scanTimeoutRef.current = setTimeout(() => setScanned(false), 3000)
     },
     [scanned, checkIn]
   )
+
+  useEffect(() => {
+    return () => {
+      if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current)
+    }
+  }, [])
 
   if (!permission) {
     return (
@@ -128,7 +135,7 @@ const styles = StyleSheet.create({
   processingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   processingText: {
     fontFamily: Fonts.mono,
