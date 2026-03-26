@@ -44,7 +44,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     // 1. Connect wallet via MWA — read address from the returned result, not
     //    stale React state (avoids React batching race condition).
     const result = await walletSignIn({ uri: AppConfig.uri })
-    const address = result?.accounts?.[0]?.address?.toString()
+    const address = result?.account?.address?.toString()
     if (!address) return
 
     // 2. Get nonce from backend
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   // Propagate forced logout (e.g. refresh token expired) back into React state
   useEffect(() => {
     setLogoutCallback(() => setHasJwt(false))
-    return () => setLogoutCallback(() => {})
+    return () => setLogoutCallback(null)
   }, [])
 
   const value: AuthState = useMemo(

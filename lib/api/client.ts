@@ -10,7 +10,7 @@ export const apiClient = axios.create({
 
 let _onLogout: (() => void) | null = null
 
-export function setLogoutCallback(cb: () => void) {
+export function setLogoutCallback(cb: (() => void) | null) {
   _onLogout = cb
 }
 
