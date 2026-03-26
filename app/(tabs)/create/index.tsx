@@ -100,7 +100,11 @@ export default function Create() {
           </Card>
           <Button
             onPress={async () => {
-              await createOrg.mutateAsync({ name: orgName, description: orgDesc })
+              try {
+                await createOrg.mutateAsync({ name: orgName, description: orgDesc })
+              } catch (e) {
+                console.error('Create org failed', e)
+              }
             }}
             loading={createOrg.isPending}
             disabled={!orgName.trim()}
