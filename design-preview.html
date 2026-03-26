@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tizzle Ticket — Design System v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@400,500,600,700&display=swap" rel="stylesheet">
+
+<style>
+/* ─── DESIGN TOKENS ─────────────────────────────────────── */
+:root {
+  --accent:       #CAFF00;
+  --accent-dim:   rgba(202, 255, 0, 0.10);
+  --accent-text:  #0A0A0A;
+  --success:      #CAFF00;
+  --error:        #FF3B30;
+  --warning:      #FFB800;
+
+  --f-display: 'Clash Grotesk', 'DM Sans', sans-serif;
+  --f-body:    'DM Sans', sans-serif;
+  --f-mono:    'Geist Mono', monospace;
+
+  --radius-sm:   2px;
+  --radius-md:   4px;
+  --radius-lg:   8px;
+  --radius-full: 9999px;
+}
+
+[data-theme="dark"] {
+  --bg:        #0A0A0A;
+  --surface:   #111111;
+  --surface-2: #161616;
+  --surface-3: #1E1E1E;
+  --border:    #1E1E1E;
+  --border-2:  #2A2A2A;
+  --text-1:    #FFFFFF;
+  --text-2:    #888888;
+  --text-3:    #444444;
+  --overlay:   rgba(10,10,10,0.9);
+}
+
+[data-theme="light"] {
+  --bg:        #F5F5F5;
+  --surface:   #FFFFFF;
+  --surface-2: #F0F0F0;
+  --surface-3: #E8E8E8;
+  --border:    #E0E0E0;
+  --border-2:  #D0D0D0;
+  --text-1:    #0A0A0A;
+  --text-2:    #666666;
+  --text-3:    #AAAAAA;
+  --overlay:   rgba(245,245,245,0.9);
+  --accent:    #8FB800;
+  --accent-dim: rgba(143,184,0,0.10);
+  --accent-text: #0A0A0A;
+}
+
+/* ─── RESET ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--f-body);
+  background: var(--bg);
+  color: var(--text-1);
+  line-height: 1.5;
+  font-size: 15px;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ─── PAGE HEADER ────────────────────────────────────────── */
+.page-header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-family: var(--f-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+}
+
+.logo span {
+  color: var(--accent);
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.version-tag {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  border: 1px solid var(--border-2);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.theme-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  color: var(--text-2);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+.section {
+  padding: 80px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section + .section {
+  border-top: 1px solid var(--border);
+}
+
+.section-label {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-family: var(--f-display);
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--text-1);
+  margin-bottom: 16px;
+}
+
+.section-sub {
+  font-size: 15px;
+  color: var(--text-2);
+  max-width: 520px;
+  line-height: 1.6;
+}
+
+/* ─── HERO ───────────────────────────────────────────────── */
+.hero {
+  padding: 100px 32px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.hero-headline {
+  font-family: var(--f-display);
+  font-size: clamp(56px, 10vw, 128px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  color: var(--text-1);
+  margin-bottom: 40px;
+}
+
+.hero-headline .line-solid {
+  display: block;
+}
+
+.hero-headline .line-outline {
+  display: block;
+  -webkit-text-stroke: 2px var(--text-1);
+  color: transparent;
+}
+
+[data-theme="light"] .hero-headline .line-outline {
+  -webkit-text-stroke: 2px var(--text-1);
+}
+
+.hero-sub {
+  font-size: 17px;
+  color: var(--text-2);
+  max-width: 480px;
+  line-height: 1.65;
+  margin-bottom: 48px;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-stat-val {
+  font-family: var(--f-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+}
+
+.hero-stat-label {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* ─── PHONE GRID ─────────────────────────────────────────── */
+.phone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 32px;
+  margin-top: 56px;
+}
+
+.phone-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.phone-label {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.phone-label .role-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.phone-label .role-dot.venue { background: #888; }
+.phone-label .role-dot.org   { background: #AAA; }
+
+/* Phone frame */
+.phone {
+  width: 100%;
+  aspect-ratio: 9/19.5;
+  background: #111;
+  border-radius: 36px;
+  border: 1.5px solid #2A2A2A;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 0 1px #0A0A0A, 0 24px 64px rgba(0,0,0,0.7);
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── PHONE STATUS BAR ───────────────────────────────────── */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px 6px;
+}
+
+.di-pill {
+  width: 88px;
+  height: 26px;
+  background: #0A0A0A;
+  border-radius: 20px;
+  flex-shrink: 0;
+  border: 1px solid #222;
+}
+
+.status-bar-time {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.status-bar-icons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.status-icon {
+  width: 14px; height: 8px;
+  border: 1.5px solid var(--text-1);
+  border-radius: 2px;
+  position: relative;
+}
+.status-icon::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  background: var(--text-1);
+  border-radius: 1px;
+}
+.signal-bars {
+  display: flex;
+  gap: 1.5px;
+  align-items: flex-end;
+}
+.signal-bar {
+  width: 3px;
+  background: var(--text-1);
+  border-radius: 0.5px;
+}
+
+/* ─── SCREEN: FAN TICKETS ────────────────────────────────── */
+.screen-fan-home {
+  background: #0A0A0A;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  padding: 12px 16px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1A1A1A;
+}
+
+.app-title {
+  font-family: var(--f-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #FFF;
+}
+
+.wallet-chip {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: #888;
+  background: #161616;
+  border: 1px solid #2A2A2A;
+  padding: 3px 7px;
+  border-radius: 2px;
+}
+
+.tickets-scroll {
+  flex: 1;
+  overflow: hidden;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticket-card {
+  background: #111;
+  border: 1px solid #2A2A2A;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.ticket-card-inner {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+.ticket-event-img {
+  width: 42px; height: 42px;
+  background: #1A1A1A;
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.ticket-info { flex: 1; min-width: 0; }
+
+.ticket-event-name {
+  font-family: var(--f-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #FFF;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket-event-date {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: #666;
+  letter-spacing: 0.04em;
+}
+
+.ticket-valid-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--f-mono);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #CAFF00;
+  background: rgba(202,255,0,0.08);
+  border: 1px solid rgba(202,255,0,0.2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  margin-top: 5px;
+}
+
+.ticket-valid-badge::before {
+  content: '';
+  width: 4px; height: 4px;
+  background: #CAFF00;
+  border-radius: 50%;
+}
+
+.ticket-card-accent {
+  height: 2px;
+  background: #CAFF00;
+}
+
+.section-heading {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #444;
+  padding: 0 12px;
+  margin-bottom: 6px;
+}
+
+.app-nav {
+  border-top: 1px solid #1A1A1A;
+  display: flex;
+  padding: 8px 0 12px;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--f-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #444;
+  padding: 4px 0;
+}
+
+.nav-item.active { color: #CAFF00; }
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── SCREEN: TICKET ARTIFACT ────────────────────────────── */
+.screen-ticket {
+  background: #0A0A0A;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ticket-header {
+  padding: 12px 16px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #1A1A1A;
+}
+
+.back-btn {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: #CAFF00;
+  letter-spacing: 0.04em;
+}
+
+.ticket-artifact {
+  margin: 16px 12px;
+  background: #111;
+  border: 1px solid #2A2A2A;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ticket-poster {
+  width: 100%;
+  aspect-ratio: 4/2;
+  background: linear-gradient(135deg, #111 0%, #1A1A0A 50%, #0A0A0A 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-bottom: 1px dashed #2A2A2A;
+}
+
+.ticket-poster-text {
+  font-family: var(--f-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #FFF;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.ticket-poster-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, rgba(202,255,0,0.06) 0%, transparent 60%);
+}
+
+.ticket-body {
+  padding: 12px;
+}
+
+.ticket-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ticket-field {}
+
+.ticket-field-label {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 2px;
+}
+
+.ticket-field-value {
+  font-family: var(--f-display);
+  font-size: 11px;
+  font-weight: 500;
+  color: #FFF;
+  letter-spacing: -0.01em;
+}
+
+.ticket-id-row {
+  padding-top: 10px;
+  border-top: 1px dashed #222;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticket-id {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: #555;
+  letter-spacing: 0.06em;
+}
+
+.on-chain-badge {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #CAFF00;
+  background: rgba(202,255,0,0.07);
+  border: 1px solid rgba(202,255,0,0.18);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.show-qr-btn {
+  margin: 0 12px 14px;
+  background: #CAFF00;
+  color: #0A0A0A;
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* ─── SCREEN: QR DISPLAY ─────────────────────────────────── */
+.screen-qr {
+  background: #0A0A0A;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.qr-header {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #1A1A1A;
+}
+
+.qr-title {
+  font-family: var(--f-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #FFF;
+}
+
+.qr-subtitle {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: #555;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+.qr-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 16px;
+}
+
+.qr-frame {
+  width: 140px;
+  height: 140px;
+  border: 1.5px solid #2A2A2A;
+  border-radius: 6px;
+  background: #FFF;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-corners::before,
+.qr-corners::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  border-color: #CAFF00;
+  border-style: solid;
+  z-index: 2;
+}
+
+.qr-corners::before {
+  top: 4px; left: 4px;
+  border-width: 2px 0 0 2px;
+}
+.qr-corners::after {
+  bottom: 4px; right: 4px;
+  border-width: 0 2px 2px 0;
+}
+
+.qr-inner {
+  width: 110px; height: 110px;
+  position: relative;
+}
+
+/* QR pattern */
+.qr-svg { width: 100%; height: 100%; }
+
+.qr-scan-line {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(202,255,0,0.8), transparent);
+  animation: qrscan 2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(202,255,0,0.4);
+}
+
+@keyframes qrscan {
+  0%   { top: 0;    opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.qr-event-name {
+  font-family: var(--f-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #FFF;
+  text-align: center;
+}
+
+.qr-event-meta {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: #555;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+.qr-token {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  color: #333;
+  letter-spacing: 0.08em;
+  text-align: center;
+  border-top: 1px solid #1A1A1A;
+  width: 100%;
+  padding-top: 10px;
+}
+
+/* ─── SCREEN: ORGANIZER ──────────────────────────────────── */
+.screen-org {
+  background: #0A0A0A;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.org-header {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #1A1A1A;
+}
+
+.org-title {
+  font-family: var(--f-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #FFF;
+}
+
+.org-subtitle {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  color: #CAFF00;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.form-scroll {
+  flex: 1;
+  overflow: hidden;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-field {}
+
+.form-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  background: #111;
+  border: 1px solid #2A2A2A;
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-family: var(--f-body);
+  font-size: 12px;
+  color: #FFF;
+}
+
+.form-input.filled {
+  border-color: #3A3A3A;
+  color: #DDD;
+}
+
+.form-input.focus {
+  border-color: #CAFF00;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.form-submit {
+  background: #CAFF00;
+  color: #0A0A0A;
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 11px;
+  border-radius: 3px;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.form-note {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  color: #444;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* ─── SCREEN: VENUE SCANNER ──────────────────────────────── */
+.screen-scanner {
+  background: #000;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.scanner-header {
+  padding: 12px 16px 10px;
+  background: rgba(0,0,0,0.9);
+  z-index: 2;
+  position: relative;
+}
+
+.scanner-event-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-chip-dot {
+  width: 6px; height: 6px;
+  background: #CAFF00;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+.event-chip-name {
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #FFF;
+}
+
+.scanner-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.stat-num {
+  font-family: var(--f-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFF;
+  letter-spacing: -0.02em;
+}
+
+.stat-num.lime { color: #CAFF00; }
+
+.stat-label {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #555;
+}
+
+.camera-viewfinder {
+  flex: 1;
+  position: relative;
+  background: #050505;
+  overflow: hidden;
+}
+
+/* Camera simulation */
+.camera-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 40% 45%, rgba(50,50,30,0.3) 0%, transparent 55%),
+    linear-gradient(180deg, #060606 0%, #111108 50%, #060606 100%);
+}
+
+.viewfinder-frame {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px; height: 140px;
+}
+
+.vf-corner {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-color: #CAFF00;
+  border-style: solid;
+}
+.vf-corner.tl { top: 0; left: 0;  border-width: 2px 0 0 2px; }
+.vf-corner.tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.vf-corner.bl { bottom: 0; left: 0;  border-width: 0 0 2px 2px; }
+.vf-corner.br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+.vf-scan-line {
+  position: absolute;
+  top: 0; left: -4px; right: -4px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(202,255,0,0.7), transparent);
+  animation: qrscan 1.6s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(202,255,0,0.3);
+}
+
+.scanner-hint {
+  position: absolute;
+  bottom: 12px; left: 0; right: 0;
+  text-align: center;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.3);
+}
+
+/* ─── SCREEN: SCAN RESULT ────────────────────────────────── */
+.screen-result {
+  background: #0A0A0A;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.result-header {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #1A1A1A;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.result-back {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: #CAFF00;
+}
+
+.result-title {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.result-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 16px;
+}
+
+.result-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.result-icon.valid {
+  background: rgba(202,255,0,0.08);
+  border: 1.5px solid rgba(202,255,0,0.25);
+}
+
+.result-icon.invalid {
+  background: rgba(255,59,48,0.08);
+  border: 1.5px solid rgba(255,59,48,0.25);
+}
+
+.result-status {
+  font-family: var(--f-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.result-status.valid  { color: #CAFF00; }
+.result-status.invalid { color: #FF3B30; }
+
+.result-details {
+  width: 100%;
+  background: #111;
+  border: 1px solid #1E1E1E;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1A1A1A;
+}
+.result-row:last-child { border-bottom: none; }
+
+.result-key {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #555;
+}
+
+.result-val {
+  font-family: var(--f-display);
+  font-size: 11px;
+  font-weight: 500;
+  color: #DDD;
+}
+
+.solana-badge {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  color: #9945FF;
+  background: rgba(153,69,255,0.08);
+  border: 1px solid rgba(153,69,255,0.2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.result-action-btn {
+  width: 100%;
+  background: #111;
+  border: 1px solid #2A2A2A;
+  color: #FFF;
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px;
+  border-radius: 3px;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* ─── TYPOGRAPHY SECTION ─────────────────────────────────── */
+.type-specimen {
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.type-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+.type-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.type-name {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.type-role {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.type-detail {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 0.03em;
+  margin-top: 6px;
+}
+
+.specimen-display {
+  font-family: var(--f-display);
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--text-1);
+}
+
+.specimen-body {
+  font-family: var(--f-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--text-1);
+  max-width: 540px;
+}
+
+.specimen-mono {
+  font-family: var(--f-mono);
+  font-size: 14px;
+  color: var(--text-1);
+  line-height: 1.7;
+}
+
+.specimen-mono .k { color: var(--accent); }
+.specimen-mono .s { color: var(--text-2); }
+
+/* ─── COLOR SECTION ──────────────────────────────────────── */
+.color-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.color-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.swatch-block {
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+}
+
+.swatch-hex {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.swatch-label {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.swatch-name {
+  font-family: var(--f-body);
+  font-size: 13px;
+  color: var(--text-1);
+  margin-bottom: 2px;
+}
+
+/* ─── UI COMPONENTS ──────────────────────────────────────── */
+.components-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.component-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.component-group-label {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--f-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-1);
+  border: 1px solid var(--border-2);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid rgba(202,255,0,0.25);
+}
+
+.btn-danger {
+  background: #FF3B30;
+  color: #FFF;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.badge::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-valid   { color: #CAFF00; background: rgba(202,255,0,0.08); border: 1px solid rgba(202,255,0,0.2); }
+.badge-used    { color: #888; background: rgba(136,136,136,0.08); border: 1px solid rgba(136,136,136,0.15); }
+.badge-onchain { color: #9945FF; background: rgba(153,69,255,0.08); border: 1px solid rgba(153,69,255,0.2); }
+.badge-error   { color: #FF3B30; background: rgba(255,59,48,0.08); border: 1px solid rgba(255,59,48,0.2); }
+
+.form-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-demo-field {}
+.form-demo-label {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: 5px;
+}
+
+.form-demo-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-family: var(--f-body);
+  font-size: 14px;
+  color: var(--text-1);
+  outline: none;
+}
+
+.form-demo-input:focus {
+  border-color: var(--accent);
+}
+
+.form-demo-input::placeholder {
+  color: var(--text-3);
+}
+
+/* ─── MOTION SECTION ─────────────────────────────────────── */
+.motion-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.motion-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.motion-card-title {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.motion-card-value {
+  font-family: var(--f-mono);
+  font-size: 16px;
+  color: var(--text-1);
+}
+
+.motion-card-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* ─── FOOTER ─────────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-brand {
+  font-family: var(--f-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+}
+.footer-brand span { color: var(--accent); }
+
+.footer-meta {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .section, .hero { padding: 56px 20px; }
+  .page-header { padding: 14px 20px; }
+  .phone-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .components-grid { grid-template-columns: 1fr; }
+  .motion-grid { grid-template-columns: 1fr; }
+  .type-row { grid-template-columns: 1fr; gap: 12px; }
+  .footer { padding: 32px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="page-header">
+  <div class="logo">Tizzle<span>.</span></div>
+  <div class="header-meta">
+    <span class="version-tag">DS v1.0</span>
+    <button class="theme-toggle" onclick="toggleTheme()">LIGHT</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">Design System — V1.0</div>
+  <h1 class="hero-headline">
+    <span class="line-solid">Your ticket.</span>
+    <span class="line-outline">On-chain.</span>
+  </h1>
+  <p class="hero-sub">A Solana NFT ticketing platform for fans and venues. Concert-poster energy in your pocket — not a DeFi dashboard.</p>
+  <div class="hero-meta">
+    <div class="hero-stat">
+      <span class="hero-stat-val">Editorial / Brutalist</span>
+      <span class="hero-stat-label">Aesthetic</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">#CAFF00 Lime</span>
+      <span class="hero-stat-label">Accent</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">Clash Grotesk</span>
+      <span class="hero-stat-label">Display Type</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">Dark First</span>
+      <span class="hero-stat-label">Color Mode</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">8px</span>
+      <span class="hero-stat-label">Base Unit</span>
+    </div>
+  </div>
+</section>
+
+<!-- PHONE MOCKUPS -->
+<section class="section">
+  <div class="section-label">App Screens</div>
+  <h2 class="section-title">Full demo flow</h2>
+  <p class="section-sub">Fan · Organizer · Venue. All three roles, eleven screens. This is what judges see.</p>
+
+  <div class="phone-grid">
+
+    <!-- Screen 1: Fan Tickets -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot"></span>Fan · My Tickets</div>
+      <div class="phone">
+
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-fan-home" style="flex:1;display:flex;flex-direction:column;">
+            <div class="app-header">
+              <div class="app-title">My Tickets</div>
+              <div class="wallet-chip">7xKm…f92a</div>
+            </div>
+
+            <div class="tickets-scroll">
+              <div class="section-heading">UPCOMING · 2</div>
+
+              <div class="ticket-card">
+                <div class="ticket-card-accent"></div>
+                <div class="ticket-card-inner">
+                  <div class="ticket-event-img">🎵</div>
+                  <div class="ticket-info">
+                    <div class="ticket-event-name">Solana Sounds Festival</div>
+                    <div class="ticket-event-date">SAT 22 MAR · 8PM · SOMA SF</div>
+                    <div class="ticket-valid-badge">Valid</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ticket-card">
+                <div class="ticket-card-inner">
+                  <div class="ticket-event-img">🎤</div>
+                  <div class="ticket-info">
+                    <div class="ticket-event-name">Devcon After Party</div>
+                    <div class="ticket-event-date">SUN 23 MAR · 10PM · THE RAMP</div>
+                    <div class="ticket-valid-badge">Valid</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-heading" style="margin-top:6px;">PAST · 1</div>
+              <div class="ticket-card" style="opacity:0.45;">
+                <div class="ticket-card-inner">
+                  <div class="ticket-event-img" style="opacity:0.5;">🏟️</div>
+                  <div class="ticket-info">
+                    <div class="ticket-event-name">Hackhouse Rave</div>
+                    <div class="ticket-event-date">FRI 14 MAR · USED</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <nav class="app-nav">
+              <div class="nav-item active">
+                <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="5" width="16" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><line x1="7" y1="5" x2="7" y2="15" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1.5"/></svg></span>
+                Tickets
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                Profile
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 3v1.5M10 15.5V17M3 10h1.5M15.5 10H17M5.05 5.05l1.06 1.06M13.89 13.89l1.06 1.06M5.05 14.95l1.06-1.06M13.89 6.11l1.06-1.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                Settings
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Ticket Artifact -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot"></span>Fan · Ticket Detail</div>
+      <div class="phone">
+
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-ticket" style="flex:1;display:flex;flex-direction:column;">
+            <div class="ticket-header">
+              <span class="back-btn">← Back</span>
+            </div>
+
+            <div class="ticket-artifact">
+              <div class="ticket-poster">
+                <div class="ticket-poster-glow"></div>
+                <div class="ticket-poster-text">Solana<br>Sounds</div>
+              </div>
+
+              <div class="ticket-body">
+                <div class="ticket-grid">
+                  <div class="ticket-field">
+                    <div class="ticket-field-label">Date</div>
+                    <div class="ticket-field-value">Sat 22 Mar</div>
+                  </div>
+                  <div class="ticket-field">
+                    <div class="ticket-field-label">Time</div>
+                    <div class="ticket-field-value">8:00 PM</div>
+                  </div>
+                  <div class="ticket-field">
+                    <div class="ticket-field-label">Venue</div>
+                    <div class="ticket-field-value">SOMA, SF</div>
+                  </div>
+                  <div class="ticket-field">
+                    <div class="ticket-field-label">Seat</div>
+                    <div class="ticket-field-value">GA Floor</div>
+                  </div>
+                </div>
+
+                <div class="ticket-id-row">
+                  <span class="ticket-id">#TKT-7F9A2C</span>
+                  <span class="on-chain-badge">On-Chain</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="show-qr-btn">Show QR</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: QR Display -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot"></span>Fan · Show QR</div>
+      <div class="phone">
+
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-qr" style="flex:1;display:flex;flex-direction:column;">
+            <div class="qr-header">
+              <div class="qr-title">Your Ticket</div>
+              <div class="qr-subtitle">SHOW TO DOOR STAFF · DO NOT SCREENSHOT</div>
+            </div>
+
+            <div class="qr-stage">
+              <div class="qr-frame">
+                <div class="qr-corners"></div>
+                <div class="qr-inner">
+                  <svg class="qr-svg" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="21" height="21" fill="white"/>
+                    <!-- Finder patterns -->
+                    <rect x="0" y="0" width="7" height="7" fill="#0A0A0A"/>
+                    <rect x="1" y="1" width="5" height="5" fill="white"/>
+                    <rect x="2" y="2" width="3" height="3" fill="#0A0A0A"/>
+                    <rect x="14" y="0" width="7" height="7" fill="#0A0A0A"/>
+                    <rect x="15" y="1" width="5" height="5" fill="white"/>
+                    <rect x="16" y="2" width="3" height="3" fill="#0A0A0A"/>
+                    <rect x="0" y="14" width="7" height="7" fill="#0A0A0A"/>
+                    <rect x="1" y="15" width="5" height="5" fill="white"/>
+                    <rect x="2" y="16" width="3" height="3" fill="#0A0A0A"/>
+                    <!-- Data pixels -->
+                    <rect x="8" y="0" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="10" y="0" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="12" y="0" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="1" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="1" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="2" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="10" y="2" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="3" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="12" y="3" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="4" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="4" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="10" y="5" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="12" y="5" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="6" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="6" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="6" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="7" y="7" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="7" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="7" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="13" y="7" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="0" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="2" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="4" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="6" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="10" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="12" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="14" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="16" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="18" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="20" y="8" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="1" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="3" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="5" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="7" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="13" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="15" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="17" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="19" y="9" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="0" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="2" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="4" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="10" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="12" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="16" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="18" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="20" y="10" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="1" y="11" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="5" y="11" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="7" y="11" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="11" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="11" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="13" y="11" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="15" y="11" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="19" y="11" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="0" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="2" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="4" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="6" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="12" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="14" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="16" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="18" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="20" y="12" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="1" y="13" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="3" y="13" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="13" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="13" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="13" y="13" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="17" y="13" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="19" y="13" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="7" y="14" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="14" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="14" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="13" y="14" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="15" y="14" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="20" y="14" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="15" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="10" y="15" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="14" y="15" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="16" y="15" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="18" y="15" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="16" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="16" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="13" y="16" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="17" y="16" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="19" y="16" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="17" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="10" y="17" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="14" y="17" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="16" y="17" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="20" y="17" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="18" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="18" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="13" y="18" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="15" y="18" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="19" y="18" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="8" y="19" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="12" y="19" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="16" y="19" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="18" y="19" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="20" y="19" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="9" y="20" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="11" y="20" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="13" y="20" width="1" height="1" fill="#0A0A0A"/>
+                    <rect x="17" y="20" width="1" height="1" fill="#0A0A0A"/>
+                  </svg>
+                  <div class="qr-scan-line"></div>
+                </div>
+              </div>
+
+              <div class="qr-event-name">Solana Sounds Festival</div>
+              <div class="qr-event-meta">SAT 22 MAR · 8PM · SOMA SF</div>
+              <div class="qr-token">SIG: 7xKm…f92a · VALID ON-CHAIN</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Organizer Create Event -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot org"></span>Organizer · Create Event</div>
+      <div class="phone">
+
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-org" style="flex:1;display:flex;flex-direction:column;">
+            <div class="org-header">
+              <div class="org-title">Create Event</div>
+              <div class="org-subtitle">Organizer Mode</div>
+            </div>
+
+            <div class="form-scroll">
+              <div class="form-field">
+                <div class="form-label">Event Name</div>
+                <div class="form-input filled">Solana Sounds Festival</div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-field">
+                  <div class="form-label">Date</div>
+                  <div class="form-input filled">22 Mar 2026</div>
+                </div>
+                <div class="form-field">
+                  <div class="form-label">Time</div>
+                  <div class="form-input filled">8:00 PM</div>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <div class="form-label">Venue</div>
+                <div class="form-input filled">SOMA, San Francisco</div>
+              </div>
+
+              <div class="form-field">
+                <div class="form-label">Capacity</div>
+                <div class="form-input focus">200</div>
+              </div>
+
+              <div class="form-submit">Mint Tickets on Solana →</div>
+
+              <div class="form-note">Tickets will be written to devnet · ~0.00025 SOL per ticket</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Venue Scanner -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot venue"></span>Venue · Scanner</div>
+      <div class="phone">
+
+        <div class="phone-screen" style="background:#000;">
+          <div class="status-bar" style="background:#000;">
+            <span class="status-bar-time" style="color:#fff;">9:41</span>
+            <div class="di-pill" style="background:#000;border-color:#333;"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;background:#fff;"></div>
+                <div class="signal-bar" style="height:6px;background:#fff;"></div>
+                <div class="signal-bar" style="height:8px;background:#fff;"></div>
+                <div class="signal-bar" style="height:10px;background:#fff;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-scanner" style="flex:1;display:flex;flex-direction:column;">
+            <div class="scanner-header">
+              <div class="scanner-event-chip">
+                <div class="event-chip-dot"></div>
+                <span class="event-chip-name">Solana Sounds</span>
+              </div>
+              <div class="scanner-stats">
+                <div class="stat-item">
+                  <span class="stat-num lime">47</span>
+                  <span class="stat-label">Scanned</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-num">153</span>
+                  <span class="stat-label">Remaining</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-num">200</span>
+                  <span class="stat-label">Capacity</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="camera-viewfinder" style="flex:1;position:relative;">
+              <div class="camera-bg"></div>
+              <div class="viewfinder-frame">
+                <div class="vf-corner tl"></div>
+                <div class="vf-corner tr"></div>
+                <div class="vf-corner bl"></div>
+                <div class="vf-corner br"></div>
+                <div class="vf-scan-line"></div>
+              </div>
+              <div class="scanner-hint">Point camera at ticket QR</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 6: Scan Result Valid -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot venue"></span>Venue · Valid ✓</div>
+      <div class="phone">
+
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-result" style="flex:1;display:flex;flex-direction:column;">
+            <div class="result-header">
+              <span class="result-back">← Scan</span>
+              <span class="result-title" style="margin-left:8px;">Result</span>
+            </div>
+
+            <div class="result-stage">
+              <div class="result-icon valid">✓</div>
+
+              <div>
+                <div class="result-status valid">Valid Ticket</div>
+                <div style="font-family:var(--f-mono);font-size:9px;color:#555;text-align:center;margin-top:4px;letter-spacing:0.06em;">CONFIRMED ON-CHAIN · 1.2s</div>
+              </div>
+
+              <div class="result-details">
+                <div class="result-row">
+                  <span class="result-key">Event</span>
+                  <span class="result-val">Solana Sounds</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-key">Holder</span>
+                  <span class="result-val" style="font-family:var(--f-mono);font-size:9px;">7xKm…f92a</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-key">Status</span>
+                  <span class="solana-badge">Solana ✓</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-key">Used</span>
+                  <span class="result-val" style="color:#CAFF00;">Now · 9:41 PM</span>
+                </div>
+              </div>
+
+              <div class="result-action-btn">Scan Next →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 7: Explore Events -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot"></span>Fan · Explore</div>
+      <div class="phone">
+        <div class="phone-screen" style="background:#0A0A0A;">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+            <!-- Header -->
+            <div style="padding:10px 14px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1A1A1A;">
+              <div style="font-family:var(--f-display);font-size:18px;font-weight:700;letter-spacing:-0.02em;color:#FFF;">Explore</div>
+              <div style="width:30px;height:30px;background:#111;border:1px solid #2A2A2A;border-radius:3px;display:flex;align-items:center;justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4" stroke="#888" stroke-width="1.5"/><path d="M9.5 9.5L12 12" stroke="#888" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+
+            <!-- Scrollable content -->
+            <div style="flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px;">
+
+              <!-- Section label -->
+              <div style="font-family:var(--f-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#444;">Featured</div>
+
+              <!-- Featured card -->
+              <div style="background:#111;border:1px solid #2A2A2A;border-radius:6px;overflow:hidden;flex-shrink:0;">
+                <div style="height:80px;background:linear-gradient(135deg,#111 0%,#1A1A0A 60%,#0A0A00 100%);position:relative;display:flex;align-items:flex-end;padding:10px;">
+                  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(202,255,0,0.07) 0%,transparent 60%);"></div>
+                  <div>
+                    <div style="font-family:var(--f-mono);font-size:8px;letter-spacing:0.10em;text-transform:uppercase;color:#CAFF00;margin-bottom:3px;">This Weekend</div>
+                    <div style="font-family:var(--f-display);font-size:15px;font-weight:700;letter-spacing:-0.02em;color:#FFF;line-height:1.1;">Solana Sounds<br>Festival</div>
+                  </div>
+                </div>
+                <div style="padding:8px 10px;display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <div style="font-family:var(--f-mono);font-size:9px;color:#666;letter-spacing:0.04em;">SAT 22 MAR · SOMA SF</div>
+                  </div>
+                  <div style="font-family:var(--f-mono);font-size:9px;font-weight:600;color:#CAFF00;background:rgba(202,255,0,0.08);border:1px solid rgba(202,255,0,0.2);padding:3px 7px;border-radius:2px;letter-spacing:0.06em;">43 left</div>
+                </div>
+              </div>
+
+              <!-- Section label -->
+              <div style="font-family:var(--f-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#444;margin-top:2px;">Upcoming</div>
+
+              <!-- Event row 1 -->
+              <div style="background:#111;border:1px solid #1E1E1E;border-radius:4px;padding:9px 10px;display:flex;gap:9px;align-items:center;flex-shrink:0;">
+                <div style="width:36px;height:36px;background:#1A1A1A;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎤</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-family:var(--f-display);font-size:11px;font-weight:600;color:#FFF;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Devcon After Party</div>
+                  <div style="font-family:var(--f-mono);font-size:8px;color:#555;letter-spacing:0.04em;margin-top:1px;">SUN 23 MAR · THE RAMP</div>
+                </div>
+                <div style="font-family:var(--f-mono);font-size:8px;color:#888;flex-shrink:0;">Free</div>
+              </div>
+
+              <!-- Event row 2 -->
+              <div style="background:#111;border:1px solid #1E1E1E;border-radius:4px;padding:9px 10px;display:flex;gap:9px;align-items:center;flex-shrink:0;">
+                <div style="width:36px;height:36px;background:#1A1A1A;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🏟️</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-family:var(--f-display);font-size:11px;font-weight:600;color:#FFF;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Hackhouse Rave Vol.3</div>
+                  <div style="font-family:var(--f-mono);font-size:8px;color:#555;letter-spacing:0.04em;margin-top:1px;">FRI 28 MAR · MISSION SF</div>
+                </div>
+                <div style="font-family:var(--f-mono);font-size:8px;color:#888;flex-shrink:0;">0.1 SOL</div>
+              </div>
+
+              <!-- Event row 3 -->
+              <div style="background:#111;border:1px solid #1E1E1E;border-radius:4px;padding:9px 10px;display:flex;gap:9px;align-items:center;flex-shrink:0;opacity:0.55;">
+                <div style="width:36px;height:36px;background:#1A1A1A;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎸</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-family:var(--f-display);font-size:11px;font-weight:600;color:#FFF;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Web3 Music Summit</div>
+                  <div style="font-family:var(--f-mono);font-size:8px;color:#555;letter-spacing:0.04em;margin-top:1px;">MON 30 MAR · SOLD OUT</div>
+                </div>
+                <div style="font-family:var(--f-mono);font-size:8px;color:#444;flex-shrink:0;text-decoration:line-through;">0.2 SOL</div>
+              </div>
+
+            </div>
+
+            <!-- Bottom nav -->
+            <nav class="app-nav">
+              <div class="nav-item active">
+                <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M13 13l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                Explore
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><line x1="7" y1="5" x2="7" y2="15" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1.5"/></svg></span>
+                Tickets
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                Profile
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 8: Event Detail -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot"></span>Fan · Event Detail</div>
+      <div class="phone">
+        <div class="phone-screen" style="background:#0A0A0A;">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+            <!-- Event poster hero -->
+            <div style="height:120px;background:linear-gradient(160deg,#111 0%,#1A1A0A 50%,#0A0A00 100%);position:relative;flex-shrink:0;">
+              <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(202,255,0,0.08) 0%,transparent 55%);"></div>
+              <!-- Back button -->
+              <div style="position:absolute;top:10px;left:12px;font-family:var(--f-mono);font-size:10px;color:#CAFF00;letter-spacing:0.04em;">← Back</div>
+              <!-- Event name -->
+              <div style="position:absolute;bottom:12px;left:12px;right:12px;">
+                <div style="font-family:var(--f-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#CAFF00;margin-bottom:4px;">Sat 22 Mar · SOMA SF</div>
+                <div style="font-family:var(--f-display);font-size:20px;font-weight:700;letter-spacing:-0.03em;color:#FFF;line-height:0.95;">Solana Sounds<br>Festival</div>
+              </div>
+            </div>
+
+            <!-- Body -->
+            <div style="flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px;">
+
+              <!-- Info row -->
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+                <div style="background:#111;border:1px solid #1E1E1E;border-radius:3px;padding:7px 8px;">
+                  <div style="font-family:var(--f-mono);font-size:7px;letter-spacing:0.08em;text-transform:uppercase;color:#444;margin-bottom:2px;">Date</div>
+                  <div style="font-family:var(--f-display);font-size:10px;font-weight:600;color:#FFF;">22 Mar</div>
+                </div>
+                <div style="background:#111;border:1px solid #1E1E1E;border-radius:3px;padding:7px 8px;">
+                  <div style="font-family:var(--f-mono);font-size:7px;letter-spacing:0.08em;text-transform:uppercase;color:#444;margin-bottom:2px;">Time</div>
+                  <div style="font-family:var(--f-display);font-size:10px;font-weight:600;color:#FFF;">8 PM</div>
+                </div>
+                <div style="background:#111;border:1px solid #1E1E1E;border-radius:3px;padding:7px 8px;">
+                  <div style="font-family:var(--f-mono);font-size:7px;letter-spacing:0.08em;text-transform:uppercase;color:#444;margin-bottom:2px;">Type</div>
+                  <div style="font-family:var(--f-display);font-size:10px;font-weight:600;color:#FFF;">Live</div>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div style="font-family:var(--f-body);font-size:10px;color:#666;line-height:1.55;">A night of on-chain music, NFT drops, and live performances. Three floors, seven artists, one blockchain.</div>
+
+              <!-- Ticket tier -->
+              <div style="background:#111;border:1px solid #2A2A2A;border-radius:4px;overflow:hidden;">
+                <div style="padding:10px 12px;border-bottom:1px solid #1A1A1A;display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <div style="font-family:var(--f-display);font-size:12px;font-weight:600;color:#FFF;letter-spacing:-0.01em;">General Admission</div>
+                    <div style="font-family:var(--f-mono);font-size:8px;color:#555;margin-top:1px;letter-spacing:0.04em;">Floor access · All stages</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-family:var(--f-display);font-size:14px;font-weight:700;color:#FFF;letter-spacing:-0.02em;">0.05 SOL</div>
+                    <div style="font-family:var(--f-mono);font-size:8px;color:#CAFF00;letter-spacing:0.04em;">43 left</div>
+                  </div>
+                </div>
+                <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center;opacity:0.45;">
+                  <div>
+                    <div style="font-family:var(--f-display);font-size:12px;font-weight:600;color:#FFF;letter-spacing:-0.01em;">VIP</div>
+                    <div style="font-family:var(--f-mono);font-size:8px;color:#555;margin-top:1px;letter-spacing:0.04em;">Backstage + lounge</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-family:var(--f-display);font-size:14px;font-weight:700;color:#FFF;letter-spacing:-0.02em;">0.2 SOL</div>
+                    <div style="font-family:var(--f-mono);font-size:8px;color:#444;letter-spacing:0.04em;">Sold out</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- CTA pinned to bottom -->
+            <div style="padding:10px 12px 14px;border-top:1px solid #1A1A1A;">
+              <div style="background:#CAFF00;color:#0A0A0A;font-family:var(--f-display);font-size:14px;font-weight:700;letter-spacing:-0.01em;padding:12px;border-radius:4px;text-align:center;">Get Ticket — 0.05 SOL</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 9: Welcome / Onboarding -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot"></span>Fan · Welcome</div>
+      <div class="phone">
+        <div class="phone-screen" style="background:#0A0A0A;">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:1;display:flex;flex-direction:column;padding:24px 20px 28px;">
+            <!-- Logo mark -->
+            <div style="margin-top:16px;">
+              <div style="font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:-0.03em;color:#FFF;">Tizzle<span style="color:#CAFF00;">.</span></div>
+            </div>
+
+            <!-- Big headline -->
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;">
+              <div style="font-family:var(--f-display);font-size:32px;font-weight:700;letter-spacing:-0.04em;line-height:0.9;color:#FFF;">Your<br>ticket.</div>
+              <div style="font-family:var(--f-display);font-size:32px;font-weight:700;letter-spacing:-0.04em;line-height:0.9;color:transparent;-webkit-text-stroke:1.5px #FFF;">On-chain.</div>
+              <p style="font-family:var(--f-body);font-size:12px;color:#666;line-height:1.55;margin-top:12px;">Scan to verify. No fakes. No screenshots. Blockchain-backed at the door.</p>
+            </div>
+
+            <!-- CTA -->
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="background:#CAFF00;color:#0A0A0A;font-family:var(--f-display);font-size:14px;font-weight:700;letter-spacing:-0.01em;padding:13px;border-radius:4px;text-align:center;">Connect Wallet</div>
+              <div style="background:transparent;color:#FFF;font-family:var(--f-body);font-size:12px;padding:10px;border:1px solid #2A2A2A;border-radius:4px;text-align:center;">I'm a venue / organizer</div>
+              <div style="font-family:var(--f-mono);font-size:9px;color:#444;text-align:center;letter-spacing:0.06em;">Powered by Solana devnet</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 8: Event Created Success -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot org"></span>Organizer · Event Created</div>
+      <div class="phone">
+        <div class="phone-screen" style="background:#0A0A0A;">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:1;display:flex;flex-direction:column;padding:16px 14px;">
+            <!-- Header -->
+            <div style="border-bottom:1px solid #1A1A1A;padding-bottom:10px;margin-bottom:16px;">
+              <div style="font-family:var(--f-mono);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:#CAFF00;margin-bottom:3px;">Event Created</div>
+              <div style="font-family:var(--f-display);font-size:17px;font-weight:700;letter-spacing:-0.02em;color:#FFF;">Solana Sounds Festival</div>
+            </div>
+
+            <!-- Tickets minted -->
+            <div style="background:#111;border:1px solid #2A2A2A;border-radius:4px;padding:14px;margin-bottom:12px;text-align:center;">
+              <div style="font-family:var(--f-display);font-size:40px;font-weight:700;letter-spacing:-0.04em;color:#CAFF00;line-height:1;">200</div>
+              <div style="font-family:var(--f-mono);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:#555;margin-top:4px;">Tickets Minted</div>
+            </div>
+
+            <!-- Tx details -->
+            <div style="background:#111;border:1px solid #1E1E1E;border-radius:4px;overflow:hidden;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid #1A1A1A;">
+                <span style="font-family:var(--f-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:#555;">Network</span>
+                <span style="font-family:var(--f-mono);font-size:9px;color:#9945FF;font-weight:600;">Solana Devnet</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid #1A1A1A;">
+                <span style="font-family:var(--f-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:#555;">Tx Hash</span>
+                <span style="font-family:var(--f-mono);font-size:9px;color:#888;">3xFq…9kM2</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;">
+                <span style="font-family:var(--f-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:#555;">Fee</span>
+                <span style="font-family:var(--f-mono);font-size:9px;color:#888;">0.05 SOL</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:8px;margin-top:auto;">
+              <div style="flex:1;background:#CAFF00;color:#0A0A0A;font-family:var(--f-display);font-size:12px;font-weight:700;padding:10px;border-radius:3px;text-align:center;">Open Scanner</div>
+              <div style="flex:1;background:#111;color:#FFF;font-family:var(--f-body);font-size:12px;padding:10px;border:1px solid #2A2A2A;border-radius:3px;text-align:center;">Share</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 9: Scan Result Already Used -->
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="role-dot venue"></span>Venue · Already Used ✗</div>
+      <div class="phone">
+        <div class="phone-screen" style="background:#0A0A0A;">
+          <div class="status-bar">
+            <span class="status-bar-time">9:41</span>
+            <div class="di-pill"></div>
+            <div class="status-bar-icons">
+              <div class="signal-bars">
+                <div class="signal-bar" style="height:4px;"></div>
+                <div class="signal-bar" style="height:6px;"></div>
+                <div class="signal-bar" style="height:8px;"></div>
+                <div class="signal-bar" style="height:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-result" style="flex:1;display:flex;flex-direction:column;">
+            <div class="result-header">
+              <span class="result-back">← Scan</span>
+              <span class="result-title" style="margin-left:8px;">Result</span>
+            </div>
+
+            <div class="result-stage">
+              <div class="result-icon invalid">✗</div>
+
+              <div>
+                <div class="result-status invalid">Already Used</div>
+                <div style="font-family:var(--f-mono);font-size:9px;color:#555;text-align:center;margin-top:4px;letter-spacing:0.06em;">CONFIRMED ON-CHAIN · 0.9s</div>
+              </div>
+
+              <div class="result-details">
+                <div class="result-row">
+                  <span class="result-key">Event</span>
+                  <span class="result-val">Solana Sounds</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-key">Holder</span>
+                  <span class="result-val" style="font-family:var(--f-mono);font-size:9px;">7xKm…f92a</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-key">Scanned at</span>
+                  <span class="result-val" style="color:#FF3B30;">8:45 PM</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-key">Status</span>
+                  <span style="font-family:var(--f-mono);font-size:8px;font-weight:600;letter-spacing:0.06em;color:#FF3B30;background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);padding:2px 6px;border-radius:2px;">USED</span>
+                </div>
+              </div>
+
+              <div class="result-action-btn">Scan Next →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section class="section">
+  <div class="section-label">Typography</div>
+  <h2 class="section-title">Type system</h2>
+  <p class="section-sub">Three fonts. Every role. Nothing wasted.</p>
+
+  <div class="type-specimen">
+
+    <div class="type-row">
+      <div class="type-meta">
+        <span class="type-name">Clash Grotesk</span>
+        <span class="type-role">Display / UI</span>
+        <span class="type-detail">600 · −0.04em<br>Titles, CTAs, event names</span>
+      </div>
+      <div>
+        <div class="specimen-display">The scan<br>is the truth.</div>
+      </div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-meta">
+        <span class="type-name">DM Sans</span>
+        <span class="type-role">Body / UI</span>
+        <span class="type-detail">400/500 · 1.65 leading<br>Descriptions, dates, labels</span>
+      </div>
+      <div>
+        <p class="specimen-body">QR codes verified on-chain. No screenshots, no fake PDFs — the ticket either lives on Solana or it doesn't. Door staff scan, blockchain confirms, show starts.</p>
+      </div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-name-row" style="grid-column: span 2;">
+        <div class="type-meta">
+          <span class="type-name">Geist Mono</span>
+          <span class="type-role">Data / Code</span>
+          <span class="type-detail">400/500 · tabular-nums<br>Wallet addresses, IDs, hashes</span>
+        </div>
+      </div>
+      <div class="type-meta">
+        <span class="type-name">Geist Mono</span>
+        <span class="type-role">Data / Code</span>
+        <span class="type-detail">400/500 · tabular-nums<br>Wallet addresses, IDs, hashes</span>
+      </div>
+      <div>
+        <div class="specimen-mono">
+          <span class="k">ticket</span>.verify(<span class="s">7xKm9f4...f92a</span>)<br>
+          → <span class="k">status</span>: VALID<br>
+          → <span class="k">chain</span>: solana-devnet<br>
+          → <span class="k">latency</span>: <span class="s">1.2s</span><br>
+          → <span class="k">used_at</span>: null → <span class="s">2026-03-22T20:41Z</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- COLOR -->
+<section class="section">
+  <div class="section-label">Color</div>
+  <h2 class="section-title">Palette</h2>
+  <p class="section-sub">One accent. Maximum signal. Black is the stage, lime is the spotlight.</p>
+
+  <div class="color-grid">
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#CAFF00;">
+        <span class="swatch-hex" style="color:#0A0A0A;">#CAFF00</span>
+      </div>
+      <div class="swatch-name">Lime</div>
+      <div class="swatch-label">Primary Accent</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#0A0A0A; border-color:#2A2A2A;">
+        <span class="swatch-hex" style="color:#888;">#0A0A0A</span>
+      </div>
+      <div class="swatch-name">Near Black</div>
+      <div class="swatch-label">Background</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#111111; border-color:#2A2A2A;">
+        <span class="swatch-hex" style="color:#666;">#111111</span>
+      </div>
+      <div class="swatch-name">Surface</div>
+      <div class="swatch-label">Cards / Panels</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#FFFFFF;">
+        <span class="swatch-hex" style="color:#0A0A0A;">#FFFFFF</span>
+      </div>
+      <div class="swatch-name">White</div>
+      <div class="swatch-label">Primary Text</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#888888;">
+        <span class="swatch-hex" style="color:#FFF;">#888888</span>
+      </div>
+      <div class="swatch-name">Mid Gray</div>
+      <div class="swatch-label">Secondary Text</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#FF3B30;">
+        <span class="swatch-hex" style="color:#FFF;">#FF3B30</span>
+      </div>
+      <div class="swatch-name">Red</div>
+      <div class="swatch-label">Error / Already Used</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#9945FF;">
+        <span class="swatch-hex" style="color:#FFF;">#9945FF</span>
+      </div>
+      <div class="swatch-name">Solana Purple</div>
+      <div class="swatch-label">Chain Status</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#2A2A2A; border-color:#3A3A3A;">
+        <span class="swatch-hex" style="color:#888;">#2A2A2A</span>
+      </div>
+      <div class="swatch-name">Border</div>
+      <div class="swatch-label">Dividers / Outlines</div>
+    </div>
+  </div>
+
+  <!-- UI Components -->
+  <div style="margin-top:56px;">
+    <div class="section-label" style="margin-bottom:24px;">Components</div>
+    <div class="components-grid">
+
+      <div class="component-group">
+        <div class="component-group-label">Buttons</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn btn-primary" style="width:100%;">Show QR Code</button>
+          <button class="btn btn-secondary" style="width:100%;">View Details</button>
+          <button class="btn btn-ghost" style="width:100%;">Transfer Ticket</button>
+          <button class="btn btn-danger" style="width:100%;">Report Invalid</button>
+        </div>
+      </div>
+
+      <div class="component-group">
+        <div class="component-group-label">Status Badges</div>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start;">
+          <span class="badge badge-valid">Valid Ticket</span>
+          <span class="badge badge-used">Already Used</span>
+          <span class="badge badge-onchain">On-Chain Verified</span>
+          <span class="badge badge-error">Invalid / Fake</span>
+        </div>
+      </div>
+
+      <div class="component-group">
+        <div class="component-group-label">Form Inputs</div>
+        <div class="form-demo">
+          <div class="form-demo-field">
+            <div class="form-demo-label">Event Name</div>
+            <input type="text" class="form-demo-input" placeholder="Solana Sounds Festival" />
+          </div>
+          <div class="form-demo-field">
+            <div class="form-demo-label">Capacity</div>
+            <input type="text" class="form-demo-input" value="200" />
+          </div>
+        </div>
+      </div>
+
+      <div class="component-group">
+        <div class="component-group-label">Ticket Card</div>
+        <div class="ticket-card" style="max-width:300px;">
+          <div class="ticket-card-accent"></div>
+          <div class="ticket-card-inner">
+            <div class="ticket-event-img">🎵</div>
+            <div class="ticket-info">
+              <div class="ticket-event-name">Solana Sounds Festival</div>
+              <div class="ticket-event-date">SAT 22 MAR · 8PM · SOMA SF</div>
+              <div class="ticket-valid-badge">Valid</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- MOTION -->
+<section class="section">
+  <div class="section-label">Motion</div>
+  <h2 class="section-title">Animation system</h2>
+  <p class="section-sub">Functional only. Motion earns its place or gets cut.</p>
+
+  <div class="motion-grid">
+    <div class="motion-card">
+      <div class="motion-card-title">QR Scan Line</div>
+      <div class="motion-card-value">2s ease-in-out ∞</div>
+      <div class="motion-card-desc">Lime scan line sweeps QR frame. Signals "live" state. Critical for door demo confidence.</div>
+    </div>
+    <div class="motion-card">
+      <div class="motion-card-title">Venue Scanner</div>
+      <div class="motion-card-value">1.6s ease-in-out ∞</div>
+      <div class="motion-card-desc">Faster sweep for urgency. Lime corners + scan line = camera is active and looking.</div>
+    </div>
+    <div class="motion-card">
+      <div class="motion-card-title">Active Event Dot</div>
+      <div class="motion-card-value">2s ease-in-out ∞</div>
+      <div class="motion-card-desc">Pulse on the live event indicator. Quietly signals the scanner is armed.</div>
+    </div>
+    <div class="motion-card">
+      <div class="motion-card-title">Transitions</div>
+      <div class="motion-card-value">150ms ease-out</div>
+      <div class="motion-card-desc">All hover states, theme toggle, and state changes. Fast enough to feel instant.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer">
+    <div class="footer-brand">Tizzle<span>.</span></div>
+    <div class="footer-meta">Design System v1.0 · Editorial/Brutalist · Clash Grotesk + DM Sans + Geist Mono · Solana Devnet</div>
+  </div>
+</footer>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const btn = document.querySelector('.theme-toggle');
+  if (html.dataset.theme === 'dark') {
+    html.dataset.theme = 'light';
+    btn.textContent = 'DARK';
+  } else {
+    html.dataset.theme = 'dark';
+    btn.textContent = 'LIGHT';
+  }
+}
+</script>
+
+</body>
+</html>
