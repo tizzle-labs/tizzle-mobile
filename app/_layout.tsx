@@ -20,7 +20,10 @@ export default function RootLayout() {
     console.log(`Track ${pathname}`, { params })
   })
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    'ClashGrotesk-Semibold': require('../assets/fonts/ClashGrotesk-Semibold.ttf'),
+    'DMSans-Regular': require('../assets/fonts/DMSans-Regular.ttf'),
+    'DMSans-Medium': require('../assets/fonts/DMSans-Medium.ttf'),
+    'GeistMono-Regular': require('../assets/fonts/GeistMono-Regular.ttf'),
   })
 
   const onLayoutRootView = useCallback(async () => {
@@ -42,11 +45,11 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1, backgroundColor: '#0A0A0A' }} onLayout={onLayoutRootView}>
       <AppProviders>
         <AppSplashController />
         <RootNavigator />
-        <StatusBar style="auto" />
+        <StatusBar style="light" />
       </AppProviders>
       <PortalHost />
     </View>
