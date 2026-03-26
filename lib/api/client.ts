@@ -30,5 +30,5 @@ apiClient.interceptors.response.use(
       _onLogout?.()
     }
     return Promise.reject(error)
-  }
+  },
 )

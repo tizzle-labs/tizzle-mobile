@@ -6,12 +6,11 @@ import { Fonts } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 
 export default function ScanResult() {
-  const { status, registrationPda, checkedInAt } =
-    useLocalSearchParams<{
-      status: 'valid' | 'used' | 'error'
-      registrationPda: string
-      checkedInAt?: string
-    }>()
+  const { status, registrationPda, checkedInAt } = useLocalSearchParams<{
+    status: 'valid' | 'used' | 'error'
+    registrationPda: string
+    checkedInAt?: string
+  }>()
 
   const isValid = status === 'valid'
   const isUsed = status === 'used'
@@ -26,20 +25,13 @@ export default function ScanResult() {
     >
       <SafeAreaView style={styles.inner}>
         <View style={styles.content}>
-          <Text style={[styles.icon, { color: textColor }]}>
-            {isValid ? '✓' : '✗'}
-          </Text>
+          <Text style={[styles.icon, { color: textColor }]}>{isValid ? '✓' : '✗'}</Text>
           <Text style={[styles.heading, { color: textColor }]}>
-            {isValid
-              ? 'CHECK-IN CONFIRMED'
-              : isUsed
-              ? 'ALREADY USED'
-              : 'VERIFICATION FAILED'}
+            {isValid ? 'CHECK-IN CONFIRMED' : isUsed ? 'ALREADY USED' : 'VERIFICATION FAILED'}
           </Text>
 
           {registrationPda && (
-            <Text style={[styles.pda, { color: isValid ? Colors.bg : Colors.text2 }]}
-              numberOfLines={2}>
+            <Text style={[styles.pda, { color: isValid ? Colors.bg : Colors.text2 }]} numberOfLines={2}>
               {registrationPda}
             </Text>
           )}
@@ -61,9 +53,7 @@ export default function ScanResult() {
           )}
         </View>
 
-        <Text style={[styles.dismiss, { color: isValid ? Colors.bg : Colors.text2 }]}>
-          Tap to scan next
-        </Text>
+        <Text style={[styles.dismiss, { color: isValid ? Colors.bg : Colors.text2 }]}>Tap to scan next</Text>
       </SafeAreaView>
     </TouchableOpacity>
   )

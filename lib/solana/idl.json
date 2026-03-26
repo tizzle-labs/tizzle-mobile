@@ -1,55 +1,19 @@
 {
   "accounts": [
     {
-      "discriminator": [
-        155,
-        12,
-        170,
-        224,
-        30,
-        250,
-        204,
-        130
-      ],
+      "discriminator": [155, 12, 170, 224, 30, 250, 204, 130],
       "name": "Config"
     },
     {
-      "discriminator": [
-        125,
-        192,
-        125,
-        158,
-        9,
-        115,
-        152,
-        233
-      ],
+      "discriminator": [125, 192, 125, 158, 9, 115, 152, 233],
       "name": "Event"
     },
     {
-      "discriminator": [
-        145,
-        38,
-        152,
-        251,
-        91,
-        57,
-        118,
-        160
-      ],
+      "discriminator": [145, 38, 152, 251, 91, 57, 118, 160],
       "name": "Organization"
     },
     {
-      "discriminator": [
-        158,
-        129,
-        230,
-        90,
-        93,
-        95,
-        101,
-        55
-      ],
+      "discriminator": [158, 129, 230, 90, 93, 95, 101, 55],
       "name": "Registration"
     }
   ],
@@ -180,13 +144,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  118,
-                  101,
-                  110,
-                  116
-                ]
+                "value": [101, 118, 101, 110, 116]
               },
               {
                 "account": "Event",
@@ -200,9 +158,7 @@
               }
             ]
           },
-          "relations": [
-            "registration"
-          ],
+          "relations": ["registration"],
           "writable": true
         },
         {
@@ -211,20 +167,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  103,
-                  105,
-                  115,
-                  116,
-                  114,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [114, 101, 103, 105, 115, 116, 114, 97, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -241,26 +184,13 @@
         },
         {
           "name": "gatekeeper",
-          "relations": [
-            "event"
-          ],
+          "relations": ["event"],
           "signer": true
         }
       ],
       "args": [],
-      "discriminator": [
-        209,
-        253,
-        4,
-        217,
-        250,
-        241,
-        207,
-        50
-      ],
-      "docs": [
-        "Check in attendee at event"
-      ],
+      "discriminator": [209, 253, 4, 217, 250, 241, 207, 50],
+      "docs": ["Check in attendee at event"],
       "name": "check_in"
     },
     {
@@ -271,14 +201,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           },
@@ -290,20 +213,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  103,
-                  97,
-                  110,
-                  105,
-                  122,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [111, 114, 103, 97, 110, 105, 122, 97, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -319,13 +229,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  118,
-                  101,
-                  110,
-                  116
-                ]
+                "value": [101, 118, 101, 110, 116]
               },
               {
                 "kind": "account",
@@ -346,9 +250,7 @@
         },
         {
           "name": "owner",
-          "relations": [
-            "organization"
-          ],
+          "relations": ["organization"],
           "signer": true
         },
         {
@@ -356,9 +258,7 @@
           "writable": true
         },
         {
-          "docs": [
-            "Token mint for stake (System Program ID for native SOL)"
-          ],
+          "docs": ["Token mint for stake (System Program ID for native SOL)"],
           "name": "stake_token_mint"
         },
         {
@@ -407,19 +307,8 @@
           "type": "i64"
         }
       ],
-      "discriminator": [
-        49,
-        219,
-        29,
-        203,
-        22,
-        98,
-        100,
-        87
-      ],
-      "docs": [
-        "Create a new event"
-      ],
+      "discriminator": [49, 219, 29, 203, 22, 98, 100, 87],
+      "docs": ["Create a new event"],
       "name": "create_event"
     },
     {
@@ -430,20 +319,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  103,
-                  97,
-                  110,
-                  105,
-                  122,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [111, 114, 103, 97, 110, 105, 122, 97, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -467,19 +343,8 @@
         }
       ],
       "args": [],
-      "discriminator": [
-        60,
-        173,
-        177,
-        39,
-        122,
-        23,
-        68,
-        185
-      ],
-      "docs": [
-        "Create a new organization"
-      ],
+      "discriminator": [60, 173, 177, 39, 122, 23, 68, 185],
+      "docs": ["Create a new organization"],
       "name": "create_organization"
     },
     {
@@ -490,14 +355,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           },
@@ -522,19 +380,8 @@
           "type": "u64"
         }
       ],
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
-      "docs": [
-        "Initialize the Tizzle protocol"
-      ],
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "docs": ["Initialize the Tizzle protocol"],
       "name": "initialize"
     },
     {
@@ -545,13 +392,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  118,
-                  101,
-                  110,
-                  116
-                ]
+                "value": [101, 118, 101, 110, 116]
               },
               {
                 "account": "Event",
@@ -565,9 +406,7 @@
               }
             ]
           },
-          "relations": [
-            "registration"
-          ]
+          "relations": ["registration"]
         },
         {
           "name": "registration",
@@ -575,20 +414,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  103,
-                  105,
-                  115,
-                  116,
-                  114,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [114, 101, 103, 105, 115, 116, 114, 97, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -608,14 +434,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "value": [101, 115, 99, 114, 111, 119]
               },
               {
                 "kind": "account",
@@ -626,37 +445,27 @@
           "writable": true
         },
         {
-          "docs": [
-            "Attendee's token account (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Attendee's token account (only for SPL tokens, ignored for SOL)"],
           "name": "attendee_token_account",
           "writable": true
         },
         {
-          "docs": [
-            "Escrow token account (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Escrow token account (only for SPL tokens, ignored for SOL)"],
           "name": "escrow_token_account",
           "writable": true
         },
         {
-          "docs": [
-            "Organization treasury token account (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Organization treasury token account (only for SPL tokens, ignored for SOL)"],
           "name": "organization_treasury_token_account",
           "writable": true
         },
         {
-          "docs": [
-            "Token mint (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Token mint (only for SPL tokens, ignored for SOL)"],
           "name": "token_mint"
         },
         {
           "name": "attendee",
-          "relations": [
-            "registration"
-          ],
+          "relations": ["registration"],
           "signer": true,
           "writable": true
         },
@@ -678,19 +487,8 @@
         }
       ],
       "args": [],
-      "discriminator": [
-        185,
-        80,
-        20,
-        3,
-        110,
-        92,
-        178,
-        240
-      ],
-      "docs": [
-        "Claim refund after event"
-      ],
+      "discriminator": [185, 80, 20, 3, 110, 92, 178, 240],
+      "docs": ["Claim refund after event"],
       "name": "refund_stake"
     },
     {
@@ -701,14 +499,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           },
@@ -720,20 +511,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  103,
-                  97,
-                  110,
-                  105,
-                  122,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [111, 114, 103, 97, 110, 105, 122, 97, 116, 105, 111, 110]
               },
               {
                 "account": "Event",
@@ -750,13 +528,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  118,
-                  101,
-                  110,
-                  116
-                ]
+                "value": [101, 118, 101, 110, 116]
               },
               {
                 "account": "Event",
@@ -778,20 +550,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  103,
-                  105,
-                  115,
-                  116,
-                  114,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [114, 101, 103, 105, 115, 116, 114, 97, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -811,14 +570,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "value": [101, 115, 99, 114, 111, 119]
               },
               {
                 "kind": "account",
@@ -829,23 +581,17 @@
           "writable": true
         },
         {
-          "docs": [
-            "Attendee's token account (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Attendee's token account (only for SPL tokens, ignored for SOL)"],
           "name": "attendee_token_account",
           "writable": true
         },
         {
-          "docs": [
-            "Escrow token account (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Escrow token account (only for SPL tokens, ignored for SOL)"],
           "name": "escrow_token_account",
           "writable": true
         },
         {
-          "docs": [
-            "Token mint (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Token mint (only for SPL tokens, ignored for SOL)"],
           "name": "token_mint"
         },
         {
@@ -867,19 +613,8 @@
         }
       ],
       "args": [],
-      "discriminator": [
-        206,
-        4,
-        37,
-        59,
-        79,
-        120,
-        169,
-        181
-      ],
-      "docs": [
-        "Register for an event"
-      ],
+      "discriminator": [206, 4, 37, 59, 79, 120, 169, 181],
+      "docs": ["Register for an event"],
       "name": "register_event"
     },
     {
@@ -890,14 +625,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           },
@@ -905,9 +633,7 @@
         },
         {
           "name": "authority",
-          "relations": [
-            "config"
-          ],
+          "relations": ["config"],
           "signer": true
         }
       ],
@@ -931,19 +657,8 @@
           }
         }
       ],
-      "discriminator": [
-        29,
-        158,
-        252,
-        191,
-        10,
-        83,
-        219,
-        99
-      ],
-      "docs": [
-        "Update protocol configuration"
-      ],
+      "discriminator": [29, 158, 252, 191, 10, 83, 219, 99],
+      "docs": ["Update protocol configuration"],
       "name": "update_config"
     },
     {
@@ -954,13 +669,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  118,
-                  101,
-                  110,
-                  116
-                ]
+                "value": [101, 118, 101, 110, 116]
               },
               {
                 "account": "Event",
@@ -982,14 +691,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "value": [101, 115, 99, 114, 111, 119]
               },
               {
                 "kind": "account",
@@ -1000,30 +702,22 @@
           "writable": true
         },
         {
-          "docs": [
-            "Escrow token account (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Escrow token account (only for SPL tokens, ignored for SOL)"],
           "name": "escrow_token_account",
           "writable": true
         },
         {
-          "docs": [
-            "Organization treasury token account (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Organization treasury token account (only for SPL tokens, ignored for SOL)"],
           "name": "organization_treasury_token_account",
           "writable": true
         },
         {
-          "docs": [
-            "Token mint (only for SPL tokens, ignored for SOL)"
-          ],
+          "docs": ["Token mint (only for SPL tokens, ignored for SOL)"],
           "name": "token_mint"
         },
         {
           "name": "organizer",
-          "relations": [
-            "event"
-          ],
+          "relations": ["event"],
           "signer": true,
           "writable": true
         },
@@ -1045,19 +739,8 @@
         }
       ],
       "args": [],
-      "discriminator": [
-        6,
-        132,
-        233,
-        254,
-        241,
-        87,
-        247,
-        185
-      ],
-      "docs": [
-        "Withdraw earnings from no-show penalties"
-      ],
+      "discriminator": [6, 132, 233, 254, 241, 87, 247, 185],
+      "docs": ["Withdraw earnings from no-show penalties"],
       "name": "withdraw_earnings"
     }
   ],

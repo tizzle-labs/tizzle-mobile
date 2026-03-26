@@ -16,11 +16,11 @@ export function deriveEventStatus(startTime: string, endTime: string, unlockTime
 }
 
 const STATUS_STYLES: Record<EventStatus, { bg: string; color: string }> = {
-  Available:  { bg: Colors.accent,   color: Colors.bg },
-  Ongoing:    { bg: Colors.accent,   color: Colors.bg },
-  Ended:      { bg: Colors.warning,  color: Colors.bg },
-  Settlement: { bg: Colors.warning,  color: Colors.bg },
-  Closed:     { bg: Colors.surface2, color: Colors.text3 },
+  Available: { bg: Colors.accent, color: Colors.bg },
+  Ongoing: { bg: Colors.accent, color: Colors.bg },
+  Ended: { bg: Colors.warning, color: Colors.bg },
+  Settlement: { bg: Colors.warning, color: Colors.bg },
+  Closed: { bg: Colors.surface2, color: Colors.text3 },
 }
 
 interface EventStatusChipProps {

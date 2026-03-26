@@ -23,7 +23,9 @@ export function TicketArtifact({
     <View style={[styles.container, style]}>
       <View style={styles.topSection}>
         <Text style={styles.label}>TIZZLE TICKET</Text>
-        <Text style={styles.title} numberOfLines={2}>{eventTitle}</Text>
+        <Text style={styles.title} numberOfLines={2}>
+          {eventTitle}
+        </Text>
         <Text style={styles.meta}>{eventDate}</Text>
         <Text style={styles.meta}>{location}</Text>
       </View>

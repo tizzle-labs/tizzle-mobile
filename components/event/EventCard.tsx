@@ -26,11 +26,7 @@ export function EventCard({ event, onPress, variant = 'compact' }: EventCardProp
   if (variant === 'featured') {
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.featured}>
-        <Image
-          source={{ uri: event.imageUrl }}
-          style={StyleSheet.absoluteFillObject}
-          contentFit="cover"
-        />
+        <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
         <View style={styles.featuredOverlay}>
           <EventStatusChip status={status} />
           <View style={styles.featuredBottom}>
@@ -46,11 +42,7 @@ export function EventCard({ event, onPress, variant = 'compact' }: EventCardProp
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.compact}>
-      <Image
-        source={{ uri: event.imageUrl }}
-        style={styles.thumb}
-        contentFit="cover"
-      />
+      <Image source={{ uri: event.imageUrl }} style={styles.thumb} contentFit="cover" />
       <View style={styles.compactInfo}>
         <Text style={styles.compactTitle} numberOfLines={1}>
           {event.title}

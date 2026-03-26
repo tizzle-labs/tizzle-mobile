@@ -50,12 +50,8 @@ export function useCreateEvent() {
       const eventId = eventIdKeypair.publicKey
       const eventPda = deriveEventPda(organizationPda, eventId)
 
-      const stakeAmountLamports = new BN(
-        Math.floor(input.stakeAmountSol * LAMPORTS_PER_SOL)
-      )
-      const gatekeeper = input.gatekeeperAddress
-        ? new PublicKey(input.gatekeeperAddress)
-        : organizerPubkey
+      const stakeAmountLamports = new BN(Math.floor(input.stakeAmountSol * LAMPORTS_PER_SOL))
+      const gatekeeper = input.gatekeeperAddress ? new PublicKey(input.gatekeeperAddress) : organizerPubkey
 
       const config = await (program as any).account.config.fetch(CONFIG_PDA)
       const platformTreasury = config.treasury as PublicKey
@@ -69,7 +65,7 @@ export function useCreateEvent() {
           0,
           new BN(Math.floor(input.startTime.getTime() / 1000)),
           new BN(Math.floor(input.endTime.getTime() / 1000)),
-          new BN(Math.floor(input.unlockTime.getTime() / 1000))
+          new BN(Math.floor(input.unlockTime.getTime() / 1000)),
         )
         .accounts({
           config: CONFIG_PDA,
@@ -78,17 +74,18 @@ export function useCreateEvent() {
           organizer: organizerPubkey,
           owner: organizerPubkey,
           platformTreasury,
-          stakeTokenMint: input.stakeTokenMint === SOL_MINT
-            ? SystemProgram.programId
-            : new PublicKey(input.stakeTokenMint),
+          stakeTokenMint:
+            input.stakeTokenMint === SOL_MINT ? SystemProgram.programId : new PublicKey(input.stakeTokenMint),
           gatekeeper,
           systemProgram: SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
         })
         .instruction()
 
-      const { context: { slot: minContextSlot }, value: latestBlockhash } =
-        await connection.getLatestBlockhashAndContext()
+      const {
+        context: { slot: minContextSlot },
+        value: latestBlockhash,
+      } = await connection.getLatestBlockhashAndContext()
 
       const message = new TransactionMessage({
         payerKey: organizerPubkey,

@@ -1,10 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  PublicKey,
-  TransactionMessage,
-  VersionedTransaction,
-  SystemProgram,
-} from '@solana/web3.js'
+import { PublicKey, TransactionMessage, VersionedTransaction, SystemProgram } from '@solana/web3.js'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createOrganization } from '@/lib/api/organizations'
@@ -17,11 +12,7 @@ export function useCreateOrganization() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: {
-      name: string
-      description: string
-      avatarUrl?: string
-    }) => {
+    mutationFn: async (payload: { name: string; description: string; avatarUrl?: string }) => {
       const walletAddress = accounts?.[0]?.address?.toString()
       if (!walletAddress) throw new Error('Wallet not connected')
       const ownerPubkey = new PublicKey(walletAddress)
@@ -37,8 +28,10 @@ export function useCreateOrganization() {
         })
         .instruction()
 
-      const { context: { slot: minContextSlot }, value: latestBlockhash } =
-        await connection.getLatestBlockhashAndContext()
+      const {
+        context: { slot: minContextSlot },
+        value: latestBlockhash,
+      } = await connection.getLatestBlockhashAndContext()
 
       const message = new TransactionMessage({
         payerKey: ownerPubkey,

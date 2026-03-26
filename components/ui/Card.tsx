@@ -8,11 +8,7 @@ interface CardProps {
 }
 
 export function Card({ children, style, variant = 'default' }: CardProps) {
-  return (
-    <View style={[styles.base, variant === 'nested' && styles.nested, style]}>
-      {children}
-    </View>
-  )
+  return <View style={[styles.base, variant === 'nested' && styles.nested, style]}>{children}</View>
 }
 
 const styles = StyleSheet.create({

@@ -1,12 +1,4 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Dimensions,
-} from 'react-native'
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
@@ -49,13 +41,17 @@ export default function EventDetailModal() {
     {
       label: 'Date',
       value: new Date(event.startTime).toLocaleDateString('en-US', {
-        weekday: 'short', month: 'long', day: 'numeric', year: 'numeric',
+        weekday: 'short',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
       }),
     },
     {
       label: 'Time',
       value: new Date(event.startTime).toLocaleTimeString('en-US', {
-        hour: '2-digit', minute: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
       }),
     },
     { label: 'Location', value: event.location },

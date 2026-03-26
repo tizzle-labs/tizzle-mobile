@@ -29,23 +29,12 @@ export function Button({
       onPress={onPress}
       disabled={isDisabled}
       activeOpacity={0.8}
-      style={[
-        styles.base,
-        styles[variant],
-        isDisabled && styles.disabled,
-        fullWidth && styles.fullWidth,
-        style,
-      ]}
+      style={[styles.base, styles[variant], isDisabled && styles.disabled, fullWidth && styles.fullWidth, style]}
     >
       {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? Colors.bg : Colors.text1}
-          size="small"
-        />
+        <ActivityIndicator color={variant === 'primary' ? Colors.bg : Colors.text1} size="small" />
       ) : (
-        <Text style={[styles.label, styles[`${variant}Label` as keyof typeof styles]]}>
-          {children}
-        </Text>
+        <Text style={[styles.label, styles[`${variant}Label` as keyof typeof styles]]}>{children}</Text>
       )}
     </TouchableOpacity>
   )

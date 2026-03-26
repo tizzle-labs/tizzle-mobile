@@ -10,7 +10,7 @@ export function ScanFrame() {
       Animated.sequence([
         Animated.timing(scanY, { toValue: 1, duration: 1600, useNativeDriver: true }),
         Animated.timing(scanY, { toValue: 0, duration: 1600, useNativeDriver: true }),
-      ])
+      ]),
     )
     anim.start()
     return () => anim.stop()

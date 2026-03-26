@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
@@ -36,9 +29,7 @@ export default function ProfileModal() {
     },
   ]
 
-  const profileRows = walletAddress
-    ? [{ label: 'Wallet', value: walletAddress, mono: true }]
-    : []
+  const profileRows = walletAddress ? [{ label: 'Wallet', value: walletAddress, mono: true }] : []
 
   return (
     <View style={styles.container}>
@@ -58,9 +49,7 @@ export default function ProfileModal() {
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.nameSection}>
-            <Text style={styles.displayName}>
-              {profile?.name ?? profile?.username ?? 'Anonymous'}
-            </Text>
+            <Text style={styles.displayName}>{profile?.name ?? profile?.username ?? 'Anonymous'}</Text>
           </View>
 
           <Card>

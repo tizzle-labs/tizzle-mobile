@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
@@ -25,9 +18,7 @@ export default function TicketDetail() {
   const { data: registrations, isLoading: regLoading } = useMyRegistrations()
   const registration = registrations?.find((r) => r.registrationPda === registrationPda)
 
-  const { data: event, isLoading: eventLoading } = useEventDetail(
-    registration?.eventPda ?? ''
-  )
+  const { data: event, isLoading: eventLoading } = useEventDetail(registration?.eventPda ?? '')
 
   if (regLoading || eventLoading || !registration) {
     return (
@@ -71,7 +62,9 @@ export default function TicketDetail() {
           eventDate={
             event
               ? new Date(event.startTime).toLocaleDateString('en-US', {
-                  weekday: 'short', month: 'long', day: 'numeric',
+                  weekday: 'short',
+                  month: 'long',
+                  day: 'numeric',
                 })
               : ''
           }
@@ -86,9 +79,7 @@ export default function TicketDetail() {
         </Card>
 
         {!registration.checkedIn && (
-          <Button onPress={() => router.push(`/(modals)/qr/${registrationPda}`)}>
-            Show QR
-          </Button>
+          <Button onPress={() => router.push(`/(modals)/qr/${registrationPda}`)}>Show QR</Button>
         )}
       </ScrollView>
     </View>
@@ -108,8 +99,11 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   back: {
-    fontFamily: Fonts.mono, fontSize: 11, color: Colors.text2,
-    letterSpacing: 0.08, textTransform: 'uppercase',
+    fontFamily: Fonts.mono,
+    fontSize: 11,
+    color: Colors.text2,
+    letterSpacing: 0.08,
+    textTransform: 'uppercase',
   },
   scroll: { flex: 1 },
   scrollContent: { padding: Spacing.md, gap: Spacing.md },

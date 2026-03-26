@@ -44,7 +44,7 @@ export default function Scanner() {
       // Allow re-scanning after 3s
       scanTimeoutRef.current = setTimeout(() => setScanned(false), 3000)
     },
-    [scanned, checkIn]
+    [scanned, checkIn],
   )
 
   useEffect(() => {

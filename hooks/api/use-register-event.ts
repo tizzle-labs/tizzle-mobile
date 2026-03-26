@@ -1,20 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  PublicKey,
-  TransactionMessage,
-  VersionedTransaction,
-  SystemProgram,
-} from '@solana/web3.js'
+import { PublicKey, TransactionMessage, VersionedTransaction, SystemProgram } from '@solana/web3.js'
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createRegistration } from '@/lib/api/registrations'
 import { registrationKeys } from './use-my-registrations'
-import {
-  CONFIG_PDA,
-  deriveRegistrationPda,
-  deriveEscrowVaultPda,
-} from '@/lib/solana/program'
+import { CONFIG_PDA, deriveRegistrationPda, deriveEscrowVaultPda } from '@/lib/solana/program'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import type { Event } from '@/lib/api/events'
 
@@ -55,13 +46,12 @@ export function useRegisterEvent() {
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       }
 
-      const ix = await (program as any).methods
-        .registerEvent()
-        .accounts(ixAccounts)
-        .instruction()
+      const ix = await (program as any).methods.registerEvent().accounts(ixAccounts).instruction()
 
-      const { context: { slot: minContextSlot }, value: latestBlockhash } =
-        await connection.getLatestBlockhashAndContext()
+      const {
+        context: { slot: minContextSlot },
+        value: latestBlockhash,
+      } = await connection.getLatestBlockhashAndContext()
 
       const message = new TransactionMessage({
         payerKey: attendeePubkey,
@@ -72,10 +62,7 @@ export function useRegisterEvent() {
       const tx = new VersionedTransaction(message)
 
       const signature = await signAndSendTransactions(tx, minContextSlot)
-      await connection.confirmTransaction(
-        { signature, ...latestBlockhash },
-        'confirmed'
-      )
+      await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       await createRegistration({
         eventPda: event.eventPda,

@@ -19,10 +19,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "app.tizzle.ticket",
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",

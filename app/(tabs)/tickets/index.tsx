@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native'
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
@@ -34,7 +27,9 @@ function TicketRow({ registration }: { registration: Registration }) {
         </Text>
         <Text style={styles.rowDate}>
           {new Date(registration.registeredAt).toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
           })}
         </Text>
       </View>
@@ -89,8 +84,11 @@ const styles = StyleSheet.create({
   rowInfo: { flex: 1, gap: 4, marginRight: Spacing.sm },
   rowPda: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1 },
   rowDate: {
-    fontFamily: Fonts.mono, fontSize: 10, color: Colors.text3,
-    textTransform: 'uppercase', letterSpacing: 0.08,
+    fontFamily: Fonts.mono,
+    fontSize: 10,
+    color: Colors.text3,
+    textTransform: 'uppercase',
+    letterSpacing: 0.08,
   },
   emptyText: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text2 },
   exploreLink: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.accent, letterSpacing: 0.08 },

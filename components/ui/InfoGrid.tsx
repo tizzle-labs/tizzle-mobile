@@ -18,11 +18,7 @@ export function InfoGrid({ rows }: InfoGridProps) {
       {rows.map((row, i) => (
         <View key={row.label} style={styles.row}>
           <Text style={styles.label}>{row.label.toUpperCase()}</Text>
-          <Text
-            style={[styles.value, row.mono && styles.monoValue]}
-            numberOfLines={1}
-            ellipsizeMode="middle"
-          >
+          <Text style={[styles.value, row.mono && styles.monoValue]} numberOfLines={1} ellipsizeMode="middle">
             {row.value}
           </Text>
         </View>

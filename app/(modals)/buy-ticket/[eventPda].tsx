@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
@@ -52,7 +45,9 @@ export default function BuyTicketModal() {
     {
       label: 'Date',
       value: new Date(event.startTime).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
       }),
     },
   ]
@@ -104,18 +99,12 @@ export default function BuyTicketModal() {
         </Card>
 
         {!hasEnoughBalance && (
-          <Text style={styles.insufficientText}>
-            Insufficient {event.stakeTokenSymbol} balance
-          </Text>
+          <Text style={styles.insufficientText}>Insufficient {event.stakeTokenSymbol} balance</Text>
         )}
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={styles.cta}>
-        <Button
-          onPress={handleDeposit}
-          disabled={!hasEnoughBalance}
-          loading={registerMutation.isPending}
-        >
+        <Button onPress={handleDeposit} disabled={!hasEnoughBalance} loading={registerMutation.isPending}>
           {registerMutation.isPending ? 'Confirming on Solana…' : 'Deposit & Register'}
         </Button>
       </SafeAreaView>
