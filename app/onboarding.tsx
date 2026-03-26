@@ -28,8 +28,8 @@ export default function Onboarding() {
       console.warn('Profile update failed', e)
     } finally {
       setLoading(false)
-      router.replace('/(tabs)/explore')
     }
+    router.replace('/(tabs)/explore')
   }
 
   function handleSkip() {

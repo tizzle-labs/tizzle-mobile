@@ -10,14 +10,15 @@ import { View } from 'react-native'
 import { useTrackLocations } from '@/hooks/use-track-locations'
 import { AppSplashController } from '@/components/app-splash-controller'
 import { useAuth } from '@/components/auth/auth-provider'
+import { Colors } from '@/constants/colors'
 
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
   // Use this hook to track the locations for analytics or debugging.
   // Delete if you don't need it.
-  useTrackLocations((pathname, params) => {
-    console.log(`Track ${pathname}`, { params })
+  useTrackLocations((_pathname, _params) => {
+    // location tracking hook
   })
   const [loaded] = useFonts({
     'ClashGrotesk-Semibold': require('../assets/fonts/ClashGrotesk-Semibold.ttf'),
@@ -27,9 +28,7 @@ export default function RootLayout() {
   })
 
   const onLayoutRootView = useCallback(async () => {
-    console.log('onLayoutRootView')
     if (loaded) {
-      console.log('loaded')
       // This tells the splash screen to hide immediately! If we call this after
       // `setAppIsReady`, then we may see a blank screen while the app is
       // loading its initial state and rendering its first pixels. So instead,
@@ -45,7 +44,7 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0A0A0A' }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1, backgroundColor: Colors.bg }} onLayout={onLayoutRootView}>
       <AppProviders>
         <AppSplashController />
         <RootNavigator />
@@ -59,16 +58,16 @@ export default function RootLayout() {
 function RootNavigator() {
   const { isAuthenticated } = useAuth()
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A0A0A' } }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}>
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="+not-found" />
       </Stack.Protected>
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="sign-in" />
       </Stack.Protected>
-      <Stack.Screen name="onboarding" />
     </Stack>
   )
 }

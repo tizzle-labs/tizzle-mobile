@@ -16,7 +16,7 @@ export default function SignIn() {
     setLoading(true)
     try {
       await signIn()
-      router.replace('/')
+      router.replace('/onboarding')
     } catch (e) {
       console.error('Sign in failed', e)
     } finally {

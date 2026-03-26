@@ -7,7 +7,7 @@ export default function ModalLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: Colors.bg },
-        presentation: 'modal',
+        presentation: 'card',
       }}
     />
   )
