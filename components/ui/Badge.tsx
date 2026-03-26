@@ -41,9 +41,9 @@ export function Badge({ variant, label }: BadgeProps) {
 
 const styles = StyleSheet.create({
   base: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 9999,
     alignSelf: 'flex-start',
   },
   label: {

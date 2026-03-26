@@ -57,7 +57,7 @@ export function EventCard({ event, onPress, variant = 'compact' }: EventCardProp
 const styles = StyleSheet.create({
   featured: {
     height: 240,
-    borderRadius: 4,
+    borderRadius: 10,
     overflow: 'hidden',
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.surface2,
@@ -71,14 +71,14 @@ const styles = StyleSheet.create({
   featuredBottom: { gap: 4 },
   featuredTitle: {
     fontFamily: Fonts.display,
-    fontSize: 22,
+    fontSize: 24,
     color: Colors.text1,
-    letterSpacing: ls(22, LS.display),
+    letterSpacing: ls(24, LS.display),
   },
   featuredDate: {
     fontFamily: Fonts.mono,
     fontSize: 10,
-    color: Colors.text2,
+    color: Colors.accent,
     textTransform: 'uppercase',
     letterSpacing: ls(10, LS.labelNarrow),
   },
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   thumb: {
     width: 56,
     height: 56,
-    borderRadius: 4,
+    borderRadius: 8,
     backgroundColor: Colors.surface2,
   },
   compactInfo: { flex: 1, gap: 5 },

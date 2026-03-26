@@ -23,7 +23,7 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const { accounts, disconnect, signIn: walletSignIn, signMessage } = useMobileWallet()
+  const { accounts, disconnect, signIn: walletSignIn, signMessages: signMessage } = useMobileWallet()
   const walletAddress = accounts?.[0]?.address?.toString() ?? null
   const [hasJwt, setHasJwt] = useState(false)
 

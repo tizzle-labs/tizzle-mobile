@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/colors'
-import { Fonts, LS, ls } from '@/constants/fonts'
+import { Fonts } from '@/constants/fonts'
 import { Ionicons } from '@expo/vector-icons'
 import { Tabs } from 'expo-router'
 
@@ -9,19 +9,17 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.bg,
+          backgroundColor: Colors.surface,
           borderTopColor: Colors.border,
           borderTopWidth: 1,
           height: 60,
           paddingBottom: 8,
         },
         tabBarActiveTintColor: Colors.accent,
-        tabBarInactiveTintColor: Colors.text3,
+        tabBarInactiveTintColor: Colors.text2,
         tabBarLabelStyle: {
-          fontFamily: Fonts.mono,
-          fontSize: 9,
-          letterSpacing: ls(9, LS.label),
-          textTransform: 'uppercase',
+          fontFamily: Fonts.bodyMedium,
+          fontSize: 10,
         },
       }}
     >

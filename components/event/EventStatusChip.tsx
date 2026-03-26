@@ -38,9 +38,9 @@ export function EventStatusChip({ status }: EventStatusChipProps) {
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 9999,
     alignSelf: 'flex-start',
   },
   label: {

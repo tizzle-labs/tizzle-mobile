@@ -46,10 +46,10 @@ export function TicketArtifact({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
-    borderRadius: 8,
+    backgroundColor: Colors.surface2,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.border2,
+    borderColor: Colors.border,
     overflow: 'hidden',
   },
   topSection: {
@@ -65,9 +65,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 22,
+    fontSize: 24,
     color: Colors.text1,
-    letterSpacing: ls(22, LS.display),
+    letterSpacing: ls(24, LS.display),
     marginTop: 4,
   },
   meta: {
@@ -83,14 +83,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderStyle: 'dashed',
-    borderColor: Colors.border2,
+    borderColor: 'rgba(255,255,255,0.1)',
     paddingVertical: 8,
   },
   dot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.border2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   bottomSection: {
     padding: 20,

@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: Fonts.mono,
     fontSize: 11,
-    color: Colors.text2,
+    color: Colors.accent,
     letterSpacing: ls(11, LS.labelNarrow),
     textTransform: 'uppercase',
   },

@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   qrBackground: {
     backgroundColor: Colors.text1,
     padding: 10,
-    borderRadius: 4,
+    borderRadius: 12,
   },
   scanLine: {
     position: 'absolute',

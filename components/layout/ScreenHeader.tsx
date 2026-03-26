@@ -28,12 +28,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.md,
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 28,
+    fontSize: 34,
     color: Colors.text1,
-    letterSpacing: ls(28, LS.display),
+    letterSpacing: ls(34, LS.display),
+    lineHeight: 38,
   },
 })
