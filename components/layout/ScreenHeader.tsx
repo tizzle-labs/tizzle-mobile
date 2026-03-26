@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 
 interface ScreenHeaderProps {
@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 28,
     color: Colors.text1,
-    letterSpacing: -0.03,
+    letterSpacing: ls(28, LS.display),
   },
 })

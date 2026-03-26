@@ -1,17 +1,17 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
-import { useLocalSearchParams, router } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
-import { Spacing } from '@/constants/spacing'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { InfoGrid } from '@/components/ui/InfoGrid'
-import { TokenAmount, SOL_MINT, formatTokenAmount } from '@/components/ui/TokenAmount'
+import { SOL_MINT, TokenAmount, formatTokenAmount } from '@/components/ui/TokenAmount'
 import { WalletBalance } from '@/components/wallet/WalletBalance'
+import { Colors } from '@/constants/colors'
+import { Fonts, LS, ls } from '@/constants/fonts'
+import { Spacing } from '@/constants/spacing'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useRegisterEvent } from '@/hooks/api/use-register-event'
 import { useWalletBalance } from '@/hooks/solana/use-wallet-balance'
+import { router, useLocalSearchParams } from 'expo-router'
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function BuyTicketModal() {
   const { eventPda } = useLocalSearchParams<{ eventPda: string }>()
@@ -128,14 +128,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 11,
     color: Colors.text2,
-    letterSpacing: 0.08,
+    letterSpacing: ls(11, LS.labelNarrow),
     textTransform: 'uppercase',
   },
   headerTitle: {
     fontFamily: Fonts.display,
     fontSize: 16,
     color: Colors.text1,
-    letterSpacing: -0.02,
+    letterSpacing: ls(16, LS.displaySubtle),
   },
   scroll: { flex: 1 },
   scrollContent: { padding: Spacing.md, gap: Spacing.md, paddingBottom: Spacing.lg },
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.text3,
-    letterSpacing: 0.12,
+    letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
   mintAddress: {
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.error,
     textAlign: 'center',
-    letterSpacing: 0.08,
+    letterSpacing: ls(11, LS.labelNarrow),
     textTransform: 'uppercase',
   },
   cta: {

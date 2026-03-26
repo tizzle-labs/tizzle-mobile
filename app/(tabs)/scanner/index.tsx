@@ -4,7 +4,7 @@ import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { ScanFrame } from '@/components/ui/ScanFrame'
 import { Button } from '@/components/ui/Button'
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 24,
     color: Colors.text1,
-    letterSpacing: -0.03,
+    letterSpacing: ls(24, LS.display),
     padding: Spacing.md,
   },
   frameContainer: {
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 10,
     color: Colors.text2,
-    letterSpacing: 0.1,
+    letterSpacing: ls(10, LS.label),
     textTransform: 'uppercase',
   },
   processingRow: {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.accent,
     textTransform: 'uppercase',
-    letterSpacing: 0.1,
+    letterSpacing: ls(11, LS.label),
   },
   permContent: {
     flex: 1,

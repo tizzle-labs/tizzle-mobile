@@ -1,6 +1,6 @@
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.display,
     fontSize: 13,
-    letterSpacing: 0.08,
+    letterSpacing: ls(13, LS.labelNarrow),
     textTransform: 'uppercase',
   },
   primaryLabel: { color: Colors.bg },

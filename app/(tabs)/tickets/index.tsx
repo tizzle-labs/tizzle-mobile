@@ -1,7 +1,7 @@
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { ScreenHeader } from '@/components/layout/ScreenHeader'
 import { Badge } from '@/components/ui/Badge'
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: Colors.text3,
     textTransform: 'uppercase',
-    letterSpacing: 0.08,
+    letterSpacing: ls(10, LS.labelNarrow),
   },
   emptyText: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text2 },
-  exploreLink: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.accent, letterSpacing: 0.08 },
+  exploreLink: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.accent, letterSpacing: ls(11, LS.labelNarrow) },
 })

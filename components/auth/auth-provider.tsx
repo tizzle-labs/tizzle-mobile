@@ -40,9 +40,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (!address) return
 
     // 2. Get nonce + canonical message from backend
-    const { message, nonce } = await generateNonce(address)
-    console.log('message', message)
-    console.log('nonce', nonce)
+    const { message } = await generateNonce(address)
 
     // 3. Sign message with wallet
     const encoded = new TextEncoder().encode(message)

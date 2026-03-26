@@ -1,7 +1,7 @@
 import { EventCard } from '@/components/event/EventCard'
 import { ScreenHeader } from '@/components/layout/ScreenHeader'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { useEvents } from '@/hooks/api/use-events'
 import type { Event } from '@/lib/api/events'
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 10,
     color: Colors.text3,
-    letterSpacing: 0.12,
+    letterSpacing: ls(10, LS.labelWide),
     textTransform: 'uppercase',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ViewStyle } from 'react-native'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 
 interface TicketArtifactProps {
   eventTitle: string
@@ -60,14 +60,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.accent,
-    letterSpacing: 0.12,
+    letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
   title: {
     fontFamily: Fonts.display,
     fontSize: 22,
     color: Colors.text1,
-    letterSpacing: -0.03,
+    letterSpacing: ls(22, LS.display),
     marginTop: 4,
   },
   meta: {

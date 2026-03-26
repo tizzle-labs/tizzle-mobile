@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import QRCode from 'react-qr-code'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 
 export default function QRModal() {
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 10,
     color: Colors.accent,
-    letterSpacing: 0.12,
+    letterSpacing: ls(10, LS.labelWide),
     textTransform: 'uppercase',
   },
   qrWrapper: {

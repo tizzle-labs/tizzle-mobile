@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 
 type BadgeVariant =
   | 'valid'
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.mono,
     fontSize: 9,
-    letterSpacing: 0.1,
+    letterSpacing: ls(9, LS.label),
     textTransform: 'uppercase',
   },
 })

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/components/auth/auth-provider'
 import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { useState } from 'react'
 
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 72,
     color: Colors.text1,
-    letterSpacing: -2,
+    letterSpacing: ls(72, LS.display),
   },
   tagline: {
     fontFamily: Fonts.body,
@@ -65,6 +65,6 @@ const styles = StyleSheet.create({
     color: Colors.text3,
     textAlign: 'center',
     textTransform: 'uppercase',
-    letterSpacing: 0.1,
+    letterSpacing: ls(10, LS.label),
   },
 })

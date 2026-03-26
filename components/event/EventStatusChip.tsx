@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet } from 'react-native'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
+import { StyleSheet, Text, View } from 'react-native'
 
 export type EventStatus = 'Available' | 'Ongoing' | 'Ended' | 'Settlement' | 'Closed'
 
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.mono,
     fontSize: 9,
-    letterSpacing: 0.1,
+    letterSpacing: ls(9, LS.label),
     textTransform: 'uppercase',
   },
 })

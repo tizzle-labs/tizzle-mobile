@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 11,
     color: Colors.text2,
-    letterSpacing: 0.08,
+    letterSpacing: ls(11, LS.labelNarrow),
     textTransform: 'uppercase',
   },
   scroll: { flex: 1 },

@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Ionicons } from '@expo/vector-icons'
 import { Tabs } from 'expo-router'
 
@@ -20,7 +20,7 @@ export default function TabLayout() {
         tabBarLabelStyle: {
           fontFamily: Fonts.mono,
           fontSize: 9,
-          letterSpacing: 0.1,
+          letterSpacing: ls(9, LS.label),
           textTransform: 'uppercase',
         },
       }}

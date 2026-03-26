@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 
 export default function ScanResult() {
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   heading: {
     fontFamily: Fonts.display,
     fontSize: 28,
-    letterSpacing: -0.04,
+    letterSpacing: ls(28, LS.displayTight),
     textAlign: 'center',
     lineHeight: 34,
   },
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   timestamp: {
     fontFamily: Fonts.mono,
     fontSize: 20,
-    letterSpacing: 0.08,
+    letterSpacing: ls(20, LS.labelNarrow),
   },
   usedBadge: {
     backgroundColor: 'rgba(0,0,0,0.2)',
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 12,
     color: Colors.text1,
-    letterSpacing: 0.12,
+    letterSpacing: ls(12, LS.labelWide),
     textTransform: 'uppercase',
   },
   dismiss: {

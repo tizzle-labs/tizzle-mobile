@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 24,
     color: Colors.text1,
-    letterSpacing: -0.03,
+    letterSpacing: ls(24, LS.display),
   },
   sectionDesc: {
     fontFamily: Fonts.body,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 10,
     color: Colors.text3,
-    letterSpacing: 0.1,
+    letterSpacing: ls(10, LS.label),
     textTransform: 'uppercase',
   },
   fieldGroup: { gap: 6, marginBottom: Spacing.md },
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.text3,
-    letterSpacing: 0.12,
+    letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
   input: {
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 56,
     color: Colors.accent,
-    letterSpacing: -0.04,
+    letterSpacing: ls(56, LS.displayTight),
     lineHeight: 62,
   },
   successCard: { gap: 10 },
@@ -278,14 +278,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 20,
     color: Colors.text1,
-    letterSpacing: -0.02,
+    letterSpacing: ls(20, LS.displaySubtle),
     marginBottom: 8,
   },
   successLabel: {
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.text3,
-    letterSpacing: 0.12,
+    letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
   successHash: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text2 },

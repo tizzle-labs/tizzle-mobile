@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { updateMyProfile } from '@/lib/api/users'
 import { userKeys } from '@/hooks/api/use-user-profile'
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 36,
     color: Colors.text1,
-    letterSpacing: -1,
+    letterSpacing: ls(36, LS.display),
     lineHeight: 44,
   },
   input: {

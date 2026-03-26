@@ -1,6 +1,6 @@
 import { Text, StyleSheet, TextStyle } from 'react-native'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 
 export const SOL_MINT = '11111111111111111111111111111111'
 
@@ -25,7 +25,7 @@ export function TokenAmount({ amount, mint, symbol, decimals, size = 'md', style
   const color = isSOL ? Colors.accent : Colors.chain
   const fontSize = { sm: 14, md: 20, lg: 36 }[size]
   return (
-    <Text style={[styles.base, { color, fontSize }, style]}>
+    <Text style={[styles.base, { color, fontSize, letterSpacing: ls(fontSize, LS.display) }, style]}>
       {formatTokenAmount(amount, decimals)} {symbol}
     </Text>
   )
@@ -34,6 +34,5 @@ export function TokenAmount({ amount, mint, symbol, decimals, size = 'md', style
 const styles = StyleSheet.create({
   base: {
     fontFamily: Fonts.display,
-    letterSpacing: -0.03,
   },
 })

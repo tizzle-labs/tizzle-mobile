@@ -1,18 +1,18 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native'
-import { useLocalSearchParams, router } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Image } from 'expo-image'
-import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
-import { Spacing } from '@/constants/spacing'
-import { Button } from '@/components/ui/Button'
+import { EventStatusChip, deriveEventStatus } from '@/components/event/EventStatusChip'
+import { StakeChip } from '@/components/event/StakeChip'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { InfoGrid } from '@/components/ui/InfoGrid'
-import { StakeChip } from '@/components/event/StakeChip'
-import { EventStatusChip, deriveEventStatus } from '@/components/event/EventStatusChip'
+import { Colors } from '@/constants/colors'
+import { Fonts, LS, ls } from '@/constants/fonts'
+import { Spacing } from '@/constants/spacing'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
+import { Image } from 'expo-image'
+import { router, useLocalSearchParams } from 'expo-router'
+import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 const { width } = Dimensions.get('window')
 
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 11,
     color: Colors.text1,
-    letterSpacing: 0.08,
+    letterSpacing: ls(11, LS.labelNarrow),
     textTransform: 'uppercase',
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: 10,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 32,
     color: Colors.text1,
-    letterSpacing: -0.03,
+    letterSpacing: ls(32, LS.display),
     lineHeight: 38,
   },
   description: {

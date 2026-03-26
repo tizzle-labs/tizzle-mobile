@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Image } from 'expo-image'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { EventStatusChip, deriveEventStatus } from './EventStatusChip'
 import type { Event } from '@/lib/api/events'
@@ -73,14 +73,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 22,
     color: Colors.text1,
-    letterSpacing: -0.03,
+    letterSpacing: ls(22, LS.display),
   },
   featuredDate: {
     fontFamily: Fonts.mono,
     fontSize: 10,
     color: Colors.text2,
     textTransform: 'uppercase',
-    letterSpacing: 0.08,
+    letterSpacing: ls(10, LS.labelNarrow),
   },
   compact: {
     flexDirection: 'row',
@@ -102,13 +102,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 15,
     color: Colors.text1,
-    letterSpacing: -0.02,
+    letterSpacing: ls(15, LS.displaySubtle),
   },
   compactDate: {
     fontFamily: Fonts.mono,
     fontSize: 10,
     color: Colors.text2,
     textTransform: 'uppercase',
-    letterSpacing: 0.08,
+    letterSpacing: ls(10, LS.labelNarrow),
   },
 })

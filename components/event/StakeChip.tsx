@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { Colors } from '@/constants/colors'
-import { Fonts } from '@/constants/fonts'
+import { Fonts, LS, ls } from '@/constants/fonts'
 import { SOL_MINT, formatTokenAmount } from '@/components/ui/TokenAmount'
 
 interface StakeChipProps {
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.mono,
     fontSize: 10,
-    letterSpacing: 0.1,
+    letterSpacing: ls(10, LS.label),
     textTransform: 'uppercase',
   },
 })
