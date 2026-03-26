@@ -5,7 +5,7 @@ import {
   VersionedTransaction,
   SystemProgram,
 } from '@solana/web3.js'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createRegistration } from '@/lib/api/registrations'
@@ -36,6 +36,9 @@ export function useRegisterEvent() {
       const escrowVault = deriveEscrowVaultPda(eventPdaPubkey)
 
       const isSOL = event.stakeTokenMint === SOL_MINT
+      const attendeeTokenAccount = isSOL
+        ? attendeePubkey
+        : getAssociatedTokenAddressSync(new PublicKey(event.stakeTokenMint), attendeePubkey)
 
       const ixAccounts = {
         config: CONFIG_PDA,
@@ -43,12 +46,13 @@ export function useRegisterEvent() {
         event: eventPdaPubkey,
         registration: registrationPda,
         escrowVault,
-        attendeeTokenAccount: attendeePubkey,
+        attendeeTokenAccount: attendeeTokenAccount,
         escrowTokenAccount: escrowVault,
         tokenMint: isSOL ? SystemProgram.programId : new PublicKey(event.stakeTokenMint),
         attendee: attendeePubkey,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       }
 
       const ix = await (program as any).methods
