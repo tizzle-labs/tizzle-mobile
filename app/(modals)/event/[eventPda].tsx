@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
     fontSize: 32,
     color: Colors.text1,
-    letterSpacing: -2,
+    letterSpacing: -0.03,
     lineHeight: 38,
   },
   description: {
