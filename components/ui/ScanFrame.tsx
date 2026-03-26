@@ -6,12 +6,14 @@ export function ScanFrame() {
   const scanY = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
-    Animated.loop(
+    const anim = Animated.loop(
       Animated.sequence([
         Animated.timing(scanY, { toValue: 1, duration: 1600, useNativeDriver: true }),
         Animated.timing(scanY, { toValue: 0, duration: 1600, useNativeDriver: true }),
       ])
-    ).start()
+    )
+    anim.start()
+    return () => anim.stop()
   }, [scanY])
 
   const translateY = scanY.interpolate({

@@ -8,7 +8,7 @@ interface WalletBalanceProps {
 }
 
 // Placeholder — useWalletBalance hook is implemented in Task 6
-export function WalletBalance({ symbol }: WalletBalanceProps) {
+export function WalletBalance({ mint: _mint, symbol }: WalletBalanceProps) {
   return (
     <Text style={styles.text}>Balance: — {symbol}</Text>
   )
