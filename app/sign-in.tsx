@@ -1,52 +1,70 @@
+import { View, Text, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { useAuth } from '@/components/auth/auth-provider'
-import { AppText } from '@/components/app-text'
-import { AppView } from '@/components/app-view'
-import { AppConfig } from '@/constants/app-config'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { View } from 'react-native'
-import { Image } from 'expo-image'
-import { Button } from '@react-navigation/elements'
+import { useAuth } from '@/components/auth/auth-provider'
+import { Button } from '@/components/ui/Button'
+import { Colors } from '@/constants/colors'
+import { Fonts } from '@/constants/fonts'
+import { Spacing } from '@/constants/spacing'
+import { useState } from 'react'
 
 export default function SignIn() {
   const { signIn } = useAuth()
+  const [loading, setLoading] = useState(false)
+
+  async function handleConnect() {
+    setLoading(true)
+    try {
+      await signIn()
+      router.replace('/')
+    } catch (e) {
+      console.error('Sign in failed', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <AppView
-      style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'stretch',
-      }}
-    >
-      <SafeAreaView
-        style={{
-          flex: 1,
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Dummy view to push the next view to the center. */}
+    <View style={styles.container}>
+      <SafeAreaView style={styles.inner}>
         <View />
-        <View style={{ alignItems: 'center', gap: 16 }}>
-          <AppText type="title">{AppConfig.name}</AppText>
-          <Image source={require('../assets/images/icon.png')} style={{ width: 128, height: 128 }} />
+        <View style={styles.hero}>
+          <Text style={styles.wordmark}>TIZZLE</Text>
+          <Text style={styles.tagline}>On-chain event ticketing</Text>
         </View>
-        <View style={{ marginBottom: 16 }}>
-          <Button
-            variant="filled"
-            style={{ marginHorizontal: 16 }}
-            onPress={async () => {
-              try {
-                await signIn()
-                router.replace('/')
-              } catch (e) {
-                console.warn('Sign in failed:', e)
-              }
-            }}
-          >
-            Connect
+        <View style={styles.footer}>
+          <Button onPress={handleConnect} loading={loading}>
+            Connect Wallet
           </Button>
+          <Text style={styles.note}>Powered by Solana</Text>
         </View>
       </SafeAreaView>
-    </AppView>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.bg },
+  inner: { flex: 1, justifyContent: 'space-between', paddingHorizontal: Spacing.md },
+  hero: { alignItems: 'center', gap: 12 },
+  wordmark: {
+    fontFamily: Fonts.display,
+    fontSize: 72,
+    color: Colors.text1,
+    letterSpacing: -2,
+  },
+  tagline: {
+    fontFamily: Fonts.body,
+    fontSize: 16,
+    color: Colors.text2,
+  },
+  footer: { paddingBottom: Spacing.lg, gap: 12 },
+  note: {
+    fontFamily: Fonts.mono,
+    fontSize: 10,
+    color: Colors.text3,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 0.1,
+  },
+})

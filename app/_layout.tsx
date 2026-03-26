@@ -59,14 +59,16 @@ export default function RootLayout() {
 function RootNavigator() {
   const { isAuthenticated } = useAuth()
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A0A0A' } }}>
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
         <Stack.Screen name="+not-found" />
       </Stack.Protected>
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="sign-in" />
       </Stack.Protected>
+      <Stack.Screen name="onboarding" />
     </Stack>
   )
 }

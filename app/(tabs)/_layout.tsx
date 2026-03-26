@@ -1,31 +1,56 @@
 import { Tabs } from 'expo-router'
-import React from 'react'
-import { UiIconSymbol } from '@/components/ui/ui-icon-symbol'
+import { Colors } from '@/constants/colors'
+import { Fonts } from '@/constants/fonts'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
-      {/* The index redirects to the account screen */}
-      <Tabs.Screen name="index" options={{ tabBarItemStyle: { display: 'none' } }} />
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: Colors.bg,
+          borderTopColor: Colors.border,
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+        },
+        tabBarActiveTintColor: Colors.accent,
+        tabBarInactiveTintColor: Colors.text3,
+        tabBarLabelStyle: {
+          fontFamily: Fonts.mono,
+          fontSize: 9,
+          letterSpacing: 0.1,
+          textTransform: 'uppercase',
+        },
+      }}
+    >
       <Tabs.Screen
-        name="account"
+        name="explore"
         options={{
-          title: 'Account',
-          tabBarIcon: ({ color }) => <UiIconSymbol size={28} name="wallet.pass.fill" color={color} />,
+          title: 'Explore',
+          tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="tickets"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => <UiIconSymbol size={28} name="gearshape.fill" color={color} />,
+          title: 'Tickets',
+          tabBarIcon: ({ color, size }) => <Ionicons name="ticket-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="demo"
+        name="create"
         options={{
-          title: 'Demo',
-          tabBarIcon: ({ color }) => <UiIconSymbol size={28} name="ladybug.fill" color={color} />,
+          title: 'Create',
+          tabBarIcon: ({ color, size }) => <Ionicons name="add-circle-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="scanner"
+        options={{
+          title: 'Scanner',
+          tabBarIcon: ({ color, size }) => <Ionicons name="scan-outline" size={size} color={color} />,
         }}
       />
     </Tabs>
