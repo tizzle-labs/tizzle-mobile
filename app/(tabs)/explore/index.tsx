@@ -1,19 +1,13 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native'
-import { router } from 'expo-router'
+import { EventCard } from '@/components/event/EventCard'
+import { ScreenHeader } from '@/components/layout/ScreenHeader'
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { ScreenHeader } from '@/components/layout/ScreenHeader'
-import { EventCard } from '@/components/event/EventCard'
 import { useEvents } from '@/hooks/api/use-events'
 import type { Event } from '@/lib/api/events'
+import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 function openEvent(eventPda: string) {
   router.push(`/(modals)/event/${eventPda}`)
@@ -27,7 +21,14 @@ export default function Explore() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="EXPLORE" />
+      <ScreenHeader
+        title="EXPLORE"
+        right={
+          <TouchableOpacity onPress={() => router.push('/(modals)/profile')}>
+            <Ionicons name="person-circle-outline" size={26} color={Colors.text2} />
+          </TouchableOpacity>
+        }
+      />
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={Colors.accent} />
@@ -36,21 +37,11 @@ export default function Explore() {
         <ScrollView
           style={styles.scroll}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              tintColor={Colors.accent}
-            />
-          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.accent} />}
         >
           {featured && (
             <View style={styles.section}>
-              <EventCard
-                event={featured}
-                variant="featured"
-                onPress={() => openEvent(featured.eventPda)}
-              />
+              <EventCard event={featured} variant="featured" onPress={() => openEvent(featured.eventPda)} />
             </View>
           )}
 
