@@ -1,7 +1,7 @@
-import { Tabs } from 'expo-router'
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
 import { Ionicons } from '@expo/vector-icons'
+import { Tabs } from 'expo-router'
 
 export default function TabLayout() {
   return (
@@ -26,33 +26,35 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="explore"
+        name="explore/index"
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="tickets"
+        name="tickets/index"
         options={{
           title: 'Tickets',
           tabBarIcon: ({ color, size }) => <Ionicons name="ticket-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="create"
+        name="create/index"
         options={{
           title: 'Create',
           tabBarIcon: ({ color, size }) => <Ionicons name="add-circle-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="scanner"
+        name="scanner/index"
         options={{
           title: 'Scanner',
           tabBarIcon: ({ color, size }) => <Ionicons name="scan-outline" size={size} color={color} />,
         }}
       />
+      <Tabs.Screen name="scanner/result" options={{ href: null }} />
+      <Tabs.Screen name="tickets/[registrationPda]" options={{ href: null }} />
     </Tabs>
   )
 }

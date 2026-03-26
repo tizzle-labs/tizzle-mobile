@@ -1,18 +1,10 @@
-import {
-  createContext,
-  type PropsWithChildren,
-  use,
-  useMemo,
-  useState,
-  useCallback,
-  useEffect,
-} from 'react'
-import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { AppConfig } from '@/constants/app-config'
 import { generateNonce, verifySignature } from '@/lib/api/auth'
 import { setLogoutCallback } from '@/lib/api/client'
 import { Storage } from '@/lib/storage'
+import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import bs58 from 'bs58'
+import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
 
 export interface AuthState {
   isAuthenticated: boolean
@@ -47,9 +39,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const address = result?.account?.address?.toString()
     if (!address) return
 
-    // 2. Get nonce from backend
-    const nonce = await generateNonce(address)
-    const message = `Sign in to Tizzle\nNonce: ${nonce}`
+    // 2. Get nonce + canonical message from backend
+    const { message, nonce } = await generateNonce(address)
+    console.log('message', message)
+    console.log('nonce', nonce)
 
     // 3. Sign message with wallet
     const encoded = new TextEncoder().encode(message)
@@ -81,7 +74,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       signIn,
       signOut,
     }),
-    [accounts, hasJwt, walletAddress, signIn, signOut]
+    [accounts, hasJwt, walletAddress, signIn, signOut],
   )
 
   return <Context value={value}>{children}</Context>

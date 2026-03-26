@@ -29,7 +29,7 @@ export interface Event {
 
 export async function getEvents(params?: { limit?: number }): Promise<Event[]> {
   const { data } = await apiClient.get('/v1/events', { params })
-  return data
+  return data.data
 }
 
 export async function getEventByPda(eventPda: string): Promise<Event> {
@@ -60,7 +60,7 @@ export async function createEvent(payload: {
 
 export async function updateEvent(
   eventPda: string,
-  payload: Partial<Pick<Event, 'title' | 'description' | 'imageUrl' | 'isPublished'>>
+  payload: Partial<Pick<Event, 'title' | 'description' | 'imageUrl' | 'isPublished'>>,
 ): Promise<Event> {
   const { data } = await apiClient.put(`/v1/events/${eventPda}`, payload)
   return data
