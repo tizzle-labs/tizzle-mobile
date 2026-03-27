@@ -5,7 +5,7 @@
 - **What this is:** A mobile app (React Native/Expo) for blockchain event ticketing on Solana — fans buy tickets, organizers create events, venue door staff scan QR codes for check-in.
 - **Who it's for:** Event organizers (create + issue), fans (hold + show ticket), venue door staff (scan + verify). Crypto-native and crypto-curious users.
 - **Space/industry:** Live events × Web3. Solana devnet. Peers: DICE (aesthetic), Phantom (polish), Magic Eden (crypto UX patterns).
-- **Project type:** React Native / Expo mobile app (iOS + Android), hackathon demo scope.
+- **Project type:** React Native / Expo mobile app (iOS + Android)
 
 ---
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-React Native / Expo mobile app. Blockchain ticketing on Solana devnet. Three roles: Fan, Organizer, Venue door staff. Hackathon demo scope.
+React Native / Expo mobile app. Blockchain ticketing on Solana devnet. Three roles: Fan, Organizer, Venue door staff.
 
 ## Commands
 
