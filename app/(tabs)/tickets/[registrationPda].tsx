@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/Badge'
 import { InfoGrid } from '@/components/ui/InfoGrid'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
+import { useTicketLifecycle } from '@/hooks/api/use-ticket-lifecycle'
 
 export default function TicketDetail() {
   const { registrationPda } = useLocalSearchParams<{ registrationPda: string }>()
@@ -19,6 +20,7 @@ export default function TicketDetail() {
   const registration = registrations?.find((r) => r.registrationPda === registrationPda)
 
   const { data: event, isLoading: eventLoading } = useEventDetail(registration?.eventPda ?? '')
+  const { status, claimRefund, isClaimingRefund } = useTicketLifecycle(registration, event)
 
   if (regLoading || eventLoading || !registration) {
     return (
@@ -27,8 +29,6 @@ export default function TicketDetail() {
       </View>
     )
   }
-
-  const badgeVariant = registration.checkedIn ? 'used' : 'valid'
 
   const onChainRows = [
     { label: 'Registration PDA', value: registration.registrationPda, mono: true },
@@ -43,7 +43,21 @@ export default function TicketDetail() {
       label: 'Registered',
       value: new Date(registration.registeredAt).toLocaleString(),
     },
+    ...(registration.checkedInAt
+      ? [{ label: 'Checked In', value: new Date(registration.checkedInAt).toLocaleString() }]
+      : []),
+    ...(registration.refundedAt
+      ? [{ label: 'Refunded', value: new Date(registration.refundedAt).toLocaleString() }]
+      : []),
   ]
+
+  async function handleClaimRefund() {
+    try {
+      await claimRefund()
+    } catch (e: any) {
+      Alert.alert('Claim Failed', e?.message ?? 'Something went wrong')
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -52,7 +66,7 @@ export default function TicketDetail() {
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.back}>← TICKETS</Text>
           </TouchableOpacity>
-          <Badge variant={badgeVariant} />
+          <Badge variant={status} />
         </View>
       </SafeAreaView>
 
@@ -78,8 +92,35 @@ export default function TicketDetail() {
           <InfoGrid rows={onChainRows} />
         </Card>
 
-        {!registration.checkedIn && (
-          <Button onPress={() => router.push(`/(modals)/qr/${registrationPda}`)}>Show QR</Button>
+        {status === 'valid' && (
+          <>
+            <Button onPress={() => router.push(`/(modals)/qr/${registrationPda}`)}>Show QR</Button>
+            <View style={styles.cancelNote}>
+              <Text style={styles.cancelText}>
+                Tickets cannot be cancelled — your stake is locked on-chain until the event ends.
+              </Text>
+            </View>
+          </>
+        )}
+
+        {status === 'claimable' && (
+          <Button onPress={handleClaimRefund} loading={isClaimingRefund}>
+            {isClaimingRefund ? 'Claiming on Solana…' : 'Claim Stake'}
+          </Button>
+        )}
+
+        {status === 'no-show' && (
+          <Card style={styles.noticeCard}>
+            <Text style={styles.noticeText}>
+              You did not check in to this event. Your staked amount has been forfeited.
+            </Text>
+          </Card>
+        )}
+
+        {status === 'refunded' && (
+          <Card style={styles.noticeCard}>
+            <Text style={styles.noticeText}>Your stake has been successfully returned to your wallet.</Text>
+          </Card>
         )}
       </ScrollView>
     </View>
@@ -107,4 +148,23 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: { padding: Spacing.md, gap: Spacing.md },
+  cancelNote: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  cancelText: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
+    color: Colors.text3,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  noticeCard: { padding: Spacing.md },
+  noticeText: {
+    fontFamily: Fonts.body,
+    fontSize: 14,
+    color: Colors.text2,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
 })
