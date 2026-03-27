@@ -1,6 +1,7 @@
 import type { Registration } from '@/lib/api/registrations'
 import type { Event } from '@/lib/api/events'
 
+// 'cancelled' is reserved for future organizer event cancellation — not yet reachable via deriveTicketStatus
 export type TicketStatus = 'valid' | 'used' | 'claimable' | 'refunded' | 'no-show' | 'cancelled'
 
 export function deriveTicketStatus(
@@ -14,5 +15,6 @@ export function deriveTicketStatus(
   if (registration.checkedIn && now >= unlockMs) return 'claimable'
   if (registration.checkedIn) return 'used'
   if (now >= endMs) return 'no-show'
+  // 'cancelled' is intentionally deferred — reserved for future organizer event cancellation flow
   return 'valid'
 }
