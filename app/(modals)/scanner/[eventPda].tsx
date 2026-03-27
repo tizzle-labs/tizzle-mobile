@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { Colors } from '@/constants/colors'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { useCheckIn } from '@/hooks/api/use-check-in'
 
 export default function Scanner() {
+  const { eventPda } = useLocalSearchParams<{ eventPda: string }>()
   const [permission, requestPermission] = useCameraPermissions()
   const checkIn = useCheckIn()
   const [scanned, setScanned] = useState(false)
@@ -24,7 +25,7 @@ export default function Scanner() {
       try {
         const registration = await checkIn.mutateAsync(data)
         router.push({
-          pathname: '/(tabs)/scanner/result',
+          pathname: '/(modals)/scanner/result',
           params: {
             status: 'valid',
             registrationPda: data,
@@ -34,7 +35,7 @@ export default function Scanner() {
       } catch (error: any) {
         const isAlreadyUsed = error?.response?.status === 409
         router.push({
-          pathname: '/(tabs)/scanner/result',
+          pathname: '/(modals)/scanner/result',
           params: {
             status: isAlreadyUsed ? 'used' : 'error',
             registrationPda: data,

@@ -7,6 +7,7 @@ import { InfoGrid } from '@/components/ui/InfoGrid'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
+import { useAuth } from '@/components/auth/auth-provider'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import { Image } from 'expo-image'
@@ -20,11 +21,16 @@ export default function EventDetailModal() {
   const { eventPda } = useLocalSearchParams<{ eventPda: string }>()
   const { data: event, isLoading } = useEventDetail(eventPda)
   const { data: myRegistrations } = useMyRegistrations()
+  const { walletAddress } = useAuth()
 
   const isRegistered = myRegistrations?.some((r) => r.eventPda === eventPda)
 
   function handleGetTicket() {
     router.push(`/(modals)/buy-ticket/${eventPda}`)
+  }
+
+  function handleScanTickets() {
+    router.push(`/(modals)/scanner/${eventPda}`)
   }
 
   if (isLoading || !event) {
@@ -36,6 +42,7 @@ export default function EventDetailModal() {
   }
 
   const status = deriveEventStatus(event.startTime, event.endTime, event.unlockTime)
+  const isGatekeeper = !!walletAddress && walletAddress === event.gatekeeperAddress
 
   const infoRows = [
     {
@@ -95,6 +102,11 @@ export default function EventDetailModal() {
 
       {/* Pinned CTA */}
       <SafeAreaView edges={['bottom']} style={styles.ctaContainer}>
+        {isGatekeeper && (
+          <Button onPress={handleScanTickets} variant="secondary" style={styles.scanButton}>
+            Scan Tickets
+          </Button>
+        )}
         {isRegistered ? (
           <View style={styles.registeredBadge}>
             <Badge variant="valid" label="REGISTERED ✓" />
@@ -157,5 +169,8 @@ const styles = StyleSheet.create({
   registeredBadge: {
     paddingVertical: Spacing.sm,
     alignItems: 'center',
+  },
+  scanButton: {
+    marginBottom: Spacing.sm,
   },
 })

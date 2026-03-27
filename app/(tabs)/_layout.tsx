@@ -44,14 +44,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="add-circle-outline" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="scanner/index"
-        options={{
-          title: 'Scanner',
-          tabBarIcon: ({ color, size }) => <Ionicons name="scan-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen name="scanner/result" options={{ href: null }} />
       <Tabs.Screen name="tickets/[registrationPda]" options={{ href: null }} />
     </Tabs>
   )
