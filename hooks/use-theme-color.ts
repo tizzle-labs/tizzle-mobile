@@ -9,10 +9,7 @@ const colorMap: Record<ThemeColorName, keyof typeof Colors> = {
   border: 'border',
 }
 
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: ThemeColorName,
-) {
+export function useThemeColor(props: { light?: string; dark?: string }, colorName: ThemeColorName) {
   const theme = useColorScheme() ?? 'dark'
   const colorFromProps = props[theme]
 

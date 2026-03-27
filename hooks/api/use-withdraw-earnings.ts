@@ -13,8 +13,7 @@ export function useWithdrawEarnings(event: Event | undefined) {
   const program = useTizzleProgram()
   const queryClient = useQueryClient()
 
-  const canWithdraw =
-    !!event && !event.organizerWithdrawn && Date.now() >= new Date(event.unlockTime).getTime()
+  const canWithdraw = !!event && !event.organizerWithdrawn && Date.now() >= new Date(event.unlockTime).getTime()
 
   const { mutateAsync: withdrawEarnings, isPending: isWithdrawing } = useMutation({
     mutationFn: async () => {

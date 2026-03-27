@@ -16,8 +16,7 @@ export function useTicketLifecycle(registration: Registration | undefined, event
   const program = useTizzleProgram()
   const queryClient = useQueryClient()
 
-  const status: TicketStatus =
-    registration && event ? deriveTicketStatus(registration, event) : 'valid'
+  const status: TicketStatus = registration && event ? deriveTicketStatus(registration, event) : 'valid'
 
   const { mutateAsync: claimRefund, isPending: isClaimingRefund } = useMutation({
     mutationFn: async () => {

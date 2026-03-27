@@ -13,7 +13,16 @@ import { useWithdrawEarnings } from '@/hooks/api/use-withdraw-earnings'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
-import { ActivityIndicator, Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const { width } = Dimensions.get('window')
