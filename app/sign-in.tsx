@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
+import { getMyProfile } from '@/lib/api/users'
 import { useState } from 'react'
 
 export default function SignIn() {
@@ -16,7 +17,12 @@ export default function SignIn() {
     setLoading(true)
     try {
       await signIn()
-      router.replace('/onboarding')
+      try {
+        const profile = await getMyProfile()
+        router.replace(profile.name?.trim() ? '/(tabs)/explore' : '/onboarding')
+      } catch {
+        router.replace('/onboarding')
+      }
     } catch (e) {
       console.error('Sign in failed', e)
     } finally {
