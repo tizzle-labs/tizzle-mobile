@@ -9,6 +9,7 @@ import { Spacing } from '@/constants/spacing'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useRegisterEvent } from '@/hooks/api/use-register-event'
 import { useWalletBalance } from '@/hooks/solana/use-wallet-balance'
+import { showErrorFeedback } from '@/lib/app-feedback'
 import { router, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -39,7 +40,7 @@ export default function BuyTicketModal() {
       const result = await registerMutation.mutateAsync({ event: currentEvent })
       router.replace(`/(tabs)/tickets/${result.registrationPda}`)
     } catch (e) {
-      console.error('Registration failed', e)
+      showErrorFeedback(e, 'Registration Failed', 'We could not register this ticket.')
     }
   }
 

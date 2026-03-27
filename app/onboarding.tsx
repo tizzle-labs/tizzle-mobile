@@ -1,14 +1,15 @@
-import { View, Text, StyleSheet, TextInput } from 'react-native'
-import { router } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { updateMyProfile } from '@/lib/api/users'
 import { userKeys } from '@/hooks/api/use-user-profile'
+import { updateMyProfile } from '@/lib/api/users'
+import { showErrorFeedback } from '@/lib/app-feedback'
+import { useQueryClient } from '@tanstack/react-query'
+import { router } from 'expo-router'
+import { useState } from 'react'
+import { StyleSheet, Text, TextInput, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Onboarding() {
   const [name, setName] = useState('')
@@ -25,7 +26,7 @@ export default function Onboarding() {
       await updateMyProfile({ name: name.trim() })
       queryClient.invalidateQueries({ queryKey: userKeys.me })
     } catch (e) {
-      console.warn('Profile update failed', e)
+      showErrorFeedback(e, 'Profile Update Failed', 'We could not save your display name.')
     } finally {
       setLoading(false)
     }

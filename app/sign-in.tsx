@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
+import { showErrorFeedback } from '@/lib/app-feedback'
 import { getMyProfile } from '@/lib/api/users'
 import { useState } from 'react'
 
@@ -24,7 +25,7 @@ export default function SignIn() {
         router.replace('/onboarding')
       }
     } catch (e) {
-      console.error('Sign in failed', e)
+      showErrorFeedback(e, 'Sign-In Failed', 'We could not verify your wallet right now.')
     } finally {
       setLoading(false)
     }

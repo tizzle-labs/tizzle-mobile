@@ -8,6 +8,7 @@ import { Spacing } from '@/constants/spacing'
 import { useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
 import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
+import { showErrorFeedback } from '@/lib/app-feedback'
 import { useState } from 'react'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 
@@ -103,7 +104,7 @@ export default function Create() {
               try {
                 await createOrg.mutateAsync({ name: orgName, description: orgDesc })
               } catch (e) {
-                console.error('Create org failed', e)
+                showErrorFeedback(e, 'Organization Creation Failed', 'We could not create your organization.')
               }
             }}
             loading={createOrg.isPending}
@@ -148,7 +149,7 @@ export default function Create() {
         capacity: result.event.capacity,
       })
     } catch (e) {
-      console.error('Create event failed', e)
+      showErrorFeedback(e, 'Event Creation Failed', 'We could not mint this event right now.')
     }
   }
 
