@@ -23,7 +23,7 @@ export default function Scanner() {
       setScanned(true)
 
       try {
-        const registration = await checkIn.mutateAsync(data)
+        const registration = await checkIn.mutateAsync({ registrationPda: data, eventPda })
         router.push({
           pathname: '/(modals)/scanner/result',
           params: {
