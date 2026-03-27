@@ -7,8 +7,11 @@ import { ScreenHeader } from '@/components/layout/ScreenHeader'
 import { Badge } from '@/components/ui/Badge'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import type { Registration } from '@/lib/api/registrations'
+import type { TicketStatus } from '@/lib/ticket-status'
 
-function ticketBadgeVariant(reg: Registration): 'valid' | 'used' {
+function ticketBadgeVariant(reg: Registration): TicketStatus {
+  // Without event timing data, fall back to checked-in/refunded flags only
+  if (reg.refunded) return 'refunded'
   if (reg.checkedIn) return 'used'
   return 'valid'
 }
