@@ -13,7 +13,7 @@ import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createEvent } from '@/lib/api/events'
 import { eventKeys } from './use-events'
-import { CONFIG_PDA, deriveOrganizationPda, deriveEventPda } from '@/lib/solana/program'
+import { CONFIG_PDA, deriveEventPda } from '@/lib/solana/program'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 
 export interface CreateEventInput {
@@ -98,7 +98,10 @@ export function useCreateEvent() {
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       const event = await createEvent({
+        eventPda: eventPda.toString(),
+        eventId: eventId.toString(),
         organizationPda: input.organizationPda,
+        gatekeeperAddress: gatekeeper.toString(),
         title: input.title,
         description: input.description,
         imageUrl: input.imageUrl,
@@ -109,6 +112,9 @@ export function useCreateEvent() {
         stakeTokenMint: input.stakeTokenMint,
         stakeTokenSymbol: input.stakeTokenSymbol,
         stakeTokenDecimals: input.stakeTokenDecimals,
+        hostFeeEnabled: false,
+        hostFeePercent: 0,
+        platformFeePaid: '0',
         startTime: input.startTime.toISOString(),
         endTime: input.endTime.toISOString(),
         unlockTime: input.unlockTime.toISOString(),

@@ -27,11 +27,44 @@ export interface Event {
   totalCheckedIn: number
 }
 
+export interface CreateEventPayload {
+  eventPda: string
+  eventId: string
+  organizationPda: string
+  gatekeeperAddress: string
+  title: string
+  description: string
+  imageUrl: string
+  location: string
+  category: string
+  capacity: number
+  stakeAmount: string
+  stakeTokenMint: string
+  stakeTokenSymbol: string
+  stakeTokenDecimals: number
+  hostFeeEnabled: boolean
+  hostFeePercent: number
+  platformFeePaid: string
+  startTime: string
+  endTime: string
+  unlockTime: string
+  transactionSignature?: string
+}
+
 export async function getEvents(params?: { limit?: number }): Promise<Event[]> {
   const { data } = await apiClient.get('/v1/events', { params })
   return data
 }
 
+export async function getEventByPda(eventPda: string): Promise<Event> {
+  const { data } = await apiClient.get(`/v1/events/${eventPda}`)
+  return data
+}
+
+export async function createEvent(payload: CreateEventPayload): Promise<Event> {
+  const { data } = await apiClient.post('/v1/events', payload)
+  return data
+}
 
 export async function updateEvent(
   eventPda: string,

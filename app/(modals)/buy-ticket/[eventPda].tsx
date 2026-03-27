@@ -32,8 +32,11 @@ export default function BuyTicketModal() {
   const isSOL = event.stakeTokenMint === SOL_MINT
 
   async function handleDeposit() {
+    const currentEvent = event
+    if (!currentEvent) return
+
     try {
-      const result = await registerMutation.mutateAsync({ event })
+      const result = await registerMutation.mutateAsync({ event: currentEvent })
       router.replace(`/(tabs)/tickets/${result.registrationPda}`)
     } catch (e) {
       console.error('Registration failed', e)
