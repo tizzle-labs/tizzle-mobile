@@ -9,10 +9,11 @@ import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
+import { useWithdrawEarnings } from '@/hooks/api/use-withdraw-earnings'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
-import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const { width } = Dimensions.get('window')
@@ -24,6 +25,10 @@ export default function EventDetailModal() {
   const { walletAddress } = useAuth()
 
   const isRegistered = myRegistrations?.some((r) => r.eventPda === eventPda)
+  const { canWithdraw, withdrawEarnings, isWithdrawing } = useWithdrawEarnings(event)
+
+  const isOrganizer = !!walletAddress && !!event && walletAddress === event.organizerAddress
+  const noShowCount = event ? event.totalRegistered - event.totalCheckedIn : 0
 
   function handleGetTicket() {
     router.push(`/(modals)/buy-ticket/${eventPda}`)
@@ -97,6 +102,43 @@ export default function EventDetailModal() {
           <Card style={styles.infoCard}>
             <InfoGrid rows={infoRows} />
           </Card>
+
+          {isOrganizer && (
+            <Card>
+              <Text style={styles.sectionLabel}>ORGANIZER SETTLEMENT</Text>
+              <View style={styles.settlementRow}>
+                <Text style={styles.settlementKey}>No-shows</Text>
+                <Text style={styles.settlementValue}>{noShowCount}</Text>
+              </View>
+              {canWithdraw ? (
+                <Button
+                  onPress={async () => {
+                    try {
+                      await withdrawEarnings()
+                    } catch (e: any) {
+                      Alert.alert('Withdrawal Failed', e?.message ?? 'Something went wrong')
+                    }
+                  }}
+                  loading={isWithdrawing}
+                >
+                  {isWithdrawing ? 'Withdrawing…' : 'Withdraw Earnings'}
+                </Button>
+              ) : event?.organizerWithdrawn ? (
+                <Text style={styles.settlementNote}>Earnings already withdrawn.</Text>
+              ) : (
+                <Text style={styles.settlementNote}>
+                  Available after{' '}
+                  {event
+                    ? new Date(event.unlockTime).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '—'}
+                </Text>
+              )}
+            </Card>
+          )}
         </View>
       </ScrollView>
 
@@ -172,5 +214,35 @@ const styles = StyleSheet.create({
   },
   scanButton: {
     marginBottom: Spacing.sm,
+  },
+  sectionLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+    textTransform: 'uppercase',
+    marginBottom: Spacing.sm,
+  },
+  settlementRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  settlementKey: {
+    fontFamily: Fonts.body,
+    fontSize: 14,
+    color: Colors.text2,
+  },
+  settlementValue: {
+    fontFamily: Fonts.mono,
+    fontSize: 14,
+    color: Colors.text1,
+  },
+  settlementNote: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
+    color: Colors.text3,
+    marginTop: Spacing.sm,
+    textAlign: 'center',
   },
 })
