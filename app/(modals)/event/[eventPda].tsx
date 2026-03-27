@@ -37,6 +37,7 @@ export default function EventDetailModal() {
   const { canWithdraw, withdrawEarnings, isWithdrawing } = useWithdrawEarnings(event)
 
   const isOrganizer = !!walletAddress && !!event && walletAddress === event.organizerAddress
+  const isEnded = !!event && Date.now() >= new Date(event.endTime).getTime()
   const noShowCount = event ? event.totalRegistered - event.totalCheckedIn : 0
 
   function handleGetTicket() {
@@ -45,6 +46,14 @@ export default function EventDetailModal() {
 
   function handleScanTickets() {
     router.push(`/(modals)/scanner/${eventPda}`)
+  }
+
+  async function handleWithdraw() {
+    try {
+      await withdrawEarnings()
+    } catch (e: any) {
+      Alert.alert('Withdrawal Failed', e?.message ?? 'Something went wrong')
+    }
   }
 
   if (isLoading || !event) {
@@ -112,7 +121,7 @@ export default function EventDetailModal() {
             <InfoGrid rows={infoRows} />
           </Card>
 
-          {isOrganizer && (
+          {isOrganizer && isEnded && (
             <Card>
               <Text style={styles.sectionLabel}>ORGANIZER SETTLEMENT</Text>
               <View style={styles.settlementRow}>
@@ -120,16 +129,7 @@ export default function EventDetailModal() {
                 <Text style={styles.settlementValue}>{noShowCount}</Text>
               </View>
               {canWithdraw ? (
-                <Button
-                  onPress={async () => {
-                    try {
-                      await withdrawEarnings()
-                    } catch (e: any) {
-                      Alert.alert('Withdrawal Failed', e?.message ?? 'Something went wrong')
-                    }
-                  }}
-                  loading={isWithdrawing}
-                >
+                <Button onPress={handleWithdraw} loading={isWithdrawing}>
                   {isWithdrawing ? 'Withdrawing…' : 'Withdraw Earnings'}
                 </Button>
               ) : event?.organizerWithdrawn ? (
