@@ -37,3 +37,10 @@ export async function checkInRegistration(registrationPda: string): Promise<Regi
   })
   return data
 }
+
+export async function updateRegistrationRefunded(registrationPda: string): Promise<Registration> {
+  const { data } = await apiClient.put(`/v1/registrations/${registrationPda}`, {
+    refunded: true,
+  })
+  return data
+}

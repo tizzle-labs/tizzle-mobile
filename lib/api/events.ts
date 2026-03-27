@@ -25,6 +25,8 @@ export interface Event {
   isFeatured: boolean
   totalRegistered: number
   totalCheckedIn: number
+  organizerAddress: string
+  organizerWithdrawn: boolean
 }
 
 export interface CreateEventPayload {
