@@ -5,19 +5,40 @@ import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { ScreenHeader } from '@/components/layout/ScreenHeader'
 import { Badge } from '@/components/ui/Badge'
+import { useEvents } from '@/hooks/api/use-events'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
+import type { Event } from '@/lib/api/events'
 import type { Registration } from '@/lib/api/registrations'
-import type { TicketStatus } from '@/lib/ticket-status'
+import { deriveTicketStatus, type TicketStatus } from '@/lib/ticket-status'
+import { useMemo } from 'react'
 
-function ticketBadgeVariant(reg: Registration): TicketStatus {
-  // Without event timing data, fall back to checked-in/refunded flags only
-  if (reg.refunded) return 'refunded'
-  if (reg.checkedIn) return 'used'
-  return 'valid'
+function ticketBadgeVariant(reg: Registration, event?: Event): TicketStatus {
+  if (!event) {
+    if (reg.refunded) return 'refunded'
+    if (reg.checkedIn) return 'used'
+    return 'valid'
+  }
+
+  return deriveTicketStatus(reg, event)
 }
 
-function TicketRow({ registration }: { registration: Registration }) {
-  const badgeVariant = ticketBadgeVariant(registration)
+function formatTicketDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+function formatTicketTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function TicketRow({ registration, event }: { registration: Registration; event?: Event }) {
+  const badgeVariant = ticketBadgeVariant(registration, event)
   return (
     <TouchableOpacity
       style={styles.row}
@@ -25,15 +46,19 @@ function TicketRow({ registration }: { registration: Registration }) {
       activeOpacity={0.8}
     >
       <View style={styles.rowInfo}>
-        <Text style={styles.rowPda} numberOfLines={1} ellipsizeMode="middle">
-          {registration.registrationPda}
+        <Text style={styles.rowTitle} numberOfLines={1}>
+          {event?.title ?? 'Untitled Event'}
+        </Text>
+        <Text style={styles.rowMeta} numberOfLines={1}>
+          {event?.location ?? 'Location unavailable'}
         </Text>
         <Text style={styles.rowDate}>
-          {new Date(registration.registeredAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          })}
+          {event
+            ? `${formatTicketDate(event.startTime)} · ${formatTicketTime(event.startTime)}`
+            : formatTicketDate(registration.registeredAt)}
+        </Text>
+        <Text style={styles.rowPda} numberOfLines={1} ellipsizeMode="middle">
+          {registration.registrationPda}
         </Text>
       </View>
       <Badge variant={badgeVariant} />
@@ -43,6 +68,8 @@ function TicketRow({ registration }: { registration: Registration }) {
 
 export default function Tickets() {
   const { data: registrations, isLoading, refetch, isRefetching } = useMyRegistrations()
+  const { data: events, refetch: refetchEvents, isRefetching: isRefetchingEvents } = useEvents()
+  const eventsByPda = useMemo(() => new Map((events ?? []).map((event) => [event.eventPda, event])), [events])
 
   return (
     <View style={styles.container}>
@@ -55,9 +82,11 @@ export default function Tickets() {
         <FlatList
           data={registrations}
           keyExtractor={(item) => item.registrationPda}
-          renderItem={({ item }) => <TicketRow registration={item} />}
-          onRefresh={refetch}
-          refreshing={isRefetching ?? false}
+          renderItem={({ item }) => <TicketRow registration={item} event={eventsByPda.get(item.eventPda)} />}
+          onRefresh={() => {
+            void Promise.all([refetch(), refetchEvents()])
+          }}
+          refreshing={(isRefetching ?? false) || (isRefetchingEvents ?? false)}
           ListEmptyComponent={
             <View style={styles.center}>
               <Text style={styles.emptyText}>No tickets yet.</Text>
@@ -85,11 +114,22 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   rowInfo: { flex: 1, gap: 4, marginRight: Spacing.sm },
+  rowTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 16,
+    color: Colors.text1,
+    letterSpacing: ls(16, LS.displaySubtle),
+  },
+  rowMeta: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
+    color: Colors.text2,
+  },
   rowPda: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1 },
   rowDate: {
     fontFamily: Fonts.mono,
     fontSize: 10,
-    color: Colors.text3,
+    color: Colors.accent,
     textTransform: 'uppercase',
     letterSpacing: ls(10, LS.labelNarrow),
   },

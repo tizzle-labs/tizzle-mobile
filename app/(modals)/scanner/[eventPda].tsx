@@ -9,6 +9,8 @@ import { Spacing } from '@/constants/spacing'
 import { ScanFrame } from '@/components/ui/ScanFrame'
 import { Button } from '@/components/ui/Button'
 import { useCheckIn } from '@/hooks/api/use-check-in'
+import { getEventByPda } from '@/lib/api/events'
+import { getRegistrationByPda } from '@/lib/api/registrations'
 
 export default function Scanner() {
   const { eventPda } = useLocalSearchParams<{ eventPda: string }>()
@@ -23,29 +25,60 @@ export default function Scanner() {
       setScanned(true)
 
       try {
-        const registration = await checkIn.mutateAsync({ registrationPda: data, eventPda })
+        const registration = await getRegistrationByPda(data)
+        const event = await getEventByPda(registration.eventPda)
+        const matchesSelectedEvent = registration.eventPda === eventPda
+
+        if (!matchesSelectedEvent) {
+          router.push({
+            pathname: '/(modals)/scanner/result',
+            params: {
+              status: 'error',
+              registrationPda: data,
+              eventTitle: event.title,
+              ticketEventPda: registration.eventPda,
+              expectedEventPda: eventPda,
+              eventMatches: 'false',
+              failureReason: 'This ticket belongs to a different event.',
+            },
+          })
+          return
+        }
+
+        const checkedInRegistration = await checkIn.mutateAsync({ registrationPda: data, eventPda })
         router.push({
           pathname: '/(modals)/scanner/result',
           params: {
             status: 'valid',
             registrationPda: data,
-            checkedInAt: registration.checkedInAt ?? new Date().toISOString(),
+            checkedInAt: checkedInRegistration.checkedInAt ?? new Date().toISOString(),
+            eventTitle: event.title,
+            ticketEventPda: registration.eventPda,
+            expectedEventPda: eventPda,
+            eventMatches: 'true',
           },
         })
       } catch (error: any) {
         const isAlreadyUsed = error?.response?.status === 409
+        const isNotFound = error?.response?.status === 404
         router.push({
           pathname: '/(modals)/scanner/result',
           params: {
             status: isAlreadyUsed ? 'used' : 'error',
             registrationPda: data,
+            expectedEventPda: eventPda,
+            failureReason: isAlreadyUsed
+              ? 'This ticket has already been checked in.'
+              : isNotFound
+                ? 'We could not find a ticket for this QR code.'
+                : 'Verification failed before check-in could be completed.',
           },
         })
       }
       // Allow re-scanning after 3s
       scanTimeoutRef.current = setTimeout(() => setScanned(false), 3000)
     },
-    [scanned, checkIn],
+    [scanned, checkIn, eventPda],
   )
 
   useEffect(() => {
