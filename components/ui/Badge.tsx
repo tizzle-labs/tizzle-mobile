@@ -12,6 +12,10 @@ type BadgeVariant =
   | 'ongoing'
   | 'settlement'
   | 'closed'
+  | 'claimable'
+  | 'refunded'
+  | 'no-show'
+  | 'cancelled'
 
 const CONFIG: Record<BadgeVariant, { bg: string; color: string; label: string }> = {
   valid: { bg: Colors.accent, color: Colors.bg, label: 'VALID' },
@@ -23,6 +27,10 @@ const CONFIG: Record<BadgeVariant, { bg: string; color: string; label: string }>
   ongoing: { bg: Colors.accent, color: Colors.bg, label: 'ONGOING' },
   settlement: { bg: Colors.warning, color: Colors.bg, label: 'SETTLEMENT' },
   closed: { bg: Colors.surface2, color: Colors.text3, label: 'CLOSED' },
+  claimable: { bg: Colors.accent, color: Colors.bg, label: 'CLAIMABLE' },
+  refunded: { bg: Colors.success, color: Colors.bg, label: 'REFUNDED' },
+  'no-show': { bg: Colors.error, color: Colors.text1, label: 'NO-SHOW' },
+  cancelled: { bg: Colors.surface2, color: Colors.text3, label: 'CANCELLED' },
 }
 
 interface BadgeProps {
