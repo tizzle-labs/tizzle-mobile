@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
@@ -8,17 +8,47 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { InfoGrid } from '@/components/ui/InfoGrid'
 import { useAuth } from '@/components/auth/auth-provider'
-import { useMyProfile } from '@/hooks/api/use-user-profile'
+import { useMyProfile, userKeys } from '@/hooks/api/use-user-profile'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
+import { updateMyProfile } from '@/lib/api/users'
+import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function ProfileModal() {
   const { walletAddress, signOut } = useAuth()
   const { data: profile, isLoading } = useMyProfile()
   const { data: registrations } = useMyRegistrations()
+  const queryClient = useQueryClient()
+  const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
+  const [bio, setBio] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    setName(profile?.name ?? '')
+    setUsername(profile?.username ?? '')
+    setBio(profile?.bio ?? '')
+  }, [profile?.bio, profile?.name, profile?.username])
 
   async function handleSignOut() {
     await signOut()
     router.replace('/sign-in')
+  }
+
+  async function handleSave() {
+    setIsSaving(true)
+    try {
+      const nextProfile = await updateMyProfile({
+        name: name.trim() || undefined,
+        username: username.trim() || undefined,
+        bio: bio.trim() || undefined,
+      })
+      queryClient.setQueryData(userKeys.me, nextProfile)
+    } catch (e) {
+      console.error('Profile update failed', e)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const statsRows = [
@@ -30,6 +60,10 @@ export default function ProfileModal() {
   ]
 
   const profileRows = walletAddress ? [{ label: 'Wallet', value: walletAddress, mono: true }] : []
+  const isDirty = useMemo(
+    () => name !== (profile?.name ?? '') || username !== (profile?.username ?? '') || bio !== (profile?.bio ?? ''),
+    [bio, name, profile?.bio, profile?.name, profile?.username, username],
+  )
 
   return (
     <View style={styles.container}>
@@ -51,6 +85,50 @@ export default function ProfileModal() {
           <View style={styles.nameSection}>
             <Text style={styles.displayName}>{profile?.name ?? profile?.username ?? 'Anonymous'}</Text>
           </View>
+
+          <Card>
+            <Text style={styles.sectionLabel}>EDIT PROFILE</Text>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>NAME</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Your display name"
+                placeholderTextColor={Colors.text3}
+                value={name}
+                onChangeText={setName}
+                maxLength={30}
+              />
+            </View>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>USERNAME</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="your-handle"
+                placeholderTextColor={Colors.text3}
+                autoCapitalize="none"
+                value={username}
+                onChangeText={setUsername}
+                maxLength={24}
+              />
+            </View>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>BIO</Text>
+              <TextInput
+                style={[styles.input, styles.textarea]}
+                placeholder="A short bio"
+                placeholderTextColor={Colors.text3}
+                value={bio}
+                onChangeText={setBio}
+                multiline
+                numberOfLines={4}
+                maxLength={160}
+                textAlignVertical="top"
+              />
+            </View>
+            <Button onPress={handleSave} loading={isSaving} disabled={!isDirty} style={styles.saveButton}>
+              Save Changes
+            </Button>
+          </Card>
 
           <Card>
             <InfoGrid rows={profileRows} />
@@ -100,6 +178,42 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: Colors.text1,
     letterSpacing: ls(36, LS.displayTight),
+  },
+  sectionLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+    textTransform: 'uppercase',
+    marginBottom: Spacing.md,
+  },
+  fieldGroup: {
+    gap: 6,
+    marginBottom: Spacing.md,
+  },
+  fieldLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+    textTransform: 'uppercase',
+  },
+  input: {
+    backgroundColor: Colors.surface2,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    color: Colors.text1,
+    fontFamily: Fonts.body,
+    fontSize: 15,
+  },
+  textarea: {
+    minHeight: 96,
+  },
+  saveButton: {
+    marginTop: Spacing.xs,
   },
   statsLabel: {
     fontFamily: Fonts.mono,
