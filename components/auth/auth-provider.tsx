@@ -7,6 +7,7 @@ import bs58 from 'bs58'
 import { createContext, type PropsWithChildren, use, useCallback, useEffect, useMemo, useState } from 'react'
 
 export interface AuthState {
+  isReady: boolean
   isAuthenticated: boolean
   hasJwt: boolean
   walletAddress: string | null
@@ -26,10 +27,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const { accounts, disconnect, signIn: walletSignIn, signMessages: signMessage } = useMobileWallet()
   const walletAddress = accounts?.[0]?.address?.toString() ?? null
   const [hasJwt, setHasJwt] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   // Restore JWT state on mount
   useEffect(() => {
-    Storage.getAccessToken().then((token) => setHasJwt(!!token))
+    Storage.getAccessToken()
+      .then((token) => setHasJwt(!!token))
+      .finally(() => setIsReady(true))
   }, [])
 
   const signIn = useCallback(async () => {
@@ -66,13 +70,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const value: AuthState = useMemo(
     () => ({
-      isAuthenticated: (accounts?.length ?? 0) > 0,
+      isReady,
+      isAuthenticated: (accounts?.length ?? 0) > 0 && hasJwt,
       hasJwt,
       walletAddress,
       signIn,
       signOut,
     }),
-    [accounts, hasJwt, walletAddress, signIn, signOut],
+    [accounts, hasJwt, isReady, walletAddress, signIn, signOut],
   )
 
   return <Context value={value}>{children}</Context>

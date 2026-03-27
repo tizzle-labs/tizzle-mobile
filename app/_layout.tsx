@@ -56,7 +56,10 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isReady } = useAuth()
+
+  if (!isReady) return null
+
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}>
       <Stack.Protected guard={isAuthenticated}>

@@ -7,10 +7,10 @@ export const userKeys = {
 }
 
 export function useMyProfile() {
-  const { hasJwt } = useAuth()
+  const { isAuthenticated } = useAuth()
   return useQuery({
     queryKey: userKeys.me,
     queryFn: getMyProfile,
-    enabled: hasJwt,
+    enabled: isAuthenticated,
   })
 }

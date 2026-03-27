@@ -8,10 +8,10 @@ export const registrationKeys = {
 }
 
 export function useMyRegistrations() {
-  const { hasJwt } = useAuth()
+  const { isAuthenticated } = useAuth()
   return useQuery({
     queryKey: registrationKeys.my,
     queryFn: getMyRegistrations,
-    enabled: hasJwt,
+    enabled: isAuthenticated,
   })
 }

@@ -7,10 +7,10 @@ export const organizationKeys = {
 }
 
 export function useMyOrganizations() {
-  const { hasJwt } = useAuth()
+  const { isAuthenticated } = useAuth()
   return useQuery({
     queryKey: organizationKeys.my,
     queryFn: getMyOrganizations,
-    enabled: hasJwt,
+    enabled: isAuthenticated,
   })
 }
