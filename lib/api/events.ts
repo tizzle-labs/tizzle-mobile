@@ -35,22 +35,21 @@ export interface CreateEventPayload {
   organizationPda: string
   gatekeeperAddress: string
   title: string
-  description: string
-  imageUrl: string
-  location: string
-  category: string
+  description?: string
+  imageUrl?: string
+  location?: string
+  category?: string
   capacity: number
-  stakeAmount: string
+  stakeAmount: number
   stakeTokenMint: string
-  stakeTokenSymbol: string
-  stakeTokenDecimals: number
-  hostFeeEnabled: boolean
-  hostFeePercent: number
-  platformFeePaid: string
+  stakeTokenSymbol?: string
+  stakeTokenDecimals?: number
+  hostFeeEnabled?: boolean
+  hostFeePercent?: number
+  platformFeePaid: number
   startTime: string
   endTime: string
   unlockTime: string
-  transactionSignature?: string
 }
 
 export async function getEvents(params?: { limit?: number }): Promise<Event[]> {

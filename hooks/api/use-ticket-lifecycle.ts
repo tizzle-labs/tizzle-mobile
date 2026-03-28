@@ -60,7 +60,8 @@ export function useTicketLifecycle(registration: Registration | undefined, event
       }).compileToLegacyMessage()
 
       const tx = new VersionedTransaction(message)
-      const signature = await signAndSendTransactions(tx, minContextSlot)
+      const result = await signAndSendTransactions(tx, minContextSlot)
+      const signature = Array.isArray(result) ? result[0] : result
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       await updateRegistrationRefunded(registration.registrationPda)

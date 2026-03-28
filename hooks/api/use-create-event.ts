@@ -1,20 +1,20 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  PublicKey,
-  TransactionMessage,
-  VersionedTransaction,
-  SystemProgram,
-  Keypair,
-  LAMPORTS_PER_SOL,
-} from '@solana/web3.js'
-import { BN } from '@coral-xyz/anchor'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { useMobileWallet } from '@wallet-ui/react-native-web3js'
+import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createEvent } from '@/lib/api/events'
-import { eventKeys } from './use-events'
 import { CONFIG_PDA, deriveEventPda } from '@/lib/solana/program'
-import { SOL_MINT } from '@/components/ui/TokenAmount'
+import { BN } from '@coral-xyz/anchor'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMobileWallet } from '@wallet-ui/react-native-web3js'
+import { eventKeys } from './use-events'
 
 export interface CreateEventInput {
   organizationPda: string
@@ -94,7 +94,9 @@ export function useCreateEvent() {
       }).compileToLegacyMessage()
 
       const tx = new VersionedTransaction(message)
-      const signature = await signAndSendTransactions(tx, minContextSlot)
+
+      const result = await signAndSendTransactions(tx, minContextSlot)
+      const signature = Array.isArray(result) ? result[0] : result
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       const event = await createEvent({
@@ -108,17 +110,16 @@ export function useCreateEvent() {
         location: input.location,
         category: input.category,
         capacity: input.capacity,
-        stakeAmount: stakeAmountLamports.toString(),
+        stakeAmount: stakeAmountLamports.toNumber(),
         stakeTokenMint: input.stakeTokenMint,
         stakeTokenSymbol: input.stakeTokenSymbol,
         stakeTokenDecimals: input.stakeTokenDecimals,
         hostFeeEnabled: false,
         hostFeePercent: 0,
-        platformFeePaid: '0',
+        platformFeePaid: 0,
         startTime: input.startTime.toISOString(),
         endTime: input.endTime.toISOString(),
         unlockTime: input.unlockTime.toISOString(),
-        transactionSignature: signature,
       })
 
       return { signature, event, eventPda: eventPda.toString() }

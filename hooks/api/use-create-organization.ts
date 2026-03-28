@@ -40,7 +40,8 @@ export function useCreateOrganization() {
       }).compileToLegacyMessage()
 
       const tx = new VersionedTransaction(message)
-      const signature = await signAndSendTransactions(tx, minContextSlot)
+      const result = await signAndSendTransactions(tx, minContextSlot)
+      const signature = Array.isArray(result) ? result[0] : result
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       return createOrganization({ ...payload, transactionSignature: signature })
