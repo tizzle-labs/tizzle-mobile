@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PublicKey, TransactionMessage, VersionedTransaction, SystemProgram } from '@solana/web3.js'
-import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { updateRegistrationRefunded } from '@/lib/api/registrations'
@@ -35,7 +35,7 @@ export function useTicketLifecycle(registration: Registration | undefined, event
         event: eventPdaPubkey,
         registration: registrationPda,
         escrowVault,
-        attendeeTokenAccount: isSOL ? attendeePubkey : attendeePubkey,
+        attendeeTokenAccount: isSOL ? attendeePubkey : getAssociatedTokenAddressSync(new PublicKey(event.stakeTokenMint), attendeePubkey),
         escrowTokenAccount: escrowVault,
         organizationTreasuryTokenAccount: organizationTreasury,
         tokenMint: isSOL ? SystemProgram.programId : new PublicKey(event.stakeTokenMint),

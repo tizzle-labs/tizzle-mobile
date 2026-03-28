@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
@@ -13,6 +13,7 @@ import { InfoGrid } from '@/components/ui/InfoGrid'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useTicketLifecycle } from '@/hooks/api/use-ticket-lifecycle'
+import { showErrorFeedback } from '@/lib/app-feedback'
 
 export default function TicketDetail() {
   const { registrationPda } = useLocalSearchParams<{ registrationPda: string }>()
@@ -22,7 +23,7 @@ export default function TicketDetail() {
   const { data: event, isLoading: eventLoading } = useEventDetail(registration?.eventPda ?? '')
   const { status, claimRefund, isClaimingRefund } = useTicketLifecycle(registration, event)
 
-  if (regLoading || eventLoading || !registration) {
+  if (regLoading || eventLoading || !registration || !event) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={Colors.accent} />
@@ -55,7 +56,7 @@ export default function TicketDetail() {
     try {
       await claimRefund()
     } catch (e: any) {
-      Alert.alert('Claim Failed', e?.message ?? 'Something went wrong')
+      showErrorFeedback(e, 'Claim Failed', 'Could not claim your stake refund')
     }
   }
 

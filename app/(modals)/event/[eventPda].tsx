@@ -10,12 +10,12 @@ import { Spacing } from '@/constants/spacing'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useWithdrawEarnings } from '@/hooks/api/use-withdraw-earnings'
+import { showErrorFeedback } from '@/lib/app-feedback'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   ScrollView,
   StyleSheet,
@@ -38,7 +38,7 @@ export default function EventDetailModal() {
 
   const isOrganizer = !!walletAddress && !!event && walletAddress === event.organizerAddress
   const isEnded = !!event && Date.now() >= new Date(event.endTime).getTime()
-  const noShowCount = event ? event.totalRegistered - event.totalCheckedIn : 0
+  const noShowCount = event ? Math.max(0, event.totalRegistered - event.totalCheckedIn) : 0
 
   function handleGetTicket() {
     router.push(`/(modals)/buy-ticket/${eventPda}`)
@@ -52,7 +52,7 @@ export default function EventDetailModal() {
     try {
       await withdrawEarnings()
     } catch (e: any) {
-      Alert.alert('Withdrawal Failed', e?.message ?? 'Something went wrong')
+      showErrorFeedback(e, 'Withdrawal Failed', 'Could not withdraw earnings')
     }
   }
 

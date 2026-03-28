@@ -61,6 +61,7 @@ export function useWithdrawEarnings(event: Event | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: eventKeys.detail(event!.eventPda) })
+      queryClient.invalidateQueries({ queryKey: eventKeys.all })
     },
   })
 
