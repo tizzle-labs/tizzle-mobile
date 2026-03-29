@@ -23,9 +23,11 @@ export async function getRegistrationByPda(registrationPda: string): Promise<Reg
 }
 
 export async function createRegistration(payload: {
+  registrationPda: string
   eventPda: string
-  transactionSignature: string
-  stakeAmount: string
+  stakeAmount: number
+  registeredAt: string
+  transactionSignature?: string
 }): Promise<Registration> {
   const { data } = await apiClient.post('/v1/registrations', payload)
   return data

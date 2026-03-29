@@ -1,13 +1,13 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { PublicKey, TransactionMessage, VersionedTransaction, SystemProgram } from '@solana/web3.js'
-import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
-import { useMobileWallet } from '@wallet-ui/react-native-web3js'
-import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
-import { createRegistration } from '@/lib/api/registrations'
-import { registrationKeys } from './use-my-registrations'
-import { CONFIG_PDA, deriveRegistrationPda, deriveEscrowVaultPda } from '@/lib/solana/program'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
+import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import type { Event } from '@/lib/api/events'
+import { createRegistration } from '@/lib/api/registrations'
+import { CONFIG_PDA, deriveEscrowVaultPda, deriveRegistrationPda } from '@/lib/solana/program'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
+import { PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMobileWallet } from '@wallet-ui/react-native-web3js'
+import { registrationKeys } from './use-my-registrations'
 
 export function useRegisterEvent() {
   const { connection, accounts, signAndSendTransactions } = useMobileWallet()
@@ -66,9 +66,11 @@ export function useRegisterEvent() {
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       await createRegistration({
+        registrationPda: registrationPda.toString(),
         eventPda: event.eventPda,
+        stakeAmount: Number(event.stakeAmount),
+        registeredAt: new Date().toISOString(),
         transactionSignature: signature,
-        stakeAmount: event.stakeAmount,
       })
 
       return { signature, registrationPda: registrationPda.toString() }
