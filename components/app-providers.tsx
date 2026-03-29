@@ -28,7 +28,11 @@ function SolanaProvider({ children }: PropsWithChildren) {
     <MobileWalletProvider
       chain={selectedCluster.id}
       endpoint={selectedCluster.endpoint}
-      identity={{ name: 'Wallet UI Example Web3js Expo' }}
+      identity={{
+        name: 'Tizzle',
+        uri: 'https://tizzle.app',
+        icon: 'favicon.png',
+      }}
     >
       {children}
     </MobileWalletProvider>

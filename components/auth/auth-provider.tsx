@@ -37,24 +37,44 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [])
 
   const signIn = useCallback(async () => {
-    // 1. Connect wallet via MWA — read address from the returned result, not
-    //    stale React state (avoids React batching race condition).
-    const result = await walletSignIn({ uri: AppConfig.uri })
-    const address = result?.account?.address?.toString()
-    if (!address) return
+    try {
+      // 1. Connect wallet via MWA — read address from the returned result, not
+      //    stale React state (avoids React batching race condition).
+      const result = await walletSignIn({ uri: AppConfig.uri })
+      const address = result?.account?.address?.toString()
+      if (!address) {
+        // User cancelled or no account returned
+        return
+      }
 
-    // 2. Get nonce + canonical message from backend
-    const { message } = await generateNonce(address)
+      // 2. Get nonce + canonical message from backend
+      const { message } = await generateNonce(address)
 
-    // 3. Sign message with wallet
-    const encoded = new TextEncoder().encode(message)
-    const signedBytes = await signMessage(encoded)
-    const signature = bs58.encode(signedBytes)
+      // 3. Sign message with wallet
+      const encoded = new TextEncoder().encode(message)
+      const signedBytes = await signMessage(encoded)
+      const signature = bs58.encode(signedBytes)
 
-    // 4. Verify with backend → stores JWT in SecureStore
-    await verifySignature({ walletAddress: address, signature, message })
-    setHasJwt(true)
-  }, [walletSignIn, signMessage])
+      // 4. Verify with backend → stores JWT in SecureStore
+      await verifySignature({ walletAddress: address, signature, message })
+      setHasJwt(true)
+    } catch (error: any) {
+      // Handle user cancellation gracefully
+      const errorMessage = String(error?.message ?? '').toLowerCase()
+      if (
+        errorMessage.includes('reject') ||
+        errorMessage.includes('cancel') ||
+        errorMessage.includes('declin') ||
+        errorMessage.includes('dismiss')
+      ) {
+        // User cancelled - disconnect to clean up state
+        await disconnect()
+        return
+      }
+      // Re-throw other errors to be handled by caller
+      throw error
+    }
+  }, [walletSignIn, signMessage, disconnect])
 
   const signOut = useCallback(async () => {
     await disconnect()

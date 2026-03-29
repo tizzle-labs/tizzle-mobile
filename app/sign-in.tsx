@@ -1,14 +1,14 @@
-import { View, Text, StyleSheet } from 'react-native'
-import { router } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/components/auth/auth-provider'
 import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { showErrorFeedback } from '@/lib/app-feedback'
 import { getMyProfile } from '@/lib/api/users'
+import { showErrorFeedback } from '@/lib/app-feedback'
+import { router } from 'expo-router'
 import { useState } from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function SignIn() {
   const { signIn } = useAuth()
@@ -24,7 +24,18 @@ export default function SignIn() {
       } catch {
         router.replace('/onboarding')
       }
-    } catch (e) {
+    } catch (e: any) {
+      // Don't show error if user cancelled the request
+      const errorMessage = String(e?.message ?? '').toLowerCase()
+      if (
+        errorMessage.includes('reject') ||
+        errorMessage.includes('cancel') ||
+        errorMessage.includes('declin') ||
+        errorMessage.includes('dismiss')
+      ) {
+        // User cancelled - just return without showing error
+        return
+      }
       showErrorFeedback(e, 'Sign-In Failed', 'We could not verify your wallet right now.')
     } finally {
       setLoading(false)
