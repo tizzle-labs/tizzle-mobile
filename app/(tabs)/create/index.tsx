@@ -9,14 +9,35 @@ import { useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-ev
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
 import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
 import { showErrorFeedback } from '@/lib/app-feedback'
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 
 interface SuccessData {
   txHash: string
   eventTitle: string
   eventPda: string
   capacity: number
+}
+
+type PickerField = 'startTime' | 'endTime'
+
+function formatDateTime(date: Date): string {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const h = String(date.getHours()).padStart(2, '0')
+  const m = String(date.getMinutes()).padStart(2, '0')
+  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()} ${date.getFullYear()} · ${h}:${m}`
 }
 
 export default function Create() {
@@ -33,6 +54,62 @@ export default function Create() {
   const [capacity, setCapacity] = useState('100')
   const [stakeAmount, setStakeAmount] = useState('0.1')
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
+
+  const [startTime, setStartTime] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
+  const [endTime, setEndTime] = useState(() => new Date(Date.now() + 27 * 60 * 60 * 1000))
+
+  const [pickerField, setPickerField] = useState<PickerField>('startTime')
+  const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date')
+  const [pickerVisible, setPickerVisible] = useState(false)
+  const [tempDate, setTempDate] = useState(new Date())
+
+  function openPicker(field: PickerField) {
+    const current = field === 'startTime' ? startTime : endTime
+    setPickerField(field)
+    setPickerMode('date')
+    setTempDate(current)
+    setPickerVisible(true)
+  }
+
+  function commitValue(field: PickerField, newDate: Date) {
+    if (field === 'startTime') {
+      setStartTime(newDate)
+      if (newDate >= endTime) setEndTime(new Date(newDate.getTime() + 3 * 60 * 60 * 1000))
+    } else {
+      setEndTime(newDate)
+    }
+  }
+
+  function handlePickerChange(_: DateTimePickerEvent, selected?: Date) {
+    if (!selected) {
+      setPickerVisible(false)
+      return
+    }
+    if (Platform.OS === 'android') {
+      setPickerVisible(false)
+      if (pickerMode === 'date') {
+        const current = pickerField === 'startTime' ? startTime : endTime
+        const merged = new Date(current)
+        merged.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate())
+        setTempDate(merged)
+        setTimeout(() => {
+          setPickerMode('time')
+          setPickerVisible(true)
+        }, 100)
+      } else {
+        const final = new Date(tempDate)
+        final.setHours(selected.getHours(), selected.getMinutes(), 0, 0)
+        commitValue(pickerField, final)
+      }
+    } else {
+      setTempDate(selected)
+    }
+  }
+
+  function handleIosDone() {
+    commitValue(pickerField, tempDate)
+    setPickerVisible(false)
+  }
 
   if (orgsLoading) {
     return (
@@ -117,11 +194,6 @@ export default function Create() {
     )
   }
 
-  const now = new Date()
-  const defaultStart = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-  const defaultEnd = new Date(defaultStart.getTime() + 3 * 60 * 60 * 1000)
-  const defaultUnlock = new Date(defaultEnd.getTime() + 7 * 24 * 60 * 60 * 1000)
-
   async function handleCreateEvent() {
     if (!org) return
     const input: CreateEventInput = {
@@ -136,9 +208,9 @@ export default function Create() {
       stakeTokenMint: SOL_MINT,
       stakeTokenSymbol: 'SOL',
       stakeTokenDecimals: 9,
-      startTime: defaultStart,
-      endTime: defaultEnd,
-      unlockTime: defaultUnlock,
+      startTime,
+      endTime,
+      unlockTime: new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000),
     }
     try {
       const result = await createEvent.mutateAsync(input)
@@ -191,6 +263,22 @@ export default function Create() {
               onChangeText={setLocation}
             />
           </View>
+          <TouchableOpacity style={styles.fieldGroup} onPress={() => openPicker('startTime')} activeOpacity={0.7}>
+            <Text style={styles.fieldLabel}>START TIME</Text>
+            <Text style={styles.dateValue}>{formatDateTime(startTime)}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.fieldGroup} onPress={() => openPicker('endTime')} activeOpacity={0.7}>
+            <Text style={styles.fieldLabel}>END TIME</Text>
+            <Text style={styles.dateValue}>{formatDateTime(endTime)}</Text>
+          </TouchableOpacity>
+          {endTime <= startTime && <Text style={styles.fieldError}>END TIME MUST BE AFTER START TIME</Text>}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>UNLOCK TIME</Text>
+            <Text style={[styles.dateValue, styles.dateValueMuted]}>
+              {formatDateTime(new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000))}
+            </Text>
+            <Text style={styles.unlockHint}>STAKE RELEASED 7 DAYS AFTER EVENT ENDS</Text>
+          </View>
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>CAPACITY</Text>
             <TextInput
@@ -217,11 +305,35 @@ export default function Create() {
         <Button
           onPress={handleCreateEvent}
           loading={createEvent.isPending}
-          disabled={!eventTitle.trim() || !location.trim()}
+          disabled={!eventTitle.trim() || !location.trim() || endTime <= startTime}
         >
           {createEvent.isPending ? 'Minting on Solana…' : 'Mint on Solana'}
         </Button>
       </ScrollView>
+
+      {pickerVisible && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={pickerMode === 'date' ? (pickerField === 'startTime' ? startTime : endTime) : tempDate}
+          mode={pickerMode}
+          onChange={handlePickerChange}
+        />
+      )}
+      {Platform.OS === 'ios' && (
+        <Modal visible={pickerVisible} transparent animationType="slide">
+          <View style={styles.pickerOverlay}>
+            <View style={styles.pickerContainer}>
+              <DateTimePicker
+                value={tempDate}
+                mode="datetime"
+                display="spinner"
+                onChange={handlePickerChange}
+                textColor={Colors.text1}
+              />
+              <Button onPress={handleIosDone}>Done</Button>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   )
 }
@@ -266,6 +378,38 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   multiline: { minHeight: 72, textAlignVertical: 'top' },
+  dateValue: {
+    fontFamily: Fonts.body,
+    fontSize: 16,
+    color: Colors.text1,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border2,
+    paddingVertical: 8,
+  },
+  dateValueMuted: { color: Colors.text2 },
+  fieldError: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.error,
+    letterSpacing: ls(9, LS.labelWide),
+    textTransform: 'uppercase',
+    marginTop: -8,
+  },
+  unlockHint: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+    marginTop: 4,
+  },
+  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  pickerContainer: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: Spacing.md,
+    paddingBottom: Spacing.xl,
+  },
   successContent: { flex: 1, padding: Spacing.md, gap: Spacing.lg, justifyContent: 'center' },
   successHeading: {
     fontFamily: Fonts.display,
