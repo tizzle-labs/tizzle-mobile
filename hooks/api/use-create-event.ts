@@ -115,6 +115,7 @@ export function useCreateEvent() {
         startTime: input.startTime.toISOString(),
         endTime: input.endTime.toISOString(),
         unlockTime: input.unlockTime.toISOString(),
+        transactionSignature: signature,
       })
 
       return { signature, event, eventPda: eventPda.toString() }

@@ -52,6 +52,7 @@ export interface CreateEventPayload {
   startTime: string
   endTime: string
   unlockTime: string
+  transactionSignature?: string
 }
 
 export async function getEvents(params?: { limit?: number }): Promise<Event[]> {
