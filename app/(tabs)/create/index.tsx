@@ -9,7 +9,11 @@ import { useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-ev
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
 import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
 import { showErrorFeedback } from '@/lib/app-feedback'
+import { updateEvent } from '@/lib/api/events'
+import { uploadEventImage } from '@/lib/api/storage'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
+import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
 import { useState } from 'react'
 import {
   ActivityIndicator,
@@ -53,6 +57,8 @@ export default function Create() {
   const [location, setLocation] = useState('')
   const [capacity, setCapacity] = useState('100')
   const [stakeAmount, setStakeAmount] = useState('0.1')
+  const [imageUri, setImageUri] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
 
   const [startTime, setStartTime] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
@@ -62,6 +68,21 @@ export default function Create() {
   const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date')
   const [pickerVisible, setPickerVisible] = useState(false)
   const [tempDate, setTempDate] = useState(new Date())
+
+  async function pickImage() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      showErrorFeedback(null, 'Permission Required', 'Allow photo library access to add an event image.')
+      return
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    })
+    if (!result.canceled) setImageUri(result.assets[0].uri)
+  }
 
   function openPicker(field: PickerField) {
     const current = field === 'startTime' ? startTime : endTime
@@ -214,6 +235,19 @@ export default function Create() {
     }
     try {
       const result = await createEvent.mutateAsync(input)
+
+      if (imageUri) {
+        setIsUploading(true)
+        try {
+          const uploaded = await uploadEventImage(imageUri, result.eventPda)
+          await updateEvent(result.eventPda, { imageUrl: uploaded.url })
+        } catch (e) {
+          showErrorFeedback(e, 'Image Upload Failed', 'Event was created but the image could not be uploaded.')
+        } finally {
+          setIsUploading(false)
+        }
+      }
+
       setSuccessData({
         txHash: result.signature,
         eventTitle: result.event.title,
@@ -225,12 +259,27 @@ export default function Create() {
     }
   }
 
+  const isBusy = createEvent.isPending || isUploading
+
   return (
     <View style={styles.container}>
       <ScreenHeader title="CREATE EVENT" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.orgLabel}>ORG: {org.name}</Text>
         <Card>
+          {/* Image picker */}
+          <TouchableOpacity style={styles.imagePicker} onPress={pickImage} activeOpacity={0.7}>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.imagePreview} contentFit="cover" />
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <Text style={styles.imagePlaceholderIcon}>＋</Text>
+                <Text style={styles.imagePlaceholderText}>ADD EVENT PHOTO</Text>
+                <Text style={styles.imagePlaceholderHint}>16:9 recommended</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>EVENT TITLE</Text>
             <TextInput
@@ -304,10 +353,10 @@ export default function Create() {
         </Card>
         <Button
           onPress={handleCreateEvent}
-          loading={createEvent.isPending}
+          loading={isBusy}
           disabled={!eventTitle.trim() || !location.trim() || endTime <= startTime}
         >
-          {createEvent.isPending ? 'Minting on Solana…' : 'Mint on Solana'}
+          {isUploading ? 'Uploading image…' : createEvent.isPending ? 'Minting on Solana…' : 'Mint on Solana'}
         </Button>
       </ScrollView>
 
@@ -360,6 +409,44 @@ const styles = StyleSheet.create({
     color: Colors.text3,
     letterSpacing: ls(10, LS.label),
     textTransform: 'uppercase',
+  },
+  imagePicker: {
+    marginBottom: Spacing.md,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  imagePreview: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 8,
+  },
+  imagePlaceholder: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  imagePlaceholderIcon: {
+    fontSize: 24,
+    color: Colors.text3,
+  },
+  imagePlaceholderText: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+  },
+  imagePlaceholderHint: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.label),
+    opacity: 0.5,
   },
   fieldGroup: { gap: 6, marginBottom: Spacing.md },
   fieldLabel: {
