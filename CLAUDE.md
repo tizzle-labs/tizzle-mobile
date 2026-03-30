@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 React Native / Expo mobile app. Blockchain ticketing on Solana devnet. Three roles: Fan, Organizer, Venue door staff.
 
+## External Resources
+
+- **API docs (OpenAPI JSON)**: `https://dev-api.tizzle.app/docs-json` — Swagger UI at `/docs`
+- **Anchor program repo**: `https://github.com/tizzle-labs/tizzle-program` (private)
+
 ## Commands
 
 ```bash
@@ -65,7 +70,7 @@ AppTheme → QueryClientProvider → ClusterProvider → MobileWalletProvider �
 2. `POST /v1/auth/nonce` → returns `{ nonce, message }` — **always use the backend-generated message, never construct it on the client**
 3. Sign `message` bytes with wallet
 4. `POST /v1/auth/verify` → returns `{ accessToken }` stored in SecureStore
-5. No refresh token — on 401, clear token and trigger logout
+5. No refresh token flow — on 401, clear token and trigger logout. (`POST /v1/auth/refresh` exists in the API but the client does not use it.)
 
 `apiClient` (`lib/api/client.ts`) attaches `Authorization: Bearer <token>` to every request via request interceptor. On 401 response, tokens are cleared and `_onLogout` callback fires.
 
@@ -87,7 +92,7 @@ Transaction pattern used in hooks:
 ### API Layer
 
 All API calls go through `lib/api/client.ts` (Axios, `https://dev-api.tizzle.app`).
-Modules: `auth.ts`, `events.ts`, `registrations.ts`, `organizations.ts`, `users.ts`.
+Modules: `auth.ts`, `events.ts`, `registrations.ts`, `organizations.ts`, `users.ts`, `storage.ts`.
 
 Data fetching uses **TanStack React Query** hooks in `hooks/api/`. Mutations for write operations (register, create event, create org, check-in) live in the same directory.
 
