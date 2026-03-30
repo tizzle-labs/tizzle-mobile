@@ -2,10 +2,8 @@ import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { userKeys } from '@/hooks/api/use-user-profile'
-import { updateMyProfile } from '@/lib/api/users'
+import { useUpdateProfile } from '@/hooks/api/use-update-profile'
 import { showErrorFeedback } from '@/lib/app-feedback'
-import { useQueryClient } from '@tanstack/react-query'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, TextInput, View } from 'react-native'
@@ -13,22 +11,17 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Onboarding() {
   const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const queryClient = useQueryClient()
+  const { mutateAsync: updateProfile, isPending: loading } = useUpdateProfile()
 
   async function handleContinue() {
     if (!name.trim()) {
       router.replace('/(tabs)/explore')
       return
     }
-    setLoading(true)
     try {
-      await updateMyProfile({ name: name.trim() })
-      queryClient.invalidateQueries({ queryKey: userKeys.me })
+      await updateProfile({ name: name.trim() })
     } catch (e) {
       showErrorFeedback(e, 'Profile Update Failed', 'We could not save your display name.')
-    } finally {
-      setLoading(false)
     }
     router.replace('/(tabs)/explore')
   }

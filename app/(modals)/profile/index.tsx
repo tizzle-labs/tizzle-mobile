@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Image, Pressable } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import * as ImagePicker from 'expo-image-picker'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -8,21 +9,20 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { InfoGrid } from '@/components/ui/InfoGrid'
 import { useAuth } from '@/components/auth/auth-provider'
-import { useMyProfile, userKeys } from '@/hooks/api/use-user-profile'
+import { useMyProfile } from '@/hooks/api/use-user-profile'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
-import { updateMyProfile } from '@/lib/api/users'
+import { useUpdateProfile } from '@/hooks/api/use-update-profile'
 import { useEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 
 export default function ProfileModal() {
   const { walletAddress, signOut } = useAuth()
   const { data: profile, isLoading } = useMyProfile()
   const { data: registrations } = useMyRegistrations()
-  const queryClient = useQueryClient()
+  const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateProfile()
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
+  const [avatarUri, setAvatarUri] = useState<string | null>(null)
 
   useEffect(() => {
     setName(profile?.name ?? '')
@@ -35,19 +35,29 @@ export default function ProfileModal() {
     router.replace('/sign-in')
   }
 
+  async function pickAvatar() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') return
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    })
+    if (!result.canceled) setAvatarUri(result.assets[0].uri)
+  }
+
   async function handleSave() {
-    setIsSaving(true)
     try {
-      const nextProfile = await updateMyProfile({
+      await updateProfile({
         name: name.trim() || undefined,
         username: username.trim() || undefined,
         bio: bio.trim() || undefined,
+        avatarUri: avatarUri ?? undefined,
       })
-      queryClient.setQueryData(userKeys.me, nextProfile)
+      setAvatarUri(null)
     } catch (e) {
       console.error('Profile update failed', e)
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -61,8 +71,12 @@ export default function ProfileModal() {
 
   const profileRows = walletAddress ? [{ label: 'Wallet', value: walletAddress, mono: true }] : []
   const isDirty = useMemo(
-    () => name !== (profile?.name ?? '') || username !== (profile?.username ?? '') || bio !== (profile?.bio ?? ''),
-    [bio, name, profile?.bio, profile?.name, profile?.username, username],
+    () =>
+      name !== (profile?.name ?? '') ||
+      username !== (profile?.username ?? '') ||
+      bio !== (profile?.bio ?? '') ||
+      avatarUri !== null,
+    [avatarUri, bio, name, profile?.bio, profile?.name, profile?.username, username],
   )
 
   return (
@@ -83,6 +97,14 @@ export default function ProfileModal() {
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.nameSection}>
+            <Pressable onPress={pickAvatar} style={styles.avatarWrapper}>
+              {avatarUri || profile?.avatarUrl ? (
+                <Image source={{ uri: avatarUri ?? profile!.avatarUrl! }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]} />
+              )}
+            </Pressable>
+            <Text style={styles.avatarHint}>CHANGE PHOTO</Text>
             <Text style={styles.displayName}>{profile?.name ?? profile?.username ?? 'Anonymous'}</Text>
           </View>
 
@@ -172,7 +194,24 @@ const styles = StyleSheet.create({
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { padding: Spacing.md, gap: Spacing.md },
-  nameSection: { paddingVertical: Spacing.sm },
+  nameSection: { paddingVertical: Spacing.sm, gap: 6 },
+  avatarWrapper: { alignSelf: 'flex-start' },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  avatarPlaceholder: {
+    backgroundColor: Colors.surface2,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+  },
+  avatarHint: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+  },
   displayName: {
     fontFamily: Fonts.display,
     fontSize: 36,
