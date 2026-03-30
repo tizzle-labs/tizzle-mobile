@@ -1,4 +1,5 @@
 import { apiClient } from './client'
+import { uploadEventImage } from './storage'
 
 export interface Event {
   eventPda: string
@@ -37,6 +38,7 @@ export interface CreateEventPayload {
   title: string
   description?: string
   imageUrl?: string
+  imageUri?: string
   location?: string
   category?: string
   capacity: number
@@ -63,7 +65,12 @@ export async function getEventByPda(eventPda: string): Promise<Event> {
 }
 
 export async function createEvent(payload: CreateEventPayload): Promise<Event> {
-  const { data } = await apiClient.post('/v1/events', payload)
+  const { imageUri, ...rest } = payload
+  if (imageUri) {
+    const uploaded = await uploadEventImage(imageUri, payload.eventPda)
+    rest.imageUrl = uploaded.url
+  }
+  const { data } = await apiClient.post('/v1/events', rest)
   return data
 }
 

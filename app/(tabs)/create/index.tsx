@@ -9,8 +9,6 @@ import { useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-ev
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
 import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
 import { showErrorFeedback } from '@/lib/app-feedback'
-import { updateEvent } from '@/lib/api/events'
-import { uploadEventImage } from '@/lib/api/storage'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
@@ -58,8 +56,7 @@ export default function Create() {
   const [capacity, setCapacity] = useState('100')
   const [stakeAmount, setStakeAmount] = useState('0.1')
   const [imageUri, setImageUri] = useState<string | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [successData, setSuccessData] = useState<SuccessData | null>(null)
+const [successData, setSuccessData] = useState<SuccessData | null>(null)
 
   const [startTime, setStartTime] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
   const [endTime, setEndTime] = useState(() => new Date(Date.now() + 27 * 60 * 60 * 1000))
@@ -221,7 +218,7 @@ export default function Create() {
       organizationPda: org.organizationPda,
       title: eventTitle,
       description: eventDesc,
-      imageUrl: '',
+      imageUri: imageUri ?? undefined,
       location,
       category: 'Music',
       capacity: parseInt(capacity) || 100,
@@ -235,19 +232,6 @@ export default function Create() {
     }
     try {
       const result = await createEvent.mutateAsync(input)
-
-      if (imageUri) {
-        setIsUploading(true)
-        try {
-          const uploaded = await uploadEventImage(imageUri, result.eventPda)
-          await updateEvent(result.eventPda, { imageUrl: uploaded.url })
-        } catch (e) {
-          showErrorFeedback(e, 'Image Upload Failed', 'Event was created but the image could not be uploaded.')
-        } finally {
-          setIsUploading(false)
-        }
-      }
-
       setSuccessData({
         txHash: result.signature,
         eventTitle: result.event.title,
@@ -258,8 +242,6 @@ export default function Create() {
       showErrorFeedback(e, 'Event Creation Failed', 'We could not mint this event right now.')
     }
   }
-
-  const isBusy = createEvent.isPending || isUploading
 
   return (
     <View style={styles.container}>
@@ -353,10 +335,10 @@ export default function Create() {
         </Card>
         <Button
           onPress={handleCreateEvent}
-          loading={isBusy}
+          loading={createEvent.isPending}
           disabled={!eventTitle.trim() || !location.trim() || endTime <= startTime}
         >
-          {isUploading ? 'Uploading image…' : createEvent.isPending ? 'Minting on Solana…' : 'Mint on Solana'}
+          {createEvent.isPending ? 'Minting on Solana…' : 'Mint on Solana'}
         </Button>
       </ScrollView>
 

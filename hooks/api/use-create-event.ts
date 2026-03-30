@@ -20,7 +20,7 @@ export interface CreateEventInput {
   organizationPda: string
   title: string
   description: string
-  imageUrl: string
+  imageUri?: string
   location: string
   category: string
   capacity: number
@@ -106,7 +106,7 @@ export function useCreateEvent() {
         gatekeeperAddress: gatekeeper.toString(),
         title: input.title,
         description: input.description,
-        imageUrl: input.imageUrl,
+        imageUri: input.imageUri,
         location: input.location,
         category: input.category,
         capacity: input.capacity,
