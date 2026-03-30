@@ -1,10 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { PublicKey, TransactionMessage, VersionedTransaction, SystemProgram } from '@solana/web3.js'
+import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createOrganization } from '@/lib/api/organizations'
 import { organizationKeys } from './use-my-organizations'
-import { deriveOrganizationPda } from '@/lib/solana/program'
 
 export function useCreateOrganization() {
   const { connection, accounts, signAndSendTransactions } = useMobileWallet()
@@ -16,15 +15,12 @@ export function useCreateOrganization() {
       const walletAddress = accounts?.[0]?.address?.toString()
       if (!walletAddress) throw new Error('Wallet not connected')
       const ownerPubkey = new PublicKey(walletAddress)
-      const organizationPda = deriveOrganizationPda(ownerPubkey)
 
-      const ix = await (program as any).methods
+      const ix = await program.methods
         .createOrganization()
         .accounts({
-          organization: organizationPda,
           owner: ownerPubkey,
           treasury: ownerPubkey,
-          systemProgram: SystemProgram.programId,
         })
         .instruction()
 

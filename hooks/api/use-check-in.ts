@@ -17,7 +17,7 @@ export function useCheckIn() {
       const eventPdaPubkey = new PublicKey(eventPda)
       const registrationPdaPubkey = new PublicKey(registrationPda)
 
-      const ix = await (program as any).methods
+      const ix = await program.methods
         .checkIn()
         .accounts({
           event: eventPdaPubkey,

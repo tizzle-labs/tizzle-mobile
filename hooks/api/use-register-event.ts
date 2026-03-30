@@ -46,7 +46,7 @@ export function useRegisterEvent() {
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       }
 
-      const ix = await (program as any).methods.registerEvent().accounts(ixAccounts).instruction()
+      const ix = await program.methods.registerEvent().accounts(ixAccounts).instruction()
 
       const {
         context: { slot: minContextSlot },

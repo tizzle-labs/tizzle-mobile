@@ -40,7 +40,7 @@ export function useWithdrawEarnings(event: Event | undefined) {
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       }
 
-      const ix = await (program as any).methods.withdrawEarnings().accounts(ixAccounts).instruction()
+      const ix = await program.methods.withdrawEarnings().accounts(ixAccounts).instruction()
 
       const {
         context: { slot: minContextSlot },

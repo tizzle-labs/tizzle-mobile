@@ -1,7 +1,8 @@
-import { Program, AnchorProvider, type Idl } from '@coral-xyz/anchor'
-import { Connection, PublicKey, SystemProgram } from '@solana/web3.js'
 import { AppConfig } from '@/constants/app-config'
-import idl from './idl.json'
+import { AnchorProvider, Program } from '@coral-xyz/anchor'
+import { Connection, PublicKey } from '@solana/web3.js'
+import { TizzleProgram } from './tizzle_program'
+import TizzleIDL from './tizzle_program.json'
 
 export const PROGRAM_ID = new PublicKey(AppConfig.programId)
 
@@ -29,8 +30,7 @@ export function deriveEscrowVaultPda(eventPda: PublicKey): PublicKey {
   return PublicKey.findProgramAddressSync([Buffer.from('escrow'), eventPda.toBuffer()], PROGRAM_ID)[0]
 }
 
-// Create a read-only program instance (no wallet — used to build instructions only)
-export function createReadonlyProgram(connection: Connection): Program {
+export function createReadonlyProgram(connection: Connection): Program<TizzleProgram> {
   const dummyWallet = {
     publicKey: PublicKey.default,
     signTransaction: async (tx: any) => tx,
@@ -39,5 +39,5 @@ export function createReadonlyProgram(connection: Connection): Program {
   const provider = new AnchorProvider(connection, dummyWallet as any, {
     commitment: 'confirmed',
   })
-  return new Program(idl as Idl, provider)
+  return new Program<TizzleProgram>(TizzleIDL, provider)
 }

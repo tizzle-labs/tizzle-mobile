@@ -53,10 +53,10 @@ export function useCreateEvent() {
       const stakeAmountLamports = new BN(Math.floor(input.stakeAmountSol * LAMPORTS_PER_SOL))
       const gatekeeper = input.gatekeeperAddress ? new PublicKey(input.gatekeeperAddress) : organizerPubkey
 
-      const config = await (program as any).account.config.fetch(CONFIG_PDA)
+      const config = await program.account.config.fetch(CONFIG_PDA)
       const platformTreasury = config.treasury as PublicKey
 
-      const ix = await (program as any).methods
+      const ix = await program.methods
         .createEvent(
           eventId,
           input.capacity,
@@ -68,16 +68,11 @@ export function useCreateEvent() {
           new BN(Math.floor(input.unlockTime.getTime() / 1000)),
         )
         .accounts({
-          config: CONFIG_PDA,
-          organization: organizationPda,
-          event: eventPda,
           organizer: organizerPubkey,
-          owner: organizerPubkey,
           platformTreasury,
           stakeTokenMint:
             input.stakeTokenMint === SOL_MINT ? SystemProgram.programId : new PublicKey(input.stakeTokenMint),
           gatekeeper,
-          systemProgram: SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
         })
         .instruction()

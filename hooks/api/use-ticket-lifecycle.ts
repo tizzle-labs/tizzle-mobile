@@ -46,7 +46,7 @@ export function useTicketLifecycle(registration: Registration | undefined, event
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       }
 
-      const ix = await (program as any).methods.refundStake().accounts(ixAccounts).instruction()
+      const ix = await program.methods.refundStake().accounts(ixAccounts).instruction()
 
       const {
         context: { slot: minContextSlot },

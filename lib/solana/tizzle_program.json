@@ -1,0 +1,1248 @@
+{
+  "address": "2MxgNvaBj3UQJrKqJbmjbXDyWRjgE3XLmmofofgX7SME",
+  "metadata": {
+    "name": "tizzle_program",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "check_in",
+      "docs": [
+        "Check in attendee at event"
+      ],
+      "discriminator": [
+        209,
+        253,
+        4,
+        217,
+        250,
+        241,
+        207,
+        50
+      ],
+      "accounts": [
+        {
+          "name": "event",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event.organization",
+                "account": "Event"
+              },
+              {
+                "kind": "account",
+                "path": "event.event_id",
+                "account": "Event"
+              }
+            ]
+          },
+          "relations": [
+            "registration"
+          ]
+        },
+        {
+          "name": "registration",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event"
+              },
+              {
+                "kind": "account",
+                "path": "registration.attendee",
+                "account": "Registration"
+              }
+            ]
+          }
+        },
+        {
+          "name": "gatekeeper",
+          "signer": true,
+          "relations": [
+            "event"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_event",
+      "docs": [
+        "Create a new event"
+      ],
+      "discriminator": [
+        49,
+        219,
+        29,
+        203,
+        22,
+        98,
+        100,
+        87
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "organization",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  114,
+                  103,
+                  97,
+                  110,
+                  105,
+                  122,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "organizer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "organization"
+              },
+              {
+                "kind": "arg",
+                "path": "event_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "organizer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "organization"
+          ]
+        },
+        {
+          "name": "platform_treasury",
+          "writable": true
+        },
+        {
+          "name": "stake_token_mint",
+          "docs": [
+            "Token mint for stake (System Program ID for native SOL)"
+          ]
+        },
+        {
+          "name": "gatekeeper"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "event_id",
+          "type": "pubkey"
+        },
+        {
+          "name": "capacity",
+          "type": "u32"
+        },
+        {
+          "name": "stake_amount",
+          "type": "u64"
+        },
+        {
+          "name": "host_fee_enabled",
+          "type": "bool"
+        },
+        {
+          "name": "host_fee_percent",
+          "type": "u8"
+        },
+        {
+          "name": "start_time",
+          "type": "i64"
+        },
+        {
+          "name": "end_time",
+          "type": "i64"
+        },
+        {
+          "name": "unlock_time",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "create_organization",
+      "docs": [
+        "Create a new organization"
+      ],
+      "discriminator": [
+        60,
+        173,
+        177,
+        39,
+        122,
+        23,
+        68,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "organization",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  114,
+                  103,
+                  97,
+                  110,
+                  105,
+                  122,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "docs": [
+        "Initialize the Tizzle protocol"
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "platform_fee_per_slot",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "refund_stake",
+      "docs": [
+        "Claim refund after event"
+      ],
+      "discriminator": [
+        185,
+        80,
+        20,
+        3,
+        110,
+        92,
+        178,
+        240
+      ],
+      "accounts": [
+        {
+          "name": "event",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event.organization",
+                "account": "Event"
+              },
+              {
+                "kind": "account",
+                "path": "event.event_id",
+                "account": "Event"
+              }
+            ]
+          },
+          "relations": [
+            "registration"
+          ]
+        },
+        {
+          "name": "registration",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event"
+              },
+              {
+                "kind": "account",
+                "path": "attendee"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event"
+              }
+            ]
+          }
+        },
+        {
+          "name": "attendee_token_account",
+          "docs": [
+            "Attendee's token account (only for SPL tokens, ignored for SOL)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "escrow_token_account",
+          "docs": [
+            "Escrow token account (only for SPL tokens, ignored for SOL)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "organization_treasury_token_account",
+          "docs": [
+            "Organization treasury token account (only for SPL tokens, ignored for SOL)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_mint",
+          "docs": [
+            "Token mint (only for SPL tokens, ignored for SOL)"
+          ]
+        },
+        {
+          "name": "attendee",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "registration"
+          ]
+        },
+        {
+          "name": "organization_treasury",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "register_event",
+      "docs": [
+        "Register for an event"
+      ],
+      "discriminator": [
+        206,
+        4,
+        37,
+        59,
+        79,
+        120,
+        169,
+        181
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "organization",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  114,
+                  103,
+                  97,
+                  110,
+                  105,
+                  122,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event.organizer",
+                "account": "Event"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event.organization",
+                "account": "Event"
+              },
+              {
+                "kind": "account",
+                "path": "event.event_id",
+                "account": "Event"
+              }
+            ]
+          }
+        },
+        {
+          "name": "registration",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event"
+              },
+              {
+                "kind": "account",
+                "path": "attendee"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event"
+              }
+            ]
+          }
+        },
+        {
+          "name": "attendee_token_account",
+          "docs": [
+            "Attendee's token account (only for SPL tokens, ignored for SOL)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "escrow_token_account",
+          "docs": [
+            "Escrow token account (only for SPL tokens, ignored for SOL)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_mint",
+          "docs": [
+            "Token mint (only for SPL tokens, ignored for SOL)"
+          ]
+        },
+        {
+          "name": "attendee",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_config",
+      "docs": [
+        "Update protocol configuration"
+      ],
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_platform_fee_per_slot",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "new_treasury",
+          "type": {
+            "option": "pubkey"
+          }
+        },
+        {
+          "name": "new_is_paused",
+          "type": {
+            "option": "bool"
+          }
+        }
+      ]
+    },
+    {
+      "name": "withdraw_earnings",
+      "docs": [
+        "Withdraw earnings from no-show penalties"
+      ],
+      "discriminator": [
+        6,
+        132,
+        233,
+        254,
+        241,
+        87,
+        247,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "event",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event.organization",
+                "account": "Event"
+              },
+              {
+                "kind": "account",
+                "path": "event.event_id",
+                "account": "Event"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow_token_account",
+          "docs": [
+            "Escrow token account (only for SPL tokens, ignored for SOL)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "organization_treasury_token_account",
+          "docs": [
+            "Organization treasury token account (only for SPL tokens, ignored for SOL)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_mint",
+          "docs": [
+            "Token mint (only for SPL tokens, ignored for SOL)"
+          ]
+        },
+        {
+          "name": "organizer",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "event"
+          ]
+        },
+        {
+          "name": "organization_treasury",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "Event",
+      "discriminator": [
+        125,
+        192,
+        125,
+        158,
+        9,
+        115,
+        152,
+        233
+      ]
+    },
+    {
+      "name": "Organization",
+      "discriminator": [
+        145,
+        38,
+        152,
+        251,
+        91,
+        57,
+        118,
+        160
+      ]
+    },
+    {
+      "name": "Registration",
+      "discriminator": [
+        158,
+        129,
+        230,
+        90,
+        93,
+        95,
+        101,
+        55
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ProtocolPaused",
+      "msg": "Protocol is currently paused"
+    },
+    {
+      "code": 6001,
+      "name": "EventCapacityReached",
+      "msg": "Event capacity has been reached"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidEventStatus",
+      "msg": "Event is not in the correct status for this operation"
+    },
+    {
+      "code": 6003,
+      "name": "RegistrationAlreadyExists",
+      "msg": "Registration already exists for this attendee"
+    },
+    {
+      "code": 6004,
+      "name": "NotCheckedIn",
+      "msg": "Attendee has not checked in"
+    },
+    {
+      "code": 6005,
+      "name": "AlreadyRefunded",
+      "msg": "Refund has already been claimed"
+    },
+    {
+      "code": 6006,
+      "name": "UnlockTimeNotReached",
+      "msg": "Unlock time has not been reached"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidHostFeePercent",
+      "msg": "Invalid host fee percentage (must be 0-100)"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidStartTime",
+      "msg": "Event start time must be in the future"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidEndTime",
+      "msg": "Event end time must be after start time"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidUnlockTime",
+      "msg": "Unlock time must be after end time"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidCapacity",
+      "msg": "Capacity must be greater than zero"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidStakeAmount",
+      "msg": "Stake amount must be greater than zero"
+    },
+    {
+      "code": 6013,
+      "name": "UnauthorizedOrganizer",
+      "msg": "Unauthorized: only the organizer can perform this action"
+    },
+    {
+      "code": 6014,
+      "name": "UnauthorizedGatekeeper",
+      "msg": "Unauthorized: only the gatekeeper can perform this action"
+    },
+    {
+      "code": 6015,
+      "name": "UnauthorizedAuthority",
+      "msg": "Unauthorized: only the protocol authority can perform this action"
+    },
+    {
+      "code": 6016,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow occurred"
+    },
+    {
+      "code": 6017,
+      "name": "RegistrationNotFound",
+      "msg": "Registration not found"
+    },
+    {
+      "code": 6018,
+      "name": "CannotCancelTicket",
+      "msg": "Cannot cancel ticket after registration"
+    },
+    {
+      "code": 6019,
+      "name": "EventAlreadyStarted",
+      "msg": "Event has already started"
+    },
+    {
+      "code": 6020,
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds to complete this operation"
+    },
+    {
+      "code": 6021,
+      "name": "AlreadyWithdrawn",
+      "msg": "Organizer has already withdrawn earnings"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidTokenMint",
+      "msg": "Invalid token mint provided"
+    }
+  ],
+  "types": [
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "platform_fee_per_slot",
+            "type": "u64"
+          },
+          {
+            "name": "total_events",
+            "type": "u64"
+          },
+          {
+            "name": "total_tickets",
+            "type": "u64"
+          },
+          {
+            "name": "total_staked_volume",
+            "type": "u64"
+          },
+          {
+            "name": "is_paused",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Event",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "event_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "organizer",
+            "type": "pubkey"
+          },
+          {
+            "name": "organization",
+            "type": "pubkey"
+          },
+          {
+            "name": "capacity",
+            "type": "u32"
+          },
+          {
+            "name": "stake_amount",
+            "type": "u64"
+          },
+          {
+            "name": "stake_token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "host_fee_enabled",
+            "type": "bool"
+          },
+          {
+            "name": "host_fee_percent",
+            "type": "u8"
+          },
+          {
+            "name": "platform_fee_paid",
+            "type": "u64"
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "end_time",
+            "type": "i64"
+          },
+          {
+            "name": "unlock_time",
+            "type": "i64"
+          },
+          {
+            "name": "total_registered",
+            "type": "u32"
+          },
+          {
+            "name": "total_checked_in",
+            "type": "u32"
+          },
+          {
+            "name": "total_staked",
+            "type": "u64"
+          },
+          {
+            "name": "total_refunded",
+            "type": "u32"
+          },
+          {
+            "name": "organizer_withdrawn",
+            "type": "bool"
+          },
+          {
+            "name": "gatekeeper",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Organization",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_events",
+            "type": "u32"
+          },
+          {
+            "name": "total_staked_volume",
+            "type": "u64"
+          },
+          {
+            "name": "is_verified",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Registration",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "event",
+            "type": "pubkey"
+          },
+          {
+            "name": "attendee",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_amount",
+            "type": "u64"
+          },
+          {
+            "name": "checked_in",
+            "type": "bool"
+          },
+          {
+            "name": "refunded",
+            "type": "bool"
+          },
+          {
+            "name": "registered_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
