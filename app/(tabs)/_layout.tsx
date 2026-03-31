@@ -1,24 +1,36 @@
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
 import { Ionicons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { Tabs } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets()
+
+  const handleTabPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+  }
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
+          position: 'absolute',
+          backgroundColor: 'rgba(28, 28, 30, 0.85)',
+          borderTopColor: 'rgba(255, 255, 255, 0.1)',
           borderTopWidth: 1,
-          paddingBottom: 8,
+          paddingBottom: (insets.bottom || 8) + 6,
+          paddingTop: 8,
+          height: 60 + (insets.bottom || 8) + 6,
         },
         tabBarActiveTintColor: Colors.accent,
         tabBarInactiveTintColor: Colors.text2,
         tabBarLabelStyle: {
           fontFamily: Fonts.bodyMedium,
-          fontSize: 10,
+          fontSize: 12,
+          marginTop: 4,
         },
       }}
     >
@@ -26,22 +38,25 @@ export default function TabLayout() {
         name="explore/index"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="compass-outline" size={28} color={color} />,
         }}
+        listeners={{ tabPress: handleTabPress }}
       />
       <Tabs.Screen
         name="tickets/index"
         options={{
           title: 'Tickets',
-          tabBarIcon: ({ color, size }) => <Ionicons name="ticket-outline" size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="ticket-outline" size={28} color={color} />,
         }}
+        listeners={{ tabPress: handleTabPress }}
       />
       <Tabs.Screen
         name="create/index"
         options={{
           title: 'Create',
-          tabBarIcon: ({ color, size }) => <Ionicons name="add-circle-outline" size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="add-circle-outline" size={28} color={color} />,
         }}
+        listeners={{ tabPress: handleTabPress }}
       />
       <Tabs.Screen name="tickets/[registrationPda]" options={{ href: null }} />
     </Tabs>
