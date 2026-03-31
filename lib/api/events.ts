@@ -67,11 +67,14 @@ export async function getEventByPda(eventPda: string): Promise<Event> {
 
 export async function createEvent(payload: CreateEventPayload): Promise<Event> {
   const { imageUri, ...rest } = payload
+  rest.imageUrl = ''
+  const { data } = await apiClient.post('/v1/events', rest)
+
   if (imageUri) {
     const uploaded = await uploadEventImage(imageUri, payload.eventPda)
-    rest.imageUrl = uploaded.url
+    return updateEvent(payload.eventPda, { imageUrl: uploaded.url })
   }
-  const { data } = await apiClient.post('/v1/events', rest)
+
   return data
 }
 

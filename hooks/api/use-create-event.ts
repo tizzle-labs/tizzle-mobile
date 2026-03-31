@@ -67,12 +67,16 @@ export function useCreateEvent() {
           new BN(Math.floor(input.endTime.getTime() / 1000)),
           new BN(Math.floor(input.unlockTime.getTime() / 1000)),
         )
-        .accounts({
+        .accountsPartial({
+          config: CONFIG_PDA,
+          event: eventPda,
           organizer: organizerPubkey,
+          owner: organizerPubkey,
           platformTreasury,
           stakeTokenMint:
             input.stakeTokenMint === SOL_MINT ? SystemProgram.programId : new PublicKey(input.stakeTokenMint),
           gatekeeper,
+          systemProgram: SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
         })
         .instruction()
@@ -115,7 +119,6 @@ export function useCreateEvent() {
         startTime: input.startTime.toISOString(),
         endTime: input.endTime.toISOString(),
         unlockTime: input.unlockTime.toISOString(),
-        transactionSignature: signature,
       })
 
       return { signature, event, eventPda: eventPda.toString() }

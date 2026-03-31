@@ -56,7 +56,7 @@ export default function Create() {
   const [capacity, setCapacity] = useState('100')
   const [stakeAmount, setStakeAmount] = useState('0.1')
   const [imageUri, setImageUri] = useState<string | null>(null)
-const [successData, setSuccessData] = useState<SuccessData | null>(null)
+  const [successData, setSuccessData] = useState<SuccessData | null>(null)
 
   const [startTime, setStartTime] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
   const [endTime, setEndTime] = useState(() => new Date(Date.now() + 27 * 60 * 60 * 1000))
