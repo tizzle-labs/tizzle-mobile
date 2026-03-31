@@ -19,7 +19,8 @@ export async function createOrganization(payload: {
   name: string
   description: string
   avatarUrl?: string
-  transactionSignature: string
+  organizationPda: string
+  treasuryAddress: string
 }): Promise<Organization> {
   const { data } = await apiClient.post('/v1/organizations', payload)
   return data

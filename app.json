@@ -19,7 +19,10 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "app.tizzle.ticket",
-      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -49,7 +52,8 @@
         {
           "cameraPermission": "Tizzle Ticket needs camera access to scan ticket QR codes."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

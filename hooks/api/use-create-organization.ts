@@ -3,6 +3,7 @@ import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createOrganization } from '@/lib/api/organizations'
+import { deriveOrganizationPda } from '@/lib/solana/program'
 import { organizationKeys } from './use-my-organizations'
 
 export function useCreateOrganization() {
@@ -16,11 +17,14 @@ export function useCreateOrganization() {
       if (!walletAddress) throw new Error('Wallet not connected')
       const ownerPubkey = new PublicKey(walletAddress)
 
+      const organizationPda = deriveOrganizationPda(ownerPubkey)
+      const treasuryAddress = ownerPubkey
+
       const ix = await program.methods
         .createOrganization()
         .accounts({
           owner: ownerPubkey,
-          treasury: ownerPubkey,
+          treasury: treasuryAddress,
         })
         .instruction()
 
@@ -40,7 +44,11 @@ export function useCreateOrganization() {
       const signature = Array.isArray(result) ? result[0] : result
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
-      return createOrganization({ ...payload, transactionSignature: signature })
+      return createOrganization({
+        ...payload,
+        organizationPda: organizationPda.toString(),
+        treasuryAddress: treasuryAddress.toString(),
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: organizationKeys.my })
