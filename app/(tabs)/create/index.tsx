@@ -9,6 +9,7 @@ import { useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-ev
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
 import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
 import { showErrorFeedback } from '@/lib/app-feedback'
+import { Ionicons } from '@expo/vector-icons'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
@@ -49,6 +50,8 @@ export default function Create() {
 
   const [orgName, setOrgName] = useState('')
   const [orgDesc, setOrgDesc] = useState('')
+  const [orgTwitter, setOrgTwitter] = useState('')
+  const [orgDiscord, setOrgDiscord] = useState('')
 
   const [eventTitle, setEventTitle] = useState('')
   const [eventDesc, setEventDesc] = useState('')
@@ -167,37 +170,90 @@ export default function Create() {
     return (
       <View style={styles.container}>
         <ScreenHeader title="CREATE" />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.sectionTitle}>CREATE ORGANIZATION</Text>
-          <Text style={styles.sectionDesc}>You need an organization before hosting events.</Text>
-          <Card>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.createOrgHeader}>
+            <Text style={styles.createOrgTitle}>Create Organization</Text>
+            <Text style={styles.createOrgSubtitle}>You need an organization before hosting events on Tizzle.</Text>
+          </View>
+          {/* Avatar picker */}
+          <TouchableOpacity style={styles.orgAvatarPicker} onPress={pickImage} activeOpacity={0.7}>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.orgAvatarImg} contentFit="cover" />
+            ) : (
+              <View style={styles.orgAvatarFallback}>
+                <Ionicons name="business-outline" size={32} color={Colors.text3} />
+              </View>
+            )}
+            <View style={styles.orgAvatarBadge}>
+              <Text style={styles.orgAvatarBadgeText}>+</Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.orgAvatarHint}>Organization logo (optional)</Text>
+          {/* Fields */}
+          <View style={styles.orgFields}>
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>ORG NAME</Text>
+              <Text style={styles.fieldLabel}>ORGANIZATION NAME *</Text>
               <TextInput
                 style={styles.input}
                 placeholder="e.g. Tizzle Events"
                 placeholderTextColor={Colors.text3}
                 value={orgName}
                 onChangeText={setOrgName}
+                maxLength={50}
               />
             </View>
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>DESCRIPTION</Text>
               <TextInput
                 style={[styles.input, styles.multiline]}
-                placeholder="What does your org do?"
+                placeholder="What does your organization do?"
                 placeholderTextColor={Colors.text3}
                 value={orgDesc}
                 onChangeText={setOrgDesc}
                 multiline
-                numberOfLines={3}
+                numberOfLines={4}
+                maxLength={200}
+                textAlignVertical="top"
               />
             </View>
-          </Card>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>X / TWITTER USERNAME</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="@yourhandle"
+                placeholderTextColor={Colors.text3}
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={orgTwitter}
+                onChangeText={setOrgTwitter}
+                maxLength={50}
+              />
+            </View>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>DISCORD SERVER / USERNAME</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="discord.gg/yourserver"
+                placeholderTextColor={Colors.text3}
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={orgDiscord}
+                onChangeText={setOrgDiscord}
+                maxLength={100}
+              />
+            </View>
+          </View>
           <Button
             onPress={async () => {
               try {
-                await createOrg.mutateAsync({ name: orgName, description: orgDesc })
+                await createOrg.mutateAsync({
+                  name: orgName.trim(),
+                  description: orgDesc.trim(),
+                  avatarUrl: undefined, // TODO: upload imageUri and pass avatarUrl
+                  twitter: orgTwitter.trim() || undefined,
+                  discord: orgDiscord.trim() || undefined,
+                })
               } catch (e) {
                 showErrorFeedback(e, 'Organization Creation Failed', 'We could not create your organization.')
               }
@@ -205,8 +261,9 @@ export default function Create() {
             loading={createOrg.isPending}
             disabled={!orgName.trim()}
           >
-            Create Organization on Solana
+            {createOrg.isPending ? 'Creating on Solana…' : 'Create Organization'}
           </Button>
+          <Text style={styles.orgNote}>This will create an on-chain organization on Solana.</Text>
         </ScrollView>
       </View>
     )
@@ -245,100 +302,148 @@ export default function Create() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="CREATE EVENT" />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.orgLabel}>ORG: {org.name}</Text>
-        <Card>
-          {/* Image picker */}
-          <TouchableOpacity style={styles.imagePicker} onPress={pickImage} activeOpacity={0.7}>
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} contentFit="cover" />
-            ) : (
-              <View style={styles.imagePlaceholder}>
-                <Text style={styles.imagePlaceholderIcon}>＋</Text>
-                <Text style={styles.imagePlaceholderText}>ADD EVENT PHOTO</Text>
-                <Text style={styles.imagePlaceholderHint}>16:9 recommended</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+      <ScreenHeader title="Create Event" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Org badge */}
+        <View style={styles.orgBadge}>
+          <Ionicons name="business-outline" size={12} color={Colors.accent} />
+          <Text style={styles.orgLabel}>{org.name}</Text>
+        </View>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>EVENT TITLE</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Solana Devnet Rave"
-              placeholderTextColor={Colors.text3}
-              value={eventTitle}
-              onChangeText={setEventTitle}
-            />
+        {/* Image picker */}
+        <TouchableOpacity style={styles.imagePicker} onPress={pickImage} activeOpacity={0.8}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.imagePreview} contentFit="cover" />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Ionicons name="image-outline" size={28} color={Colors.text3} />
+              <Text style={styles.imagePlaceholderText}>Add Cover Photo</Text>
+              <Text style={styles.imagePlaceholderHint}>16:9 recommended</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Basic info */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Event Info</Text>
+          <View style={styles.card}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>TITLE *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Solana Builder Meetup"
+                placeholderTextColor={Colors.text3}
+                value={eventTitle}
+                onChangeText={setEventTitle}
+                maxLength={80}
+              />
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>DESCRIPTION</Text>
+              <TextInput
+                style={[styles.input, styles.multiline]}
+                placeholder="Describe the event…"
+                placeholderTextColor={Colors.text3}
+                value={eventDesc}
+                onChangeText={setEventDesc}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>LOCATION *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Jakarta / Online"
+                placeholderTextColor={Colors.text3}
+                value={location}
+                onChangeText={setLocation}
+              />
+            </View>
           </View>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>DESCRIPTION</Text>
-            <TextInput
-              style={[styles.input, styles.multiline]}
-              placeholder="Describe the event…"
-              placeholderTextColor={Colors.text3}
-              value={eventDesc}
-              onChangeText={setEventDesc}
-              multiline
-              numberOfLines={3}
-            />
+        </View>
+
+        {/* Date & Time */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Date & Time</Text>
+          <View style={styles.card}>
+            <TouchableOpacity style={styles.fieldGroup} onPress={() => openPicker('startTime')} activeOpacity={0.7}>
+              <Text style={styles.fieldLabel}>START</Text>
+              <View style={styles.dateRow}>
+                <Ionicons name="calendar-outline" size={14} color={Colors.text3} />
+                <Text style={styles.dateValue}>{formatDateTime(startTime)}</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity style={styles.fieldGroup} onPress={() => openPicker('endTime')} activeOpacity={0.7}>
+              <Text style={styles.fieldLabel}>END</Text>
+              <View style={styles.dateRow}>
+                <Ionicons name="calendar-outline" size={14} color={Colors.text3} />
+                <Text style={[styles.dateValue, endTime <= startTime && styles.dateValueError]}>
+                  {formatDateTime(endTime)}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            {endTime <= startTime && <Text style={styles.fieldError}>End time must be after start time</Text>}
+            <View style={styles.divider} />
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>UNLOCK (AUTO)</Text>
+              <View style={styles.dateRow}>
+                <Ionicons name="lock-open-outline" size={14} color={Colors.text3} />
+                <Text style={[styles.dateValue, styles.dateValueMuted]}>
+                  {formatDateTime(new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000))}
+                </Text>
+              </View>
+              <Text style={styles.unlockHint}>Stake released 7 days after event ends</Text>
+            </View>
           </View>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>LOCATION</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Online / City, Country"
-              placeholderTextColor={Colors.text3}
-              value={location}
-              onChangeText={setLocation}
-            />
+        </View>
+
+        {/* Capacity & Stake */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ticket Settings</Text>
+          <View style={styles.card}>
+            <View style={styles.fieldRow}>
+              <View style={[styles.fieldGroup, { flex: 1 }]}>
+                <Text style={styles.fieldLabel}>CAPACITY</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="100"
+                  placeholderTextColor={Colors.text3}
+                  value={capacity}
+                  onChangeText={setCapacity}
+                  keyboardType="number-pad"
+                />
+              </View>
+              <View style={styles.fieldRowDivider} />
+              <View style={[styles.fieldGroup, { flex: 1 }]}>
+                <Text style={styles.fieldLabel}>STAKE (SOL)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0.1"
+                  placeholderTextColor={Colors.text3}
+                  value={stakeAmount}
+                  onChangeText={setStakeAmount}
+                  keyboardType="decimal-pad"
+                />
+              </View>
+            </View>
           </View>
-          <TouchableOpacity style={styles.fieldGroup} onPress={() => openPicker('startTime')} activeOpacity={0.7}>
-            <Text style={styles.fieldLabel}>START TIME</Text>
-            <Text style={styles.dateValue}>{formatDateTime(startTime)}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.fieldGroup} onPress={() => openPicker('endTime')} activeOpacity={0.7}>
-            <Text style={styles.fieldLabel}>END TIME</Text>
-            <Text style={styles.dateValue}>{formatDateTime(endTime)}</Text>
-          </TouchableOpacity>
-          {endTime <= startTime && <Text style={styles.fieldError}>END TIME MUST BE AFTER START TIME</Text>}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>UNLOCK TIME</Text>
-            <Text style={[styles.dateValue, styles.dateValueMuted]}>
-              {formatDateTime(new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000))}
-            </Text>
-            <Text style={styles.unlockHint}>STAKE RELEASED 7 DAYS AFTER EVENT ENDS</Text>
-          </View>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>CAPACITY</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="100"
-              placeholderTextColor={Colors.text3}
-              value={capacity}
-              onChangeText={setCapacity}
-              keyboardType="number-pad"
-            />
-          </View>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>STAKE AMOUNT (SOL)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="0.1"
-              placeholderTextColor={Colors.text3}
-              value={stakeAmount}
-              onChangeText={setStakeAmount}
-              keyboardType="decimal-pad"
-            />
-          </View>
-        </Card>
+        </View>
+
         <Button
           onPress={handleCreateEvent}
           loading={createEvent.isPending}
           disabled={!eventTitle.trim() || !location.trim() || endTime <= startTime}
         >
-          {createEvent.isPending ? 'Minting on Solana…' : 'Mint on Solana'}
+          {createEvent.isPending ? 'Creating on Solana…' : 'Create Event'}
         </Button>
       </ScrollView>
 
@@ -372,65 +477,51 @@ export default function Create() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scrollContent: { padding: Spacing.md, gap: Spacing.md },
-  sectionTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 24,
-    color: Colors.text1,
-    letterSpacing: ls(24, LS.display),
-  },
-  sectionDesc: {
-    fontFamily: Fonts.body,
-    fontSize: 14,
-    color: Colors.text2,
-    lineHeight: 22,
-  },
-  orgLabel: {
-    fontFamily: Fonts.mono,
-    fontSize: 10,
-    color: Colors.text3,
-    letterSpacing: ls(10, LS.label),
-    textTransform: 'uppercase',
-  },
-  imagePicker: {
-    marginBottom: Spacing.md,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  imagePreview: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: 8,
-  },
+  scrollContent: { padding: Spacing.md, gap: Spacing.lg, paddingBottom: 160 },
+
+  orgBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  orgLabel: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.accent, letterSpacing: ls(11, LS.labelNarrow) },
+
+  imagePicker: { borderRadius: 16, overflow: 'hidden', marginBottom: Spacing.xs },
+  imagePreview: { width: '100%', aspectRatio: 16 / 9 },
   imagePlaceholder: {
     width: '100%',
     aspectRatio: 16 / 9,
     borderWidth: 1,
     borderColor: Colors.border2,
     borderStyle: 'dashed',
-    borderRadius: 8,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 6,
+    backgroundColor: Colors.surface,
   },
-  imagePlaceholderIcon: {
-    fontSize: 24,
-    color: Colors.text3,
-  },
-  imagePlaceholderText: {
+  imagePlaceholderText: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text2 },
+  imagePlaceholderHint: {
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.text3,
     letterSpacing: ls(9, LS.labelWide),
   },
-  imagePlaceholderHint: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.label),
-    opacity: 0.5,
+
+  section: { gap: Spacing.sm },
+  sectionTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 18,
+    color: Colors.text1,
+    letterSpacing: ls(18, LS.displaySubtle),
   },
-  fieldGroup: { gap: 6, marginBottom: Spacing.md },
+
+  card: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+  },
+  divider: { height: 1, backgroundColor: Colors.border },
+
+  fieldGroup: { paddingVertical: Spacing.md, gap: 6 },
   fieldLabel: {
     fontFamily: Fonts.mono,
     fontSize: 9,
@@ -438,38 +529,80 @@ const styles = StyleSheet.create({
     letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
-  input: {
-    fontFamily: Fonts.body,
-    fontSize: 16,
-    color: Colors.text1,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border2,
-    paddingVertical: 8,
-  },
-  multiline: { minHeight: 72, textAlignVertical: 'top' },
-  dateValue: {
-    fontFamily: Fonts.body,
-    fontSize: 16,
-    color: Colors.text1,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border2,
-    paddingVertical: 8,
-  },
+  input: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1, paddingVertical: 0 },
+  multiline: { minHeight: 64, textAlignVertical: 'top' },
+
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dateValue: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1 },
   dateValueMuted: { color: Colors.text2 },
+  dateValueError: { color: Colors.error },
   fieldError: {
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.error,
     letterSpacing: ls(9, LS.labelWide),
-    textTransform: 'uppercase',
-    marginTop: -8,
+    paddingBottom: Spacing.sm,
   },
   unlockHint: {
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.text3,
     letterSpacing: ls(9, LS.labelWide),
-    marginTop: 4,
+    marginTop: 2,
+  },
+
+  fieldRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  fieldRowDivider: { width: 1, backgroundColor: Colors.border, alignSelf: 'stretch', marginVertical: Spacing.md },
+  sectionDesc: {
+    fontFamily: Fonts.body,
+    fontSize: 14,
+    color: Colors.text2,
+    lineHeight: 22,
+  },
+  createOrgHeader: { gap: 6, marginBottom: Spacing.lg },
+  createOrgTitle: { fontFamily: Fonts.display, fontSize: 28, color: Colors.text1, letterSpacing: ls(28, LS.display) },
+  createOrgSubtitle: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, lineHeight: 20 },
+  orgAvatarPicker: { alignSelf: 'center', position: 'relative', marginBottom: Spacing.xs },
+  orgAvatarImg: { width: 88, height: 88, borderRadius: 44 },
+  orgAvatarFallback: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: Colors.surface2,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orgAvatarBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.bg,
+  },
+  orgAvatarBadgeText: { color: Colors.bg, fontSize: 16, fontFamily: Fonts.display, lineHeight: 20 },
+  orgAvatarHint: {
+    fontFamily: Fonts.body,
+    fontSize: 12,
+    color: Colors.text3,
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+  },
+  orgFields: { gap: Spacing.md, marginBottom: Spacing.lg },
+  orgNote: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    textAlign: 'center',
+    letterSpacing: ls(9, LS.labelWide),
+    marginTop: Spacing.sm,
   },
   pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   pickerContainer: {

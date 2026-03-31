@@ -8,6 +8,7 @@ export interface Organization {
   avatarUrl: string
   website: string
   twitter: string
+  discord: string
 }
 
 export async function getMyOrganizations(): Promise<Organization[]> {
@@ -19,6 +20,8 @@ export async function createOrganization(payload: {
   name: string
   description: string
   avatarUrl?: string
+  twitter?: string
+  discord?: string
   organizationPda: string
   treasuryAddress: string
 }): Promise<Organization> {

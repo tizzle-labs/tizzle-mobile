@@ -4,7 +4,7 @@ export const Colors = {
   surface2: '#1A1A1A',
   border: 'rgba(255,255,255,0.08)',
   border2: 'rgba(255,255,255,0.14)',
-  accent: '#CAFF00',
+  accent: '#8FF363',
   text1: '#FFFFFF',
   text2: '#888888',
   text3: '#444444',

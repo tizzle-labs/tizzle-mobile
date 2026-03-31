@@ -7,24 +7,11 @@ import type { Event } from '@/lib/api/events'
 import type { Registration } from '@/lib/api/registrations'
 import { deriveTicketStatus, type TicketStatus } from '@/lib/ticket-status'
 import { Ionicons } from '@expo/vector-icons'
+import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { useMemo } from 'react'
-import {
-  ActivityIndicator,
-  Dimensions,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-
-const { width: SCREEN_W } = Dimensions.get('window')
-const CARD_W = SCREEN_W - Spacing.md * 2
-
-// ─── helpers ────────────────────────────────────────────────────────────────
 
 function ticketStatus(reg: Registration, event?: Event): TicketStatus {
   if (!event) {
@@ -36,176 +23,125 @@ function ticketStatus(reg: Registration, event?: Event): TicketStatus {
 }
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const d = new Date(iso),
+    now = new Date(),
+    tmr = new Date(now)
+  tmr.setDate(now.getDate() + 1)
+  if (d.toDateString() === now.toDateString()) return 'Today'
+  if (d.toDateString() === tmr.toDateString()) return 'Tomorrow'
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
-
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-function shortPda(pda: string) {
-  return `${pda.slice(0, 4)}…${pda.slice(-4)}`
+const STATUS_META: Record<TicketStatus, { color: string; label: string }> = {
+  valid: { color: Colors.accent, label: 'VALID' },
+  used: { color: Colors.error, label: 'USED' },
+  claimable: { color: Colors.chain, label: 'CLAIM' },
+  refunded: { color: Colors.success, label: 'REFUNDED' },
+  'no-show': { color: Colors.warning, label: 'NO-SHOW' },
+  cancelled: { color: Colors.text3, label: 'CANCELLED' },
 }
+const TICKET_BG = '#f0efeb'
+const TICKET_TEXT = '#1A1200'
 
-const STATUS_COLOR: Record<TicketStatus, string> = {
-  valid: Colors.accent,
-  used: Colors.error,
-  claimable: Colors.chain,
-  refunded: Colors.success,
-  'no-show': Colors.warning,
-  cancelled: Colors.text3,
-}
-
-// ─── TicketCard ──────────────────────────────────────────────────────────────
-
-function TicketCard({ registration, event, index }: { registration: Registration; event?: Event; index: number }) {
-  const status = ticketStatus(registration, event)
-  const accentColor = STATUS_COLOR[status]
-
-  // Alternate card accent colors for visual variety
-  const cardColors = ['#1A1A2E', '#16213E', '#0F3460', '#1A1A1A']
-  const cardBg = cardColors[index % cardColors.length]
-
+function TicketCard({ registration: reg, event }: { registration: Registration; event?: Event }) {
+  const status = ticketStatus(reg, event)
+  const m = STATUS_META[status]
   return (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: cardBg }]}
-      onPress={() => router.push(`/(tabs)/tickets/${registration.registrationPda}`)}
+      style={s.ticket}
+      onPress={() => router.push(`/(modals)/tickets/${reg.registrationPda}`)}
       activeOpacity={0.85}
     >
-      {/* Left accent strip */}
-      <View style={[styles.cardStrip, { backgroundColor: accentColor }]} />
-
-      {/* Main content */}
-      <View style={styles.cardBody}>
-        <View style={styles.cardTop}>
-          <View style={styles.cardTitleBlock}>
-            <Text style={styles.cardTitle} numberOfLines={1}>
-              {event?.title ?? 'Untitled Event'}
-            </Text>
-            <Text style={styles.cardLocation} numberOfLines={1}>
-              {event?.location ?? 'Location unavailable'}
-            </Text>
-          </View>
-          {/* Status pill */}
-          <View style={[styles.statusPill, { backgroundColor: accentColor + '22', borderColor: accentColor + '55' }]}>
-            <Text style={[styles.statusText, { color: accentColor }]}>{status.toUpperCase()}</Text>
-          </View>
-        </View>
-
-        {/* Perforated divider */}
-        <View style={styles.perfRow}>
-          <View style={[styles.perfCircle, styles.perfLeft]} />
-          <View style={styles.perfDash} />
-          <View style={[styles.perfCircle, styles.perfRight]} />
-        </View>
-
-        {/* Bottom info row */}
-        <View style={styles.cardBottom}>
-          <View style={styles.cardInfoCol}>
-            <Text style={styles.cardInfoLabel}>DATE</Text>
-            <Text style={styles.cardInfoValue}>
-              {event ? fmtDate(event.startTime) : fmtDate(registration.registeredAt)}
+      {reg.checkedIn && (
+        <Image source={require('../../../assets/images/check-in-stamp.png')} style={s.stamp} contentFit="contain" />
+      )}
+      {/* Top section */}
+      <View style={s.ticketTop}>
+        <Image source={{ uri: event?.imageUrl }} style={s.ticketImg} contentFit="cover" />
+        <View style={s.ticketInfo}>
+          <Text style={s.orgText} numberOfLines={1}>
+            {event?.location ?? 'Location TBA'}
+          </Text>
+          <Text style={s.ticketTitle} numberOfLines={2}>
+            {event?.title ?? 'Untitled Event'}
+          </Text>
+          <View style={s.dateRow}>
+            <Ionicons name="calendar-outline" size={11} color={TICKET_TEXT} />
+            <Text style={s.dateText}>
+              {event ? `${fmtDate(event.startTime)}, ${fmtTime(event.startTime)}` : fmtDate(reg.registeredAt)}
             </Text>
           </View>
-          {event && (
-            <View style={styles.cardInfoCol}>
-              <Text style={styles.cardInfoLabel}>TIME</Text>
-              <Text style={styles.cardInfoValue}>{fmtTime(event.startTime)}</Text>
-            </View>
-          )}
-          <View style={[styles.cardInfoCol, styles.cardInfoRight]}>
-            <Text style={styles.cardInfoLabel}>REF</Text>
-            <Text style={[styles.cardInfoValue, styles.cardPda]}>{shortPda(registration.registrationPda)}</Text>
-          </View>
         </View>
+        <Text style={s.statusLabel}>{m.label}</Text>
       </View>
 
-      {/* Barcode stub */}
-      <View style={styles.cardStub}>
-        <View style={styles.barcodeLines}>
-          {Array.from({ length: 12 }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.barcodeLine,
-                { width: i % 3 === 0 ? 3 : 1.5, backgroundColor: Colors.text3 + (i % 2 === 0 ? 'CC' : '66') },
-              ]}
-            />
-          ))}
+      {/* Tear line */}
+      <View style={s.tearRow}>
+        <View style={s.notchL} />
+        <View style={s.tearDash} />
+        <View style={s.notchR} />
+      </View>
+
+      {/* Stub */}
+      <View style={s.stub}>
+        <View style={s.refBlock}>
+          <Text style={s.refLabel}>REGISTERED</Text>
+          <Text style={s.refVal}>{fmtDate(reg.registeredAt)}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={14} color={Colors.text3} style={{ marginTop: 8 }} />
+        <Ionicons name="chevron-forward" size={16} color={TICKET_TEXT} />
       </View>
     </TouchableOpacity>
   )
 }
 
-// ─── Screen ──────────────────────────────────────────────────────────────────
-
 export default function Tickets() {
   const { data: registrations, isLoading, refetch, isRefetching } = useMyRegistrations()
   const { data: events, refetch: refetchEvents, isRefetching: isRefetchingEvents } = useEvents()
   const insets = useSafeAreaInsets()
-
   const eventsByPda = useMemo(() => new Map((events ?? []).map((e) => [e.eventPda, e])), [events])
-
   const onRefresh = () => {
     void Promise.all([refetch(), refetchEvents()])
   }
   const refreshing = (isRefetching ?? false) || (isRefetchingEvents ?? false)
 
   return (
-    <View style={styles.container}>
-      {/* ── Hero header ── */}
-      <View style={[styles.hero, { paddingTop: insets.top + Spacing.sm }]}>
-        <Text style={styles.heroBg} numberOfLines={1} allowFontScaling={false}>
-          TCKTS
-        </Text>
-        <View style={styles.heroContent}>
-          <View>
-            <Text style={styles.heroLabel}>YOUR COLLECTION</Text>
-            <Text style={styles.heroTitle}>My Tickets</Text>
-          </View>
-          <View style={styles.heroCount}>
-            <Text style={styles.heroCountNum}>{registrations?.length ?? 0}</Text>
-            <Text style={styles.heroCountLabel}>total</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ── List ── */}
+    <View style={s.container}>
       {isLoading ? (
-        <View style={styles.center}>
+        <View style={s.center}>
           <ActivityIndicator color={Colors.accent} />
         </View>
       ) : (
         <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
+          style={s.scroll}
+          contentContainerStyle={[
+            s.scrollContent,
+            { paddingTop: insets.top + Spacing.sm, paddingBottom: insets.bottom + 80 },
+          ]}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />}
         >
+          <View style={s.header}>
+            <Text style={s.headerTitle}>My Tickets</Text>
+            <TouchableOpacity onPress={() => router.push('/(modals)/claim')} style={s.claimBtn}>
+              <Text style={s.claimBtnText}>Claim</Text>
+            </TouchableOpacity>
+          </View>
           {registrations && registrations.length > 0 ? (
-            <>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionLabel}>ALL TICKETS</Text>
-                <View style={styles.sectionLine} />
-              </View>
-              {registrations.map((reg, i) => (
-                <TicketCard
-                  key={reg.registrationPda}
-                  registration={reg}
-                  event={eventsByPda.get(reg.eventPda)}
-                  index={i}
-                />
+            <View style={s.list}>
+              {registrations.map((reg) => (
+                <TicketCard key={reg.registrationPda} registration={reg} event={eventsByPda.get(reg.eventPda)} />
               ))}
-            </>
+            </View>
           ) : (
-            <View style={styles.empty}>
-              <Ionicons name="ticket-outline" size={48} color={Colors.text3} />
-              <Text style={styles.emptyTitle}>No tickets yet</Text>
-              <Text style={styles.emptyBody}>Register for an event to see your tickets here.</Text>
-              <TouchableOpacity style={styles.exploreBtn} onPress={() => router.push('/(tabs)/explore')}>
-                <Text style={styles.exploreBtnText}>Explore Events</Text>
+            <View style={s.empty}>
+              <Ionicons name="ticket-outline" size={44} color={Colors.text3} />
+              <Text style={s.emptyTitle}>No tickets yet</Text>
+              <Text style={s.emptyBody}>Register for an event to see your tickets here.</Text>
+              <TouchableOpacity style={s.exploreBtn} onPress={() => router.push('/(tabs)/explore')}>
+                <Text style={s.exploreBtnText}>Explore Events</Text>
                 <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
               </TouchableOpacity>
             </View>
@@ -216,203 +152,118 @@ export default function Tickets() {
   )
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-
-  // ── Hero ──
-  hero: {
-    backgroundColor: Colors.surface,
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.lg,
-    overflow: 'hidden',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  heroBg: {
-    position: 'absolute',
-    bottom: -12,
-    right: -8,
-    fontFamily: Fonts.display,
-    fontSize: 96,
-    color: Colors.text1,
-    opacity: 0.04,
-    letterSpacing: ls(96, LS.displayTight),
-  },
-  heroContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    marginTop: Spacing.sm,
-  },
-  heroLabel: {
-    fontFamily: Fonts.mono,
-    fontSize: 10,
-    color: Colors.accent,
-    letterSpacing: ls(10, LS.labelWide),
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  heroTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 34,
-    color: Colors.text1,
-    letterSpacing: ls(34, LS.display),
-    lineHeight: 38,
-  },
-  heroCount: {
-    alignItems: 'center',
-    backgroundColor: Colors.surface2,
-    borderRadius: 12,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border2,
-  },
-  heroCountNum: {
-    fontFamily: Fonts.display,
-    fontSize: 24,
-    color: Colors.accent,
-    letterSpacing: ls(24, LS.display),
-  },
-  heroCountLabel: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
-    textTransform: 'uppercase',
-  },
-
-  // ── Scroll ──
   scroll: { flex: 1 },
-  scrollContent: { paddingTop: Spacing.md },
-
-  sectionHeader: {
+  scrollContent: { paddingHorizontal: Spacing.md },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+    justifyContent: 'space-between',
+    marginBottom: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
-  sectionLabel: {
+  claimBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: Colors.accent,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  claimBtnText: {
+    fontFamily: Fonts.display,
+    fontSize: 14,
+    color: Colors.bg,
+  },
+  headerTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 18,
+    color: Colors.text1,
+    letterSpacing: ls(18, LS.displaySubtle),
+  },
+  list: { gap: Spacing.md },
+  ticket: {
+    backgroundColor: TICKET_BG,
+    borderRadius: 16,
+    overflow: 'visible',
+  },
+  stamp: { position: 'absolute', top: 8, right: 8, width: 100, height: 100, opacity: 0.9, zIndex: 10 },
+  ticketTop: { flexDirection: 'row', padding: Spacing.md, gap: Spacing.md, alignItems: 'flex-start' },
+  ticketImg: { width: 68, height: 68, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.15)', flexShrink: 0 },
+  ticketInfo: { flex: 1, gap: 3, minWidth: 0 },
+  orgText: {
     fontFamily: Fonts.mono,
     fontSize: 10,
-    color: Colors.text3,
-    letterSpacing: ls(10, LS.labelWide),
-    textTransform: 'uppercase',
+    color: TICKET_TEXT,
+    letterSpacing: ls(10, LS.labelNarrow),
+    opacity: 0.6,
   },
-  sectionLine: { flex: 1, height: 1, backgroundColor: Colors.border },
-
-  // ── Ticket Card ──
-  card: {
-    flexDirection: 'row',
-    width: CARD_W,
-    marginHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border2,
-  },
-  cardStrip: { width: 4 },
-  cardBody: { flex: 1, padding: Spacing.md },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  cardTitleBlock: { flex: 1 },
-  cardTitle: {
+  ticketTitle: {
     fontFamily: Fonts.display,
-    fontSize: 17,
-    color: Colors.text1,
-    letterSpacing: ls(17, LS.displaySubtle),
-    marginBottom: 3,
+    fontSize: 15,
+    color: TICKET_TEXT,
+    letterSpacing: ls(15, LS.displaySubtle),
+    lineHeight: 19,
   },
-  cardLocation: {
-    fontFamily: Fonts.body,
-    fontSize: 12,
-    color: Colors.text2,
-  },
-  statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 99,
-    borderWidth: 1,
-  },
-  statusText: {
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  dateText: { fontFamily: Fonts.mono, fontSize: 10, color: TICKET_TEXT, opacity: 0.6 },
+  statusLabel: {
     fontFamily: Fonts.mono,
     fontSize: 9,
     letterSpacing: ls(9, LS.label),
+    color: TICKET_TEXT,
+    opacity: 0.7,
+    flexShrink: 0,
+    marginTop: 2,
   },
-
-  // perforated divider
-  perfRow: {
+  tearRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: Spacing.sm,
+    height: 14,
+    overflow: 'hidden',
   },
-  perfCircle: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  notchL: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: Colors.bg,
+    marginLeft: -7,
+    flexShrink: 0,
   },
-  perfLeft: { marginLeft: -Spacing.md - 6 },
-  perfRight: { marginRight: -Spacing.md - 6 },
-  perfDash: {
+  notchR: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: Colors.bg,
+    marginRight: -7,
+    flexShrink: 0,
+  },
+  tearDash: {
     flex: 1,
-    height: 1,
     borderStyle: 'dashed',
     borderWidth: 1,
-    borderColor: Colors.border2,
-    marginHorizontal: Spacing.xs,
+    height: 0,
   },
-
-  cardBottom: {
+  stub: {
     flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 4,
     gap: Spacing.md,
   },
-  cardInfoCol: { gap: 2 },
-  cardInfoRight: { marginLeft: 'auto' },
-  cardInfoLabel: {
+  refBlock: { flex: 1, gap: 2 },
+  refLabel: {
     fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
+    fontSize: 8,
+    color: TICKET_TEXT,
+    opacity: 0.5,
+    letterSpacing: ls(8, LS.labelWide),
     textTransform: 'uppercase',
   },
-  cardInfoValue: {
-    fontFamily: Fonts.mono,
-    fontSize: 11,
-    color: Colors.text1,
-  },
-  cardPda: { color: Colors.text2 },
-
-  // barcode stub
-  cardStub: {
-    width: 36,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderLeftWidth: 1,
-    borderLeftColor: Colors.border,
-  },
-  barcodeLines: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    height: 48,
-  },
-  barcodeLine: {
-    height: '100%',
-    borderRadius: 1,
-  },
-
-  // ── Center / Empty ──
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  refVal: { fontFamily: Fonts.mono, fontSize: 11, color: TICKET_TEXT, opacity: 0.8 },
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -427,13 +278,7 @@ const styles = StyleSheet.create({
     letterSpacing: ls(22, LS.display),
     marginTop: Spacing.sm,
   },
-  emptyBody: {
-    fontFamily: Fonts.body,
-    fontSize: 14,
-    color: Colors.text2,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  emptyBody: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, textAlign: 'center', lineHeight: 20 },
   exploreBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -444,9 +289,5 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     marginTop: Spacing.sm,
   },
-  exploreBtnText: {
-    fontFamily: Fonts.bodyMedium,
-    fontSize: 13,
-    color: Colors.bg,
-  },
+  exploreBtnText: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.bg },
 })

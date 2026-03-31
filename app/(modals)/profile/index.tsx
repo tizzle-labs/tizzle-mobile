@@ -1,265 +1,306 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Image, Pressable } from 'react-native'
-import { router } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import * as ImagePicker from 'expo-image-picker'
+import { useAuth } from '@/components/auth/auth-provider'
+import { deriveEventStatus, EventStatusChip } from '@/components/event/EventStatusChip'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { InfoGrid } from '@/components/ui/InfoGrid'
-import { useAuth } from '@/components/auth/auth-provider'
-import { useMyProfile } from '@/hooks/api/use-user-profile'
+import { useEvents } from '@/hooks/api/use-events'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
-import { useUpdateProfile } from '@/hooks/api/use-update-profile'
-import { useEffect, useMemo, useState } from 'react'
+import { useMyProfile } from '@/hooks/api/use-user-profile'
+import type { Event } from '@/lib/api/events'
+import { Ionicons } from '@expo/vector-icons'
+import { Image } from 'expo-image'
+import { router } from 'expo-router'
+import { useMemo } from 'react'
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+function formatEventDate(iso: string): string {
+  const date = new Date(iso)
+  const now = new Date()
+  const tomorrow = new Date(now)
+  tomorrow.setDate(now.getDate() + 1)
+  const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+  if (date.toDateString() === now.toDateString()) return `Today, ${time}`
+  if (date.toDateString() === tomorrow.toDateString()) return `Tomorrow, ${time}`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + `, ${time}`
+}
+
+function shortAddr(addr: string) {
+  return !addr || addr.length < 10 ? addr : `${addr.slice(0, 4)}...${addr.slice(-4)}`
+}
+
+function HistoryEventRow({ event, onPress }: { event: Event; onPress: () => void }) {
+  const status = deriveEventStatus(event.startTime, event.endTime, event.unlockTime)
+  return (
+    <TouchableOpacity style={s.eventRow} onPress={onPress} activeOpacity={0.75}>
+      <Image source={{ uri: event.imageUrl }} style={s.eventThumb} contentFit="cover" />
+      <View style={s.eventInfo}>
+        <View style={s.eventTopRow}>
+          <View style={s.orgAvatar}>
+            <Ionicons name="business-outline" size={10} color={Colors.text3} />
+          </View>
+          <Text style={[s.orgName, { flex: 1 }]} numberOfLines={1}>
+            {shortAddr(event.organizerAddress)}
+          </Text>
+          <EventStatusChip status={status} />
+        </View>
+        <Text style={s.eventTitle} numberOfLines={2}>
+          {event.title}
+        </Text>
+        <View style={s.eventDateRow}>
+          <Ionicons name="time-outline" size={11} color={Colors.text3} />
+          <Text style={s.eventDate}>{formatEventDate(event.startTime)}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  )
+}
 
 export default function ProfileModal() {
-  const { walletAddress, signOut } = useAuth()
+  const { walletAddress } = useAuth()
   const { data: profile, isLoading } = useMyProfile()
   const { data: registrations } = useMyRegistrations()
-  const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateProfile()
-  const [name, setName] = useState('')
-  const [username, setUsername] = useState('')
-  const [bio, setBio] = useState('')
-  const [avatarUri, setAvatarUri] = useState<string | null>(null)
+  const { data: events } = useEvents()
+  const insets = useSafeAreaInsets()
 
-  useEffect(() => {
-    setName(profile?.name ?? '')
-    setUsername(profile?.username ?? '')
-    setBio(profile?.bio ?? '')
-  }, [profile?.bio, profile?.name, profile?.username])
+  const eventsByPda = useMemo(() => new Map((events ?? []).map((e) => [e.eventPda, e])), [events])
 
-  async function handleSignOut() {
-    await signOut()
-    router.replace('/sign-in')
+  const attendedCount = registrations?.filter((r) => r.checkedIn).length ?? 0
+  // TODO: Replace with real hosted events count once organizer API is available
+  const hostedCount = 0
+
+  // History: events the user has registered for
+  const historyEvents = useMemo(() => {
+    return (registrations ?? []).map((r) => eventsByPda.get(r.eventPda)).filter((e): e is Event => !!e)
+  }, [registrations, eventsByPda])
+
+  const displayName = profile?.name || profile?.username || shortAddr(walletAddress ?? '')
+  const joinedDate = 'Mar 2025' // TODO: Replace with real joinedAt field once backend provides it
+
+  if (isLoading) {
+    return (
+      <View style={s.loading}>
+        <ActivityIndicator color={Colors.accent} />
+      </View>
+    )
   }
-
-  async function pickAvatar() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== 'granted') return
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    })
-    if (!result.canceled) setAvatarUri(result.assets[0].uri)
-  }
-
-  async function handleSave() {
-    try {
-      await updateProfile({
-        name: name.trim() || undefined,
-        username: username.trim() || undefined,
-        bio: bio.trim() || undefined,
-        avatarUri: avatarUri ?? undefined,
-      })
-      setAvatarUri(null)
-    } catch (e) {
-      console.error('Profile update failed', e)
-    }
-  }
-
-  const statsRows = [
-    { label: 'Tickets', value: String(registrations?.length ?? 0) },
-    {
-      label: 'Check-ins',
-      value: String(registrations?.filter((r) => r.checkedIn).length ?? 0),
-    },
-  ]
-
-  const profileRows = walletAddress ? [{ label: 'Wallet', value: walletAddress, mono: true }] : []
-  const isDirty = useMemo(
-    () =>
-      name !== (profile?.name ?? '') ||
-      username !== (profile?.username ?? '') ||
-      bio !== (profile?.bio ?? '') ||
-      avatarUri !== null,
-    [avatarUri, bio, name, profile?.bio, profile?.name, profile?.username, username],
-  )
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.title}>PROFILE</Text>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.closeText}>✕</Text>
+    <View style={s.container}>
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={[
+          s.scrollContent,
+          { paddingTop: insets.top + Spacing.sm, paddingBottom: insets.bottom + 40 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header ── */}
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => router.back()} style={s.iconBtn} hitSlop={8}>
+            <Ionicons name="arrow-back" size={20} color={Colors.text1} />
+          </TouchableOpacity>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity onPress={() => router.push('/(modals)/settings')} style={s.iconBtn} hitSlop={8}>
+            <Ionicons name="settings-outline" size={20} color={Colors.text1} />
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
-
-      {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={Colors.accent} />
-        </View>
-      ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.nameSection}>
-            <Pressable onPress={pickAvatar} style={styles.avatarWrapper}>
-              {avatarUri || profile?.avatarUrl ? (
-                <Image source={{ uri: avatarUri ?? profile!.avatarUrl! }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, styles.avatarPlaceholder]} />
-              )}
-            </Pressable>
-            <Text style={styles.avatarHint}>CHANGE PHOTO</Text>
-            <Text style={styles.displayName}>{profile?.name ?? profile?.username ?? 'Anonymous'}</Text>
+        {/* ── Avatar + Identity ── */}
+        <View style={s.identity}>
+          <View style={s.avatarWrap}>
+            {profile?.avatarUrl ? (
+              <Image source={{ uri: profile.avatarUrl }} style={s.avatar} contentFit="cover" />
+            ) : (
+              <View style={[s.avatar, s.avatarFallback]}>
+                <Ionicons name="person" size={32} color={Colors.text3} />
+              </View>
+            )}
           </View>
-
-          <Card>
-            <Text style={styles.sectionLabel}>EDIT PROFILE</Text>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>NAME</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Your display name"
-                placeholderTextColor={Colors.text3}
-                value={name}
-                onChangeText={setName}
-                maxLength={30}
+          <View style={s.nameRow}>
+            <Text style={s.displayName}>{displayName}</Text>
+            {/* TODO: Show verified badge once backend provides isVerified field */}
+          </View>
+          {profile?.username && <Text style={s.username}>@{profile.username}</Text>}
+          {profile?.bio && <Text style={s.bio}>{profile.bio}</Text>}
+          <View style={s.joinedRow}>
+            <Ionicons name="calendar-outline" size={12} color={Colors.text3} />
+            <Text style={s.joinedText}>Joined {joinedDate}</Text>
+          </View>
+        </View>
+        {/* ── Stats ── */}
+        <View style={s.statsRow}>
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{hostedCount}</Text>
+            <Text style={s.statLabel}>Hosted</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{attendedCount}</Text>
+            <Text style={s.statLabel}>Attended</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{registrations?.length ?? 0}</Text>
+            <Text style={s.statLabel}>Tickets</Text>
+          </View>
+        </View>
+        {/* ── Badges ── */}
+        {/* TODO: Replace with real badges once backend provides badge/achievement API */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Badges</Text>
+          <View style={s.badgesPlaceholder}>
+            <Ionicons name="ribbon-outline" size={24} color={Colors.text3} />
+            <Text style={s.placeholderText}>Badges coming soon</Text>
+          </View>
+        </View>
+        {/* ── Event History ── */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Event History</Text>
+          {historyEvents.length > 0 ? (
+            historyEvents.map((event) => (
+              <HistoryEventRow
+                key={event.eventPda}
+                event={event}
+                onPress={() => router.push(`/(modals)/event/${event.eventPda}`)}
               />
+            ))
+          ) : (
+            <View style={s.emptyInline}>
+              <Text style={s.emptyText}>No events attended yet.</Text>
             </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>USERNAME</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="your-handle"
-                placeholderTextColor={Colors.text3}
-                autoCapitalize="none"
-                value={username}
-                onChangeText={setUsername}
-                maxLength={24}
-              />
-            </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>BIO</Text>
-              <TextInput
-                style={[styles.input, styles.textarea]}
-                placeholder="A short bio"
-                placeholderTextColor={Colors.text3}
-                value={bio}
-                onChangeText={setBio}
-                multiline
-                numberOfLines={4}
-                maxLength={160}
-                textAlignVertical="top"
-              />
-            </View>
-            <Button onPress={handleSave} loading={isSaving} disabled={!isDirty} style={styles.saveButton}>
-              Save Changes
-            </Button>
-          </Card>
-
-          <Card>
-            <InfoGrid rows={profileRows} />
-          </Card>
-
-          <Card variant="nested">
-            <Text style={styles.statsLabel}>STATS</Text>
-            <InfoGrid rows={statsRows} />
-          </Card>
-
-          <Button onPress={handleSignOut} variant="secondary">
-            Disconnect Wallet
-          </Button>
-        </ScrollView>
-      )}
+          )}
+        </View>
+      </ScrollView>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  title: {
-    fontFamily: Fonts.display,
-    fontSize: 22,
-    color: Colors.text1,
-    letterSpacing: ls(22, LS.display),
-  },
-  closeText: {
-    fontFamily: Fonts.mono,
-    fontSize: 16,
-    color: Colors.text2,
-  },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scrollContent: { padding: Spacing.md, gap: Spacing.md },
-  nameSection: { paddingVertical: Spacing.sm, gap: 6 },
-  avatarWrapper: { alignSelf: 'flex-start' },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  avatarPlaceholder: {
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: Spacing.md },
+
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: Colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.border2,
   },
-  avatarHint: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
+
+  identity: { gap: Spacing.xs, marginBottom: Spacing.lg },
+  avatarWrap: { marginBottom: Spacing.sm },
+  avatar: { width: 80, height: 80, borderRadius: 40 },
+  avatarFallback: {
+    backgroundColor: Colors.surface2,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   displayName: {
     fontFamily: Fonts.display,
-    fontSize: 36,
+    fontSize: 28,
     color: Colors.text1,
-    letterSpacing: ls(36, LS.displayTight),
+    letterSpacing: ls(28, LS.displayTight),
+    lineHeight: 34,
   },
-  sectionLabel: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
-    textTransform: 'uppercase',
-    marginBottom: Spacing.md,
+  username: { fontFamily: Fonts.mono, fontSize: 13, color: Colors.text3 },
+  bio: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, lineHeight: 20, marginTop: 2 },
+  joinedRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
+  joinedText: { fontFamily: Fonts.body, fontSize: 12, color: Colors.text3 },
+
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    marginBottom: Spacing.xl,
   },
-  fieldGroup: {
-    gap: 6,
-    marginBottom: Spacing.md,
+  statItem: { flex: 1, alignItems: 'center', gap: 2 },
+  statNum: { fontFamily: Fonts.display, fontSize: 22, color: Colors.text1, letterSpacing: ls(22, LS.display) },
+  statLabel: { fontFamily: Fonts.mono, fontSize: 9, color: Colors.text3, letterSpacing: ls(9, LS.labelWide) },
+  statDivider: { width: 1, height: 32, backgroundColor: Colors.border2 },
+
+  section: { marginBottom: Spacing.xl, gap: Spacing.md },
+  sectionTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 18,
+    color: Colors.text1,
+    letterSpacing: ls(18, LS.displaySubtle),
   },
-  fieldLabel: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
-    textTransform: 'uppercase',
+
+  badgesPlaceholder: {
+    height: 80,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    flexDirection: 'row',
   },
-  input: {
+  placeholderText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text3 },
+
+  eventRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    alignItems: 'flex-start',
+  },
+  eventThumb: { width: 80, height: 80, borderRadius: 10, backgroundColor: Colors.surface2 },
+  eventInfo: { flex: 1, gap: 5 },
+  eventTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  orgAvatar: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: Colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.border2,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    color: Colors.text1,
-    fontFamily: Fonts.body,
+  },
+  orgName: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.text3 },
+  eventTitle: {
+    fontFamily: Fonts.display,
     fontSize: 15,
+    color: Colors.text1,
+    letterSpacing: ls(15, LS.displaySubtle),
+    lineHeight: 20,
   },
-  textarea: {
-    minHeight: 96,
+  eventDateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  eventDate: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.text3 },
+
+  emptyInline: {
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    backgroundColor: Colors.surface,
   },
-  saveButton: {
-    marginTop: Spacing.xs,
+  emptyText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text3 },
+
+  signOutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.sm,
   },
-  statsLabel: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
-    textTransform: 'uppercase',
-    marginBottom: 10,
-  },
+  signOutText: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.error },
 })
