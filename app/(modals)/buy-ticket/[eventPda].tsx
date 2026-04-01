@@ -1,6 +1,4 @@
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { InfoGrid } from '@/components/ui/InfoGrid'
 import { SOL_MINT, TokenAmount, formatTokenAmount } from '@/components/ui/TokenAmount'
 import { WalletBalance } from '@/components/wallet/WalletBalance'
 import { Colors } from '@/constants/colors'
@@ -10,19 +8,28 @@ import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useRegisterEvent } from '@/hooks/api/use-register-event'
 import { useWalletBalance } from '@/hooks/solana/use-wallet-balance'
 import { showErrorFeedback } from '@/lib/app-feedback'
+import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
+}
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+}
 
 export default function BuyTicketModal() {
   const { eventPda } = useLocalSearchParams<{ eventPda: string }>()
   const { data: event, isLoading } = useEventDetail(eventPda)
   const registerMutation = useRegisterEvent()
   const { data: balance } = useWalletBalance(event?.stakeTokenMint ?? SOL_MINT)
+  const insets = useSafeAreaInsets()
 
   if (isLoading || !event) {
     return (
-      <View style={styles.loading}>
+      <View style={s.loading}>
         <ActivityIndicator color={Colors.accent} />
       </View>
     )
@@ -33,48 +40,61 @@ export default function BuyTicketModal() {
   const isSOL = event.stakeTokenMint === SOL_MINT
 
   async function handleDeposit() {
-    const currentEvent = event
-    if (!currentEvent) return
-
+    if (!event) return
     try {
-      const result = await registerMutation.mutateAsync({ event: currentEvent })
-      router.replace(`/(tabs)/tickets/${result.registrationPda}`)
+      const result = await registerMutation.mutateAsync({ event })
+      router.replace(`/(modals)/tickets/${result.registrationPda}`)
     } catch (e) {
       showErrorFeedback(e, 'Registration Failed', 'We could not register this ticket.')
     }
   }
 
-  const infoRows = [
-    { label: 'Event', value: event.title },
-    {
-      label: 'Date',
-      value: new Date(event.startTime).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-    },
-  ]
-
   return (
-    <View style={styles.container}>
-      <SafeAreaView edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backText}>← BACK</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>GET TICKET</Text>
-          <View style={{ width: 48 }} />
+    <View style={s.container}>
+      {/* Header */}
+      <View style={[s.header, { paddingTop: insets.top + Spacing.sm }]}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn} hitSlop={12}>
+          <Ionicons name="arrow-back" size={20} color={Colors.text1} />
+        </TouchableOpacity>
+        <Text style={s.headerTitle}>GET TICKET</Text>
+        <View style={{ width: 38 }} />
+      </View>
+
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={[s.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Event info */}
+        <View style={s.eventCard}>
+          <Text style={s.eventTitle} numberOfLines={2}>
+            {event.title}
+          </Text>
+          <View style={s.eventMeta}>
+            <View style={s.metaRow}>
+              <Ionicons name="calendar-outline" size={13} color={Colors.text3} />
+              <Text style={s.metaText}>{fmtDate(event.startTime)}</Text>
+            </View>
+            <View style={s.metaRow}>
+              <Ionicons name="time-outline" size={13} color={Colors.text3} />
+              <Text style={s.metaText}>
+                {fmtTime(event.startTime)} – {fmtTime(event.endTime)}
+              </Text>
+            </View>
+            {!!event.location && (
+              <View style={s.metaRow}>
+                <Ionicons name="location-outline" size={13} color={Colors.text3} />
+                <Text style={s.metaText} numberOfLines={1}>
+                  {event.location}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-      </SafeAreaView>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <Card>
-          <InfoGrid rows={infoRows} />
-        </Card>
-
-        <Card style={styles.stakeCard}>
-          <Text style={styles.stakeLabel}>REQUIRED STAKE</Text>
+        {/* Stake required */}
+        <View style={s.stakeCard}>
+          <Text style={s.sectionLabel}>REQUIRED STAKE</Text>
           <TokenAmount
             amount={event.stakeAmount}
             mint={event.stakeTokenMint}
@@ -82,58 +102,89 @@ export default function BuyTicketModal() {
             decimals={event.stakeTokenDecimals}
             size="lg"
           />
-          <WalletBalance mint={event.stakeTokenMint} symbol={event.stakeTokenSymbol} />
+          <View style={s.divider} />
+          <View style={s.balanceRow}>
+            <Text style={s.balanceLabel}>YOUR BALANCE</Text>
+            <WalletBalance mint={event.stakeTokenMint} symbol={event.stakeTokenSymbol} />
+          </View>
           {!isSOL && (
-            <Text style={styles.mintAddress} numberOfLines={1} ellipsizeMode="middle">
-              Mint: {event.stakeTokenMint}
+            <Text style={s.mintAddress} numberOfLines={1} ellipsizeMode="middle">
+              {event.stakeTokenMint}
             </Text>
           )}
-        </Card>
+        </View>
 
-        <Card variant="nested">
-          <InfoGrid
-            rows={[
-              {
-                label: 'Stake amount',
-                value: `${formatTokenAmount(event.stakeAmount, event.stakeTokenDecimals)} ${event.stakeTokenSymbol}`,
-              },
-              { label: 'Network fee', value: '~0.000005 SOL' },
-            ]}
-          />
-        </Card>
+        {/* Summary */}
+        <View style={s.summaryCard}>
+          <Text style={s.sectionLabel}>SUMMARY</Text>
+          <View style={s.summaryRow}>
+            <Text style={s.summaryKey}>Stake deposit</Text>
+            <Text style={s.summaryVal}>
+              {formatTokenAmount(event.stakeAmount, event.stakeTokenDecimals)} {event.stakeTokenSymbol}
+            </Text>
+          </View>
+          <View style={s.summaryDivider} />
+          <View style={s.summaryRow}>
+            <Text style={s.summaryKey}>Network fee</Text>
+            <Text style={s.summaryVal}>~0.000005 SOL</Text>
+          </View>
+          <View style={s.summaryDivider} />
+          <View style={s.summaryRow}>
+            <Text style={s.summaryKey}>Capacity</Text>
+            <Text style={s.summaryVal}>
+              {event.totalRegistered} / {event.capacity}
+            </Text>
+          </View>
+        </View>
+
+        {/* Stake explanation */}
+        <View style={s.noticeRow}>
+          <Ionicons name="information-circle-outline" size={15} color={Colors.text3} />
+          <Text style={s.noticeText}>
+            Your stake is locked on-chain and returned after you check in. No-shows forfeit their stake.
+          </Text>
+        </View>
 
         {!hasEnoughBalance && (
-          <Text style={styles.insufficientText}>Insufficient {event.stakeTokenSymbol} balance</Text>
+          <View style={s.errorRow}>
+            <Ionicons name="warning-outline" size={14} color={Colors.error} />
+            <Text style={s.errorText}>Insufficient {event.stakeTokenSymbol} balance</Text>
+          </View>
         )}
       </ScrollView>
 
-      <SafeAreaView edges={['bottom']} style={styles.cta}>
+      {/* CTA */}
+      <View style={[s.cta, { paddingBottom: insets.bottom + Spacing.sm }]}>
         <Button onPress={handleDeposit} disabled={!hasEnoughBalance} loading={registerMutation.isPending}>
           {registerMutation.isPending ? 'Confirming on Solana…' : 'Deposit & Register'}
         </Button>
-      </SafeAreaView>
+      </View>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingBottom: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
-  backText: {
-    fontFamily: Fonts.mono,
-    fontSize: 11,
-    color: Colors.accent,
-    letterSpacing: ls(11, LS.labelNarrow),
-    textTransform: 'uppercase',
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border2,
   },
   headerTitle: {
     fontFamily: Fonts.display,
@@ -141,10 +192,49 @@ const styles = StyleSheet.create({
     color: Colors.text1,
     letterSpacing: ls(16, LS.displaySubtle),
   },
+
   scroll: { flex: 1 },
-  scrollContent: { padding: Spacing.md, gap: Spacing.md, paddingBottom: Spacing.lg },
-  stakeCard: { gap: 10 },
-  stakeLabel: {
+  scrollContent: { padding: Spacing.md, gap: Spacing.md },
+
+  // Event card
+  eventCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  eventTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 22,
+    color: Colors.text1,
+    letterSpacing: ls(22, LS.displaySubtle),
+    lineHeight: 28,
+  },
+  eventMeta: { gap: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text2, flex: 1 },
+
+  // Stake card
+  stakeCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  sectionLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+    textTransform: 'uppercase',
+  },
+  divider: { height: 1, backgroundColor: Colors.border },
+  balanceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  balanceLabel: {
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.text3,
@@ -156,17 +246,51 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: Colors.text3,
   },
-  insufficientText: {
+
+  // Summary card
+  summaryCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  summaryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  summaryDivider: { height: 1, backgroundColor: Colors.border },
+  summaryKey: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2 },
+  summaryVal: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text1 },
+
+  // Notice
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingHorizontal: Spacing.xs,
+  },
+  noticeText: { flex: 1, fontFamily: Fonts.body, fontSize: 12, color: Colors.text3, lineHeight: 18 },
+
+  // Error
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  errorText: {
     fontFamily: Fonts.mono,
     fontSize: 11,
     color: Colors.error,
-    textAlign: 'center',
     letterSpacing: ls(11, LS.labelNarrow),
     textTransform: 'uppercase',
   },
+
+  // CTA
   cta: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
+    backgroundColor: Colors.bg,
   },
 })

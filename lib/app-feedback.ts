@@ -31,11 +31,18 @@ export function describeAppError(error: any, fallbackTitle: string, fallbackMess
     }
   }
 
+  // Only treat as network error if it's an Axios error (has isAxiosError) or message explicitly says network
+  const isAxiosError = error?.isAxiosError === true
   if (
-    normalizedMessage.includes('network') ||
-    normalizedMessage.includes('timeout') ||
-    normalizedMessage.includes('failed to fetch') ||
-    !error?.response
+    (isAxiosError &&
+      (normalizedMessage.includes('network') ||
+        normalizedMessage.includes('timeout') ||
+        normalizedMessage.includes('failed to fetch') ||
+        !error?.response)) ||
+    (!isAxiosError &&
+      (normalizedMessage.includes('network') ||
+        normalizedMessage.includes('timeout') ||
+        normalizedMessage.includes('failed to fetch')))
   ) {
     return {
       title: 'Network Problem',

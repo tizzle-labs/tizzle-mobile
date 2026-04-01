@@ -1,6 +1,5 @@
 import { useAuth } from '@/components/auth/auth-provider'
 import { EventStatusChip, deriveEventStatus } from '@/components/event/EventStatusChip'
-import { StakeChip } from '@/components/event/StakeChip'
 import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
@@ -13,8 +12,17 @@ import { Ionicons } from '@expo/vector-icons'
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
-import { useMemo, useRef } from 'react'
-import { ActivityIndicator, Dimensions, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useMemo, useRef, useState } from 'react'
+import {
+  ActivityIndicator,
+  Dimensions,
+  LayoutChangeEvent,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -39,6 +47,7 @@ export default function EventDetailModal() {
   const insets = useSafeAreaInsets()
   const bottomSheetRef = useRef<BottomSheet>(null)
   const snapPoints = useMemo(() => ['55%', '90%'], [])
+  const [ctaHeight, setCtaHeight] = useState(100)
 
   const isRegistered = myRegistrations?.some((r) => r.eventPda === eventPda)
   const myRegistration = myRegistrations?.find((r) => r.eventPda === eventPda)
@@ -76,13 +85,12 @@ export default function EventDetailModal() {
 
   const status = deriveEventStatus(event.startTime, event.endTime, event.unlockTime)
   const isGatekeeper = !!walletAddress && walletAddress === event.gatekeeperAddress
+  const stakeDisplay = (Number(event.stakeAmount) / Math.pow(10, event.stakeTokenDecimals)).toString()
 
   return (
     <GestureHandlerRootView style={s.container}>
-      {/* ── Hero image (full screen behind sheet) ── */}
       <Image source={{ uri: event.imageUrl }} style={s.hero} contentFit="cover" />
 
-      {/* ── Floating back + share buttons ── */}
       <View style={[s.floatRow, { top: insets.top + Spacing.sm }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.floatBtn} hitSlop={8}>
           <Ionicons name="arrow-back" size={20} color={Colors.text1} />
@@ -92,7 +100,6 @@ export default function EventDetailModal() {
         </TouchableOpacity>
       </View>
 
-      {/* ── Bottom Sheet ── */}
       <BottomSheet
         ref={bottomSheetRef}
         index={0}
@@ -103,7 +110,7 @@ export default function EventDetailModal() {
         handleIndicatorStyle={s.handle}
       >
         <BottomSheetScrollView
-          contentContainerStyle={[s.sheetContent, { paddingBottom: insets.bottom + 100 }]}
+          contentContainerStyle={[s.sheetContent, { paddingBottom: ctaHeight + Spacing.md }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Title + status */}
@@ -112,6 +119,20 @@ export default function EventDetailModal() {
               {event.title}
             </Text>
             <EventStatusChip status={status} />
+          </View>
+
+          {/* Org inline under title */}
+          <View style={s.orgInlineRow}>
+            {event.organizationAvatarUrl ? (
+              <Image source={{ uri: event.organizationAvatarUrl }} style={s.orgInlineAvatar} contentFit="cover" />
+            ) : (
+              <View style={s.orgInlineAvatarFallback}>
+                <Ionicons name="business-outline" size={11} color={Colors.text3} />
+              </View>
+            )}
+            <Text style={s.orgInlineName} numberOfLines={1}>
+              {event.organizationName ?? shortAddr(event.organizerAddress)}
+            </Text>
           </View>
 
           {/* Date + time */}
@@ -133,65 +154,49 @@ export default function EventDetailModal() {
             </Text>
           </View>
 
-          {/* Maps placeholder */}
-          {/* TODO: Integrate real maps once map library is set up */}
+          {/* Map placeholder */}
           <View style={s.mapPlaceholder}>
             <Ionicons name="map-outline" size={24} color={Colors.text3} />
             <Text style={s.mapText}>Map coming soon</Text>
           </View>
 
-          {/* Venue placeholder */}
-          {/* TODO: Replace with real venue image once backend provides venueImageUrl field */}
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>Venue</Text>
-            <View style={s.venuePlaceholder}>
-              <Ionicons name="business-outline" size={28} color={Colors.text3} />
-              <Text style={s.venueText}>{event.location || 'Venue TBA'}</Text>
+          {/* Venue — only shown if venueImageUrl exists */}
+          {!!event.venueImageUrl && (
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>Venue</Text>
+              <Image source={{ uri: event.venueImageUrl }} style={s.venueImage} contentFit="cover" />
             </View>
-          </View>
+          )}
 
-          {/* Description */}
-          {/* Stake info */}
+          {/* Details */}
           <View style={s.section}>
             <Text style={s.sectionTitle}>Details</Text>
             <View style={s.detailGrid}>
-              <View style={s.detailItem}>
-                <Text style={s.detailLabel}>CAPACITY</Text>
-                <Text style={s.detailValue}>
-                  {event.totalRegistered} / {event.capacity}
+              <View style={s.detailRow}>
+                <View style={s.detailCard}>
+                  <Text style={s.detailLabel}>CAPACITY</Text>
+                  <Text style={s.detailValue}>
+                    {event.totalRegistered} / {event.capacity}
+                  </Text>
+                  <Text style={s.detailSub}>registered</Text>
+                </View>
+                <View style={s.detailCard}>
+                  <Text style={s.detailLabel}>CATEGORY</Text>
+                  <Text style={s.detailValue}>{event.category || '—'}</Text>
+                  <Text style={s.detailSub}>type</Text>
+                </View>
+              </View>
+              <View style={s.detailCardWide}>
+                <Text style={s.detailLabel}>STAKE REQUIRED</Text>
+                <Text style={s.stakeValue}>
+                  {stakeDisplay} {event.stakeTokenSymbol}
                 </Text>
-              </View>
-              <View style={s.detailItem}>
-                <Text style={s.detailLabel}>CATEGORY</Text>
-                <Text style={s.detailValue}>{event.category || '—'}</Text>
-              </View>
-              <View style={s.detailItem}>
-                <Text style={s.detailLabel}>STAKE</Text>
-                <StakeChip
-                  stakeAmount={event.stakeAmount}
-                  stakeTokenMint={event.stakeTokenMint}
-                  stakeTokenSymbol={event.stakeTokenSymbol}
-                  stakeTokenDecimals={event.stakeTokenDecimals}
-                />
+                <Text style={s.detailSub}>locked on-chain · returned after check-in</Text>
               </View>
             </View>
           </View>
 
-          {/* Organization */}
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>Organizer</Text>
-            <View style={s.orgRow}>
-              <View style={s.orgAvatar}>
-                <Ionicons name="business-outline" size={16} color={Colors.text2} />
-              </View>
-              <View style={s.orgInfo}>
-                <Text style={s.orgName}>{shortAddr(event.organizerAddress)}</Text>
-                <Text style={s.orgSub}>Event Organizer</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Description */}
+          {/* About */}
           {!!event.description && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>About</Text>
@@ -199,7 +204,7 @@ export default function EventDetailModal() {
             </View>
           )}
 
-          {/* Organizer settlement */}
+          {/* Settlement */}
           {isOrganizer && isEnded && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>Settlement</Text>
@@ -216,13 +221,11 @@ export default function EventDetailModal() {
               ) : (
                 <Text style={s.notice}>
                   Available after{' '}
-                  {event
-                    ? new Date(event.unlockTime).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    : '—'}
+                  {new Date(event.unlockTime).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
                 </Text>
               )}
             </View>
@@ -230,8 +233,11 @@ export default function EventDetailModal() {
         </BottomSheetScrollView>
       </BottomSheet>
 
-      {/* ── Pinned CTA ── */}
-      <View style={[s.cta, { paddingBottom: insets.bottom + Spacing.sm }]}>
+      {/* Pinned CTA */}
+      <View
+        style={[s.cta, { paddingBottom: insets.bottom + Spacing.sm }]}
+        onLayout={(e: LayoutChangeEvent) => setCtaHeight(e.nativeEvent.layout.height)}
+      >
         {isGatekeeper && (
           <Button onPress={handleScanTickets} variant="secondary" style={{ marginBottom: Spacing.sm }}>
             Scan Tickets
@@ -247,7 +253,7 @@ export default function EventDetailModal() {
             <Ionicons name="ticket-outline" size={18} color={Colors.accent} />
           </TouchableOpacity>
         ) : status === 'Available' ? (
-          <Button onPress={handleGetTicket}>Register</Button>
+          <Button onPress={handleGetTicket}>Get Ticket</Button>
         ) : null}
       </View>
     </GestureHandlerRootView>
@@ -291,6 +297,27 @@ const s = StyleSheet.create({
     lineHeight: 32,
   },
 
+  orgInlineRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  orgInlineAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.surface2,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+  },
+  orgInlineAvatarFallback: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border2,
+  },
+  orgInlineName: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text2, flex: 1 },
+
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text2 },
   metaDot: { color: Colors.text3, fontSize: 13 },
@@ -315,39 +342,50 @@ const s = StyleSheet.create({
     letterSpacing: ls(16, LS.displaySubtle),
   },
 
-  venuePlaceholder: {
-    height: 140,
+  venueImage: { width: '100%', height: 180, borderRadius: 12 },
+
+  detailGrid: { gap: Spacing.sm },
+  detailRow: { flexDirection: 'row', gap: Spacing.sm },
+  detailCard: {
+    flex: 1,
     backgroundColor: Colors.surface2,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    padding: Spacing.md,
+    gap: 4,
   },
-  venueText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text3 },
-
-  orgRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  orgAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  detailCardWide: {
     backgroundColor: Colors.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border2,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    gap: 4,
   },
-  orgInfo: { gap: 2 },
-  orgName: { fontFamily: Fonts.display, fontSize: 15, color: Colors.text1, letterSpacing: ls(15, LS.displaySubtle) },
-  orgSub: { fontFamily: Fonts.body, fontSize: 12, color: Colors.text3 },
+  detailLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 10,
+    color: Colors.text3,
+    letterSpacing: ls(10, LS.labelWide),
+    textTransform: 'uppercase',
+  },
+  detailValue: {
+    fontFamily: Fonts.display,
+    fontSize: 18,
+    color: Colors.text1,
+    letterSpacing: ls(18, LS.displaySubtle),
+  },
+  detailSub: { fontFamily: Fonts.body, fontSize: 11, color: Colors.text3 },
+  stakeValue: {
+    fontFamily: Fonts.display,
+    fontSize: 28,
+    color: Colors.accent,
+    letterSpacing: ls(28, LS.displayTight),
+    lineHeight: 34,
+  },
 
   description: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, lineHeight: 22 },
-
-  detailGrid: { gap: Spacing.sm },
-  detailItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  detailLabel: { fontFamily: Fonts.mono, fontSize: 9, color: Colors.text3, letterSpacing: ls(9, LS.labelWide) },
-  detailValue: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text1 },
 
   settlementRow: {
     flexDirection: 'row',

@@ -144,7 +144,7 @@ Do not apply uniform radius across all elements. The contrast between sharp and 
 - **Approach:** Hybrid — grid-disciplined for tab screens, lists, and data; editorial freedom for event hero moments (event detail, ticket view, QR screen).
 - **Mobile grid:** Single column, `md` (16px) horizontal padding.
 - **Max content width:** Full-bleed on mobile (no max-width constraint for app screens). 1200px for any web preview only.
-- **Image treatment:** Event cover images are full-width with no border-radius (bleed to card edges). 16:9 for cards, 1:1 for thumbnails.
+- **Image treatment:** Event cover images are square. 1:1 for cards, 1:1 for thumbnails.
 
 ---
 
@@ -219,7 +219,7 @@ Used on: **Event Detail, Ticket Detail, Profile, Create form, Org settings, Scan
 - Background: `surface` (`#111111`)
 - Border: 1px `rgba(255,255,255,0.08)`
 - Border radius: 10px
-- Image: full-width top, 16:9 ratio, no radius (clips to card corners)
+- Image: square, 1:1 ratio
 - Date: Geist Mono 500, 11pt, `#CAFF00`, uppercase, letter-spacing +0.06em
 - Title: Clash Grotesk 700, 20pt, white, tracking –0.02em
 - Venue: DM Sans 400, 13pt, `#888888`

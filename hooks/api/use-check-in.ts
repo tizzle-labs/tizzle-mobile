@@ -1,8 +1,8 @@
-import { useMutation } from '@tanstack/react-query'
-import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
-import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { checkInRegistration } from '@/lib/api/registrations'
+import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
+import { useMutation } from '@tanstack/react-query'
+import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 
 export function useCheckIn() {
   const { connection, accounts, signAndSendTransactions } = useMobileWallet()
@@ -10,10 +10,8 @@ export function useCheckIn() {
 
   return useMutation({
     mutationFn: async ({ registrationPda, eventPda }: { registrationPda: string; eventPda: string }) => {
-      const walletAddress = accounts?.[0]?.address?.toString()
-      if (!walletAddress) throw new Error('Wallet not connected')
-
-      const gatekeeperPubkey = new PublicKey(walletAddress)
+      const gatekeeperPubkey = accounts?.[0]?.publicKey
+      if (!gatekeeperPubkey) throw new Error('Wallet not connected')
       const eventPdaPubkey = new PublicKey(eventPda)
       const registrationPdaPubkey = new PublicKey(registrationPda)
 
@@ -26,20 +24,17 @@ export function useCheckIn() {
         })
         .instruction()
 
-      const {
-        context: { slot: minContextSlot },
-        value: latestBlockhash,
-      } = await connection.getLatestBlockhashAndContext()
+      const { value: latestBlockhash } = await connection.getLatestBlockhashAndContext()
 
       const message = new TransactionMessage({
         payerKey: gatekeeperPubkey,
         recentBlockhash: latestBlockhash.blockhash,
         instructions: [ix],
-      }).compileToLegacyMessage()
+      }).compileToV0Message()
 
       const tx = new VersionedTransaction(message)
 
-      const result = await signAndSendTransactions(tx, minContextSlot)
+      const result = await signAndSendTransactions(tx, 0)
       const signature = Array.isArray(result) ? result[0] : result
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 

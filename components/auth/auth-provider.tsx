@@ -1,4 +1,3 @@
-import { AppConfig } from '@/constants/app-config'
 import { generateNonce, verifySignature } from '@/lib/api/auth'
 import { setLogoutCallback } from '@/lib/api/client'
 import { Storage } from '@/lib/storage'
@@ -24,7 +23,7 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const { accounts, disconnect, signIn: walletSignIn, signMessages: signMessage } = useMobileWallet()
+  const { accounts, connect, disconnect, signMessages: signMessage } = useMobileWallet()
   const walletAddress = accounts?.[0]?.address?.toString() ?? null
   const [hasJwt, setHasJwt] = useState(false)
   const [isReady, setIsReady] = useState(false)
@@ -38,10 +37,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signIn = useCallback(async () => {
     try {
-      // 1. Connect wallet via MWA — read address from the returned result, not
-      //    stale React state (avoids React batching race condition).
-      const result = await walletSignIn({ uri: AppConfig.uri })
-      const address = result?.account?.address?.toString()
+      // 1. Connect wallet via MWA
+      const result = await connect()
+      const address = result?.address?.toString()
       if (!address) {
         // User cancelled or no account returned
         return
@@ -74,7 +72,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // Re-throw other errors to be handled by caller
       throw error
     }
-  }, [walletSignIn, signMessage, disconnect])
+  }, [connect, signMessage, disconnect])
 
   const signOut = useCallback(async () => {
     await disconnect()

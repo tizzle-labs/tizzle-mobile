@@ -16,10 +16,8 @@ export function useRegisterEvent() {
 
   return useMutation({
     mutationFn: async ({ event }: { event: Event }) => {
-      const walletAddress = accounts?.[0]?.address?.toString()
-      if (!walletAddress) throw new Error('Wallet not connected')
-
-      const attendeePubkey = new PublicKey(walletAddress)
+      const attendeePubkey = accounts?.[0]?.publicKey
+      if (!attendeePubkey) throw new Error('Wallet not connected')
       const eventPdaPubkey = new PublicKey(event.eventPda)
       const organizationPdaPubkey = new PublicKey(event.organizationPda)
 
@@ -48,20 +46,17 @@ export function useRegisterEvent() {
 
       const ix = await program.methods.registerEvent().accounts(ixAccounts).instruction()
 
-      const {
-        context: { slot: minContextSlot },
-        value: latestBlockhash,
-      } = await connection.getLatestBlockhashAndContext()
+      const { value: latestBlockhash } = await connection.getLatestBlockhashAndContext()
 
       const message = new TransactionMessage({
         payerKey: attendeePubkey,
         recentBlockhash: latestBlockhash.blockhash,
         instructions: [ix],
-      }).compileToLegacyMessage()
+      }).compileToV0Message()
 
       const tx = new VersionedTransaction(message)
 
-      const result = await signAndSendTransactions(tx, minContextSlot)
+      const result = await signAndSendTransactions(tx, 0)
       const signature = Array.isArray(result) ? result[0] : result
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 

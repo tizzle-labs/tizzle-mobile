@@ -28,3 +28,11 @@ export async function createOrganization(payload: {
   const { data } = await apiClient.post('/v1/organizations', payload)
   return data
 }
+
+export async function updateOrganization(
+  organizationPda: string,
+  payload: Partial<Pick<Organization, 'name' | 'description' | 'avatarUrl' | 'twitter' | 'discord'>>,
+): Promise<Organization> {
+  const { data } = await apiClient.patch(`/v1/organizations/${organizationPda}`, payload)
+  return data
+}

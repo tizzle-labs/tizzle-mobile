@@ -1,5 +1,4 @@
 import { apiClient } from './client'
-import { uploadEventImage } from './storage'
 
 export interface Event {
   eventPda: string
@@ -28,6 +27,9 @@ export interface Event {
   totalCheckedIn: number
   organizerAddress: string
   organizerWithdrawn: boolean
+  organizationName: string | null
+  organizationAvatarUrl: string | null
+  venueImageUrl: string | null
 }
 
 export interface CreateEventPayload {
@@ -38,7 +40,6 @@ export interface CreateEventPayload {
   title: string
   description?: string
   imageUrl?: string
-  imageUri?: string
   location?: string
   category?: string
   capacity: number
@@ -52,7 +53,6 @@ export interface CreateEventPayload {
   startTime: string
   endTime: string
   unlockTime: string
-  transactionSignature?: string
 }
 
 export async function getEvents(params?: { limit?: number }): Promise<Event[]> {
@@ -66,22 +66,14 @@ export async function getEventByPda(eventPda: string): Promise<Event> {
 }
 
 export async function createEvent(payload: CreateEventPayload): Promise<Event> {
-  const { imageUri, ...rest } = payload
-  rest.imageUrl = ''
-  const { data } = await apiClient.post('/v1/events', rest)
-
-  if (imageUri) {
-    const uploaded = await uploadEventImage(imageUri, payload.eventPda)
-    return updateEvent(payload.eventPda, { imageUrl: uploaded.url })
-  }
-
+  const { data } = await apiClient.post('/v1/events', payload)
   return data
 }
 
 export async function updateEvent(
   eventPda: string,
-  payload: Partial<Pick<Event, 'title' | 'description' | 'imageUrl' | 'isPublished'>>,
+  payload: Partial<Pick<Event, 'title' | 'description' | 'imageUrl' | 'venueImageUrl' | 'isPublished'>>,
 ): Promise<Event> {
-  const { data } = await apiClient.put(`/v1/events/${eventPda}`, payload)
+  const { data } = await apiClient.patch(`/v1/events/${eventPda}`, payload)
   return data
 }

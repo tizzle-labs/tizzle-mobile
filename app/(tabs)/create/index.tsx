@@ -1,21 +1,23 @@
 import { ScreenHeader } from '@/components/layout/ScreenHeader'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
+import { PLATFORM_FEE_SOL, useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
 import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
 import { showErrorFeedback } from '@/lib/app-feedback'
 import { Ionicons } from '@expo/vector-icons'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
+import * as Clipboard from 'expo-clipboard'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
+import { router } from 'expo-router'
 import { useState } from 'react'
 import {
   ActivityIndicator,
+  Linking,
   Modal,
   Platform,
   ScrollView,
@@ -34,6 +36,10 @@ interface SuccessData {
 }
 
 type PickerField = 'startTime' | 'endTime'
+type StakeMode = 'SOL' | 'SPL'
+type FeeMode = 'free' | 'fee'
+
+const CATEGORIES = ['Music', 'Tech', 'Art', 'Sports', 'Gaming', 'Education', 'Community', 'Other']
 
 function formatDateTime(date: Date): string {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -48,40 +54,79 @@ export default function Create() {
   const createOrg = useCreateOrganization()
   const createEvent = useCreateEvent()
 
+  // Org form
   const [orgName, setOrgName] = useState('')
   const [orgDesc, setOrgDesc] = useState('')
   const [orgTwitter, setOrgTwitter] = useState('')
   const [orgDiscord, setOrgDiscord] = useState('')
+  const [orgImageUri, setOrgImageUri] = useState<string | null>(null)
 
+  // Event form
   const [eventTitle, setEventTitle] = useState('')
   const [eventDesc, setEventDesc] = useState('')
   const [location, setLocation] = useState('')
+  const [category, setCategory] = useState('Music')
   const [capacity, setCapacity] = useState('100')
-  const [stakeAmount, setStakeAmount] = useState('0.1')
-  const [imageUri, setImageUri] = useState<string | null>(null)
+  const [eventImageUri, setEventImageUri] = useState<string | null>(null)
+  const [venueImageUri, setVenueImageUri] = useState<string | null>(null)
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
 
+  // Stake settings
+  const [stakeMode, setStakeMode] = useState<StakeMode>('SOL')
+  const [stakeAmount, setStakeAmount] = useState('0.1')
+  const [splMint, setSplMint] = useState('')
+  const [splSymbol, setSplSymbol] = useState('')
+  const [splDecimals, setSplDecimals] = useState('6')
+
+  // Host fee
+  const [feeMode, setFeeMode] = useState<FeeMode>('free')
+  const [hostFeePercent, setHostFeePercent] = useState('10')
+
+  // Date/time
   const [startTime, setStartTime] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
   const [endTime, setEndTime] = useState(() => new Date(Date.now() + 27 * 60 * 60 * 1000))
-
   const [pickerField, setPickerField] = useState<PickerField>('startTime')
   const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date')
   const [pickerVisible, setPickerVisible] = useState(false)
   const [tempDate, setTempDate] = useState(new Date())
 
-  async function pickImage() {
+  function resetEventForm() {
+    setEventTitle('')
+    setEventDesc('')
+    setLocation('')
+    setCategory('Music')
+    setCapacity('100')
+    setEventImageUri(null)
+    setVenueImageUri(null)
+    setStakeMode('SOL')
+    setStakeAmount('0.1')
+    setSplMint('')
+    setSplSymbol('')
+    setSplDecimals('6')
+    setFeeMode('free')
+    setHostFeePercent('10')
+    setStartTime(new Date(Date.now() + 24 * 60 * 60 * 1000))
+    setEndTime(new Date(Date.now() + 27 * 60 * 60 * 1000))
+    setSuccessData(null)
+  }
+
+  async function pickImage(target: 'org' | 'event' | 'venue') {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      showErrorFeedback(null, 'Permission Required', 'Allow photo library access to add an event image.')
+      showErrorFeedback(null, 'Permission Required', 'Allow photo library access to add an image.')
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      aspect: [16, 9],
+      aspect: [1, 1],
       quality: 0.8,
     })
-    if (!result.canceled) setImageUri(result.assets[0].uri)
+    if (!result.canceled) {
+      if (target === 'org') setOrgImageUri(result.assets[0].uri)
+      else if (target === 'event') setEventImageUri(result.assets[0].uri)
+      else setVenueImageUri(result.assets[0].uri)
+    }
   }
 
   function openPicker(field: PickerField) {
@@ -149,19 +194,54 @@ export default function Create() {
     return (
       <View style={styles.container}>
         <ScreenHeader title="CREATE" />
-        <View style={styles.successContent}>
+        <ScrollView contentContainerStyle={styles.successContent} showsVerticalScrollIndicator={false}>
           <Text style={styles.successHeading}>TICKETS{'\n'}MINTED</Text>
-          <Card style={styles.successCard}>
+
+          <View style={styles.successCard}>
             <Text style={styles.successEventTitle}>{successData.eventTitle}</Text>
-            <Text style={styles.successLabel}>TRANSACTION HASH</Text>
-            <Text style={styles.successHash} numberOfLines={2}>
-              {successData.txHash}
-            </Text>
-            <Text style={styles.successLabel}>CAPACITY</Text>
-            <Text style={styles.successValue}>{successData.capacity} tickets</Text>
-          </Card>
-          <Button onPress={() => setSuccessData(null)}>Create Another</Button>
-        </View>
+
+            <View style={styles.successDivider} />
+
+            {/* Capacity */}
+            <View style={styles.successRow}>
+              <Text style={styles.successLabel}>CAPACITY</Text>
+              <Text style={styles.successValue}>{successData.capacity} tickets</Text>
+            </View>
+
+            <View style={styles.successDivider} />
+
+            {/* Transaction hash — copyable + open in explorer */}
+            <View style={styles.successRow}>
+              <Text style={styles.successLabel}>TRANSACTION</Text>
+              <View style={styles.txActions}>
+                <TouchableOpacity
+                  style={styles.txHashBtn}
+                  onPress={() => Clipboard.setStringAsync(successData.txHash)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.successHash} numberOfLines={1}>
+                    {successData.txHash.slice(0, 8)}…{successData.txHash.slice(-8)}
+                  </Text>
+                  <Ionicons name="copy-outline" size={15} color={Colors.text3} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.txLinkBtn}
+                  onPress={() => Linking.openURL(`https://solscan.io/tx/${successData.txHash}?cluster=devnet`)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="open-outline" size={16} color={Colors.accent} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.successActions}>
+            <Button onPress={() => router.push(`/(modals)/event/${successData.eventPda}`)}>View Event</Button>
+            <Button onPress={resetEventForm} variant="secondary">
+              Create Another
+            </Button>
+          </View>
+        </ScrollView>
       </View>
     )
   }
@@ -171,15 +251,13 @@ export default function Create() {
       <View style={styles.container}>
         <ScreenHeader title="CREATE" />
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Header */}
           <View style={styles.createOrgHeader}>
             <Text style={styles.createOrgTitle}>Create Organization</Text>
             <Text style={styles.createOrgSubtitle}>You need an organization before hosting events on Tizzle.</Text>
           </View>
-          {/* Avatar picker */}
-          <TouchableOpacity style={styles.orgAvatarPicker} onPress={pickImage} activeOpacity={0.7}>
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.orgAvatarImg} contentFit="cover" />
+          <TouchableOpacity style={styles.orgAvatarPicker} onPress={() => pickImage('org')} activeOpacity={0.7}>
+            {orgImageUri ? (
+              <Image source={{ uri: orgImageUri }} style={styles.orgAvatarImg} contentFit="cover" />
             ) : (
               <View style={styles.orgAvatarFallback}>
                 <Ionicons name="business-outline" size={32} color={Colors.text3} />
@@ -190,7 +268,6 @@ export default function Create() {
             </View>
           </TouchableOpacity>
           <Text style={styles.orgAvatarHint}>Organization logo (optional)</Text>
-          {/* Fields */}
           <View style={styles.orgFields}>
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>ORGANIZATION NAME *</Text>
@@ -250,7 +327,7 @@ export default function Create() {
                 await createOrg.mutateAsync({
                   name: orgName.trim(),
                   description: orgDesc.trim(),
-                  avatarUrl: undefined, // TODO: upload imageUri and pass avatarUrl
+                  imageUri: orgImageUri ?? undefined,
                   twitter: orgTwitter.trim() || undefined,
                   discord: orgDiscord.trim() || undefined,
                 })
@@ -273,16 +350,19 @@ export default function Create() {
     if (!org) return
     const input: CreateEventInput = {
       organizationPda: org.organizationPda,
-      title: eventTitle,
-      description: eventDesc,
-      imageUri: imageUri ?? undefined,
-      location,
-      category: 'Music',
+      title: eventTitle.trim(),
+      description: eventDesc.trim(),
+      imageUri: eventImageUri ?? undefined,
+      venueImageUri: venueImageUri ?? undefined,
+      location: location.trim(),
+      category,
       capacity: parseInt(capacity) || 100,
-      stakeAmountSol: parseFloat(stakeAmount) || 0.1,
-      stakeTokenMint: SOL_MINT,
-      stakeTokenSymbol: 'SOL',
-      stakeTokenDecimals: 9,
+      stakeAmount: parseFloat(stakeAmount) || 0.1,
+      stakeTokenMint: stakeMode === 'SOL' ? SOL_MINT : splMint.trim(),
+      stakeTokenSymbol: stakeMode === 'SOL' ? 'SOL' : splSymbol.trim(),
+      stakeTokenDecimals: stakeMode === 'SOL' ? 9 : parseInt(splDecimals) || 6,
+      hostFeeEnabled: feeMode === 'fee',
+      hostFeePercent: feeMode === 'fee' ? parseInt(hostFeePercent) || 0 : 0,
       startTime,
       endTime,
       unlockTime: new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000),
@@ -300,6 +380,10 @@ export default function Create() {
     }
   }
 
+  const splValid = stakeMode === 'SOL' || (splMint.trim().length > 30 && splSymbol.trim().length > 0)
+  const feeValid = feeMode === 'free' || (parseInt(hostFeePercent) > 0 && parseInt(hostFeePercent) <= 100)
+  const canSubmit = eventTitle.trim() && location.trim() && endTime > startTime && splValid && feeValid
+
   return (
     <View style={styles.container}>
       <ScreenHeader title="Create Event" />
@@ -308,21 +392,26 @@ export default function Create() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Org badge */}
         <View style={styles.orgBadge}>
-          <Ionicons name="business-outline" size={12} color={Colors.accent} />
+          {org.avatarUrl ? (
+            <Image source={{ uri: org.avatarUrl }} style={styles.orgBadgeAvatar} contentFit="cover" />
+          ) : (
+            <View style={styles.orgBadgeAvatarFallback}>
+              <Ionicons name="business-outline" size={10} color={Colors.text3} />
+            </View>
+          )}
           <Text style={styles.orgLabel}>{org.name}</Text>
         </View>
 
-        {/* Image picker */}
-        <TouchableOpacity style={styles.imagePicker} onPress={pickImage} activeOpacity={0.8}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.imagePreview} contentFit="cover" />
+        {/* Cover image */}
+        <TouchableOpacity style={styles.imagePicker} onPress={() => pickImage('event')} activeOpacity={0.8}>
+          {eventImageUri ? (
+            <Image source={{ uri: eventImageUri }} style={styles.imagePreview} contentFit="cover" />
           ) : (
             <View style={styles.imagePlaceholder}>
               <Ionicons name="image-outline" size={28} color={Colors.text3} />
-              <Text style={styles.imagePlaceholderText}>Add Cover Photo</Text>
-              <Text style={styles.imagePlaceholderHint}>16:9 recommended</Text>
+              <Text style={styles.imagePlaceholderText}>Add Event Image</Text>
+              <Text style={styles.imagePlaceholderHint}>1:1 recommended</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -367,6 +456,24 @@ export default function Create() {
                 onChangeText={setLocation}
               />
             </View>
+            <View style={styles.divider} />
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>CATEGORY</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+                {CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[styles.categoryChip, category === cat && styles.categoryChipActive]}
+                    onPress={() => setCategory(cat)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.categoryChipText, category === cat && styles.categoryChipTextActive]}>
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
           </View>
         </View>
 
@@ -406,43 +513,190 @@ export default function Create() {
           </View>
         </View>
 
-        {/* Capacity & Stake */}
+        {/* Venue Image */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Venue Photo</Text>
+          <TouchableOpacity style={styles.venuePickerBtn} onPress={() => pickImage('venue')} activeOpacity={0.8}>
+            {venueImageUri ? (
+              <Image source={{ uri: venueImageUri }} style={styles.venuePreview} contentFit="cover" />
+            ) : (
+              <View style={styles.venuePlaceholder}>
+                <Ionicons name="business-outline" size={24} color={Colors.text3} />
+                <Text style={styles.imagePlaceholderText}>Add Venue Photo</Text>
+                <Text style={styles.imagePlaceholderHint}>Optional</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Ticket Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ticket Settings</Text>
           <View style={styles.card}>
-            <View style={styles.fieldRow}>
-              <View style={[styles.fieldGroup, { flex: 1 }]}>
-                <Text style={styles.fieldLabel}>CAPACITY</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="100"
-                  placeholderTextColor={Colors.text3}
-                  value={capacity}
-                  onChangeText={setCapacity}
-                  keyboardType="number-pad"
-                />
+            {/* Capacity */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>CAPACITY</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="100"
+                placeholderTextColor={Colors.text3}
+                value={capacity}
+                onChangeText={setCapacity}
+                keyboardType="number-pad"
+              />
+            </View>
+            <View style={styles.divider} />
+            {/* Stake token tabs */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>STAKE TOKEN</Text>
+              <View style={styles.stakeTabs}>
+                <TouchableOpacity
+                  style={[styles.stakeTab, stakeMode === 'SOL' && styles.stakeTabActive]}
+                  onPress={() => setStakeMode('SOL')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.stakeTabText, stakeMode === 'SOL' && styles.stakeTabTextActive]}>SOL</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.stakeTab, stakeMode === 'SPL' && styles.stakeTabActive]}
+                  onPress={() => setStakeMode('SPL')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.stakeTabText, stakeMode === 'SPL' && styles.stakeTabTextActive]}>SPL Token</Text>
+                </TouchableOpacity>
               </View>
-              <View style={styles.fieldRowDivider} />
-              <View style={[styles.fieldGroup, { flex: 1 }]}>
-                <Text style={styles.fieldLabel}>STAKE (SOL)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="0.1"
-                  placeholderTextColor={Colors.text3}
-                  value={stakeAmount}
-                  onChangeText={setStakeAmount}
-                  keyboardType="decimal-pad"
-                />
+            </View>
+            <View style={styles.divider} />
+            {/* Stake amount */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>
+                STAKE AMOUNT {stakeMode === 'SOL' ? '(SOL)' : `(${splSymbol || 'TOKEN'})`}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder={stakeMode === 'SOL' ? '0.1' : '10'}
+                placeholderTextColor={Colors.text3}
+                value={stakeAmount}
+                onChangeText={setStakeAmount}
+                keyboardType="decimal-pad"
+              />
+            </View>
+            {/* SPL-only fields */}
+            {stakeMode === 'SPL' && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>TOKEN MINT ADDRESS *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                    placeholderTextColor={Colors.text3}
+                    value={splMint}
+                    onChangeText={setSplMint}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.fieldRow}>
+                  <View style={[styles.fieldGroup, { flex: 2 }]}>
+                    <Text style={styles.fieldLabel}>TOKEN SYMBOL *</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g. USDC"
+                      placeholderTextColor={Colors.text3}
+                      value={splSymbol}
+                      onChangeText={setSplSymbol}
+                      autoCapitalize="characters"
+                      maxLength={10}
+                    />
+                  </View>
+                  <View style={styles.fieldRowDivider} />
+                  <View style={[styles.fieldGroup, { flex: 1 }]}>
+                    <Text style={styles.fieldLabel}>DECIMALS</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="6"
+                      placeholderTextColor={Colors.text3}
+                      value={splDecimals}
+                      onChangeText={setSplDecimals}
+                      keyboardType="number-pad"
+                      maxLength={2}
+                    />
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+
+        {/* Host Fee */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Host Fee</Text>
+          <View style={styles.card}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>TICKET TYPE</Text>
+              <View style={styles.stakeTabs}>
+                <TouchableOpacity
+                  style={[styles.stakeTab, feeMode === 'free' && styles.stakeTabActive]}
+                  onPress={() => setFeeMode('free')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.stakeTabText, feeMode === 'free' && styles.stakeTabTextActive]}>Free</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.stakeTab, feeMode === 'fee' && styles.stakeTabActive]}
+                  onPress={() => setFeeMode('fee')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.stakeTabText, feeMode === 'fee' && styles.stakeTabTextActive]}>With Fee</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            {feeMode === 'fee' && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>HOST FEE PERCENT (1–100)</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. 10"
+                    placeholderTextColor={Colors.text3}
+                    value={hostFeePercent}
+                    onChangeText={setHostFeePercent}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                  />
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>WHAT THIS MEANS</Text>
+                  <Text style={styles.feeNote}>
+                    {parseInt(hostFeePercent) || 0}% of each attendee{"'"}s stake will go to you as host fee. The rest
+                    is returned to attendees who check in.
+                  </Text>
+                </View>
+              </>
+            )}
+            <View style={styles.divider} />
+            <View style={styles.platformFeeRow}>
+              <View style={styles.platformFeeLeft}>
+                <Text style={styles.fieldLabel}>PLATFORM FEE</Text>
+                <Text style={styles.platformFeeFormula}>
+                  {PLATFORM_FEE_SOL} SOL × {parseInt(capacity) || 100} tickets
+                </Text>
+              </View>
+              <View style={styles.platformFeeRight}>
+                <Text style={styles.platformFeeTotal}>
+                  {(PLATFORM_FEE_SOL * (parseInt(capacity) || 100)).toFixed(4)}
+                </Text>
+                <Text style={styles.platformFeeUnit}>SOL</Text>
               </View>
             </View>
           </View>
         </View>
 
-        <Button
-          onPress={handleCreateEvent}
-          loading={createEvent.isPending}
-          disabled={!eventTitle.trim() || !location.trim() || endTime <= startTime}
-        >
+        <Button onPress={handleCreateEvent} loading={createEvent.isPending} disabled={!canSubmit}>
           {createEvent.isPending ? 'Creating on Solana…' : 'Create Event'}
         </Button>
       </ScrollView>
@@ -479,14 +733,25 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { padding: Spacing.md, gap: Spacing.lg, paddingBottom: 160 },
 
-  orgBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  orgLabel: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.accent, letterSpacing: ls(11, LS.labelNarrow) },
+  orgBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  orgBadgeAvatar: { width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.surface2 },
+  orgBadgeAvatarFallback: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border2,
+  },
+  orgLabel: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text1 },
 
   imagePicker: { borderRadius: 16, overflow: 'hidden', marginBottom: Spacing.xs },
-  imagePreview: { width: '100%', aspectRatio: 16 / 9 },
+  imagePreview: { width: '100%', aspectRatio: 1 },
   imagePlaceholder: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    aspectRatio: 1,
     borderWidth: 1,
     borderColor: Colors.border2,
     borderStyle: 'dashed',
@@ -532,6 +797,38 @@ const styles = StyleSheet.create({
   input: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1, paddingVertical: 0 },
   multiline: { minHeight: 64, textAlignVertical: 'top' },
 
+  categoryScroll: { marginTop: 4 },
+  categoryChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    marginRight: 8,
+    backgroundColor: Colors.surface2,
+  },
+  categoryChipActive: { backgroundColor: Colors.accent, borderColor: Colors.accent },
+  categoryChipText: {
+    fontFamily: Fonts.mono,
+    fontSize: 10,
+    color: Colors.text2,
+    letterSpacing: ls(10, LS.labelNarrow),
+  },
+  categoryChipTextActive: { color: Colors.bg },
+
+  stakeTabs: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  stakeTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    backgroundColor: Colors.surface2,
+  },
+  stakeTabActive: { backgroundColor: Colors.accent, borderColor: Colors.accent },
+  stakeTabText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text2, letterSpacing: ls(11, LS.labelNarrow) },
+  stakeTabTextActive: { color: Colors.bg },
+
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dateValue: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1 },
   dateValueMuted: { color: Colors.text2 },
@@ -553,12 +850,7 @@ const styles = StyleSheet.create({
 
   fieldRow: { flexDirection: 'row', alignItems: 'flex-start' },
   fieldRowDivider: { width: 1, backgroundColor: Colors.border, alignSelf: 'stretch', marginVertical: Spacing.md },
-  sectionDesc: {
-    fontFamily: Fonts.body,
-    fontSize: 14,
-    color: Colors.text2,
-    lineHeight: 22,
-  },
+
   createOrgHeader: { gap: 6, marginBottom: Spacing.lg },
   createOrgTitle: { fontFamily: Fonts.display, fontSize: 28, color: Colors.text1, letterSpacing: ls(28, LS.display) },
   createOrgSubtitle: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, lineHeight: 20 },
@@ -604,6 +896,7 @@ const styles = StyleSheet.create({
     letterSpacing: ls(9, LS.labelWide),
     marginTop: Spacing.sm,
   },
+
   pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   pickerContainer: {
     backgroundColor: Colors.surface,
@@ -612,7 +905,39 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     paddingBottom: Spacing.xl,
   },
-  successContent: { flex: 1, padding: Spacing.md, gap: Spacing.lg, justifyContent: 'center' },
+
+  venuePickerBtn: { borderRadius: 12, overflow: 'hidden' },
+  venuePreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12 },
+  venuePlaceholder: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.surface,
+  },
+  feeNote: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text2, lineHeight: 20 },
+  platformFeeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.md,
+  },
+  platformFeeLeft: { gap: 3 },
+  platformFeeFormula: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text3 },
+  platformFeeRight: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  platformFeeTotal: {
+    fontFamily: Fonts.display,
+    fontSize: 20,
+    color: Colors.text1,
+    letterSpacing: ls(20, LS.displaySubtle),
+  },
+  platformFeeUnit: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text3 },
+  successContent: { flexGrow: 1, padding: Spacing.md, gap: Spacing.xl, justifyContent: 'center', paddingBottom: 80 },
   successHeading: {
     fontFamily: Fonts.display,
     fontSize: 56,
@@ -620,13 +945,25 @@ const styles = StyleSheet.create({
     letterSpacing: ls(56, LS.displayTight),
     lineHeight: 62,
   },
-  successCard: { gap: 10 },
+  successCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    overflow: 'hidden',
+  },
+  successDivider: { height: 1, backgroundColor: Colors.border },
+  successRow: {
+    paddingVertical: Spacing.md,
+    gap: 8,
+  },
   successEventTitle: {
     fontFamily: Fonts.display,
-    fontSize: 20,
+    fontSize: 22,
     color: Colors.text1,
-    letterSpacing: ls(20, LS.displaySubtle),
-    marginBottom: 8,
+    letterSpacing: ls(22, LS.displaySubtle),
+    paddingVertical: Spacing.md,
   },
   successLabel: {
     fontFamily: Fonts.mono,
@@ -635,6 +972,31 @@ const styles = StyleSheet.create({
     letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
-  successHash: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text2 },
   successValue: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1 },
+  txActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  txHashBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Colors.surface2,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    minHeight: 44,
+  },
+  successHash: { flex: 1, fontFamily: Fonts.mono, fontSize: 13, color: Colors.text2 },
+  txLinkBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: Colors.surface2,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successActions: { gap: Spacing.md },
 })

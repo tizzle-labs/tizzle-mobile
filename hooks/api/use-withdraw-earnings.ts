@@ -1,12 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { PublicKey, TransactionMessage, VersionedTransaction, SystemProgram } from '@solana/web3.js'
-import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { useMobileWallet } from '@wallet-ui/react-native-web3js'
-import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
-import { eventKeys } from './use-events'
-import { deriveEscrowVaultPda } from '@/lib/solana/program'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
+import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import type { Event } from '@/lib/api/events'
+import { deriveEscrowVaultPda } from '@/lib/solana/program'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMobileWallet } from '@wallet-ui/react-native-web3js'
+import { eventKeys } from './use-events'
 
 export function useWithdrawEarnings(event: Event | undefined) {
   const { connection, accounts, signAndSendTransactions } = useMobileWallet()
@@ -18,10 +18,8 @@ export function useWithdrawEarnings(event: Event | undefined) {
   const { mutateAsync: withdrawEarnings, isPending: isWithdrawing } = useMutation({
     mutationFn: async () => {
       if (!event) throw new Error('Missing event')
-      const walletAddress = accounts?.[0]?.address?.toString()
-      if (!walletAddress) throw new Error('Wallet not connected')
-
-      const organizerPubkey = new PublicKey(walletAddress)
+      const organizerPubkey = accounts?.[0]?.publicKey
+      if (!organizerPubkey) throw new Error('Wallet not connected')
       const eventPdaPubkey = new PublicKey(event.eventPda)
       const escrowVault = deriveEscrowVaultPda(eventPdaPubkey)
       const organizationTreasury = new PublicKey(event.organizerAddress)
@@ -42,19 +40,16 @@ export function useWithdrawEarnings(event: Event | undefined) {
 
       const ix = await program.methods.withdrawEarnings().accounts(ixAccounts).instruction()
 
-      const {
-        context: { slot: minContextSlot },
-        value: latestBlockhash,
-      } = await connection.getLatestBlockhashAndContext()
+      const { value: latestBlockhash } = await connection.getLatestBlockhashAndContext()
 
       const message = new TransactionMessage({
         payerKey: organizerPubkey,
         recentBlockhash: latestBlockhash.blockhash,
         instructions: [ix],
-      }).compileToLegacyMessage()
+      }).compileToV0Message()
 
       const tx = new VersionedTransaction(message)
-      const result = await signAndSendTransactions(tx, minContextSlot)
+      const result = await signAndSendTransactions(tx, 0)
       const signature = Array.isArray(result) ? result[0] : result
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 

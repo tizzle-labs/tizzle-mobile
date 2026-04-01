@@ -1,5 +1,5 @@
 import { useAuth } from '@/components/auth/auth-provider'
-import { deriveEventStatus, EventStatusChip } from '@/components/event/EventStatusChip'
+import { deriveEventStatus } from '@/components/event/EventStatusChip'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -31,25 +31,32 @@ function shortAddr(addr: string) {
 
 function HistoryEventRow({ event, onPress }: { event: Event; onPress: () => void }) {
   const status = deriveEventStatus(event.startTime, event.endTime, event.unlockTime)
+  const statusColor = status === 'Available' || status === 'Ongoing' ? Colors.accent : Colors.warning
   return (
     <TouchableOpacity style={s.eventRow} onPress={onPress} activeOpacity={0.75}>
       <Image source={{ uri: event.imageUrl }} style={s.eventThumb} contentFit="cover" />
       <View style={s.eventInfo}>
         <View style={s.eventTopRow}>
-          <View style={s.orgAvatar}>
-            <Ionicons name="business-outline" size={10} color={Colors.text3} />
-          </View>
-          <Text style={[s.orgName, { flex: 1 }]} numberOfLines={1}>
-            {shortAddr(event.organizerAddress)}
+          {event.organizationAvatarUrl ? (
+            <Image source={{ uri: event.organizationAvatarUrl }} style={s.orgAvatarImg} contentFit="cover" />
+          ) : (
+            <View style={s.orgAvatar}>
+              <Ionicons name="business-outline" size={10} color={Colors.text3} />
+            </View>
+          )}
+          <Text style={s.orgName} numberOfLines={1}>
+            {event.organizationName ?? shortAddr(event.organizerAddress)}
           </Text>
-          <EventStatusChip status={status} />
         </View>
         <Text style={s.eventTitle} numberOfLines={2}>
           {event.title}
         </Text>
-        <View style={s.eventDateRow}>
-          <Ionicons name="time-outline" size={11} color={Colors.text3} />
-          <Text style={s.eventDate}>{formatEventDate(event.startTime)}</Text>
+        <View style={s.eventBottomRow}>
+          <View style={s.eventDateRow}>
+            <Ionicons name="time-outline" size={11} color={Colors.text3} />
+            <Text style={s.eventDate}>{formatEventDate(event.startTime)}</Text>
+          </View>
+          <Text style={[s.statusText, { color: statusColor }]}>{status.toUpperCase()}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -273,7 +280,15 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border2,
   },
-  orgName: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.text3 },
+  orgAvatarImg: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.surface2,
+    borderWidth: 1,
+    borderColor: Colors.border2,
+  },
+  orgName: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1, flex: 1 },
   eventTitle: {
     fontFamily: Fonts.display,
     fontSize: 15,
@@ -281,8 +296,10 @@ const s = StyleSheet.create({
     letterSpacing: ls(15, LS.displaySubtle),
     lineHeight: 20,
   },
+  eventBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   eventDateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  eventDate: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.text3 },
+  eventDate: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1 },
+  statusText: { fontFamily: Fonts.mono, fontSize: 10, letterSpacing: ls(10, LS.labelNarrow) },
 
   emptyInline: {
     paddingVertical: Spacing.lg,
