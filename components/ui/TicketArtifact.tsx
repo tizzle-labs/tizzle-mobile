@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, ViewStyle } from 'react-native'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
+import { StyleSheet, Text, View, ViewStyle } from 'react-native'
 
 interface TicketArtifactProps {
   eventTitle: string
@@ -22,7 +22,7 @@ export function TicketArtifact({
   return (
     <View style={[styles.container, style]}>
       <View style={styles.topSection}>
-        <Text style={styles.label}>TIZZLE TICKET</Text>
+        <Text style={styles.label}>TIZZLE</Text>
         <Text style={styles.title} numberOfLines={2}>
           {eventTitle}
         </Text>

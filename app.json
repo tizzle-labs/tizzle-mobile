@@ -1,28 +1,25 @@
 {
   "expo": {
-    "name": "Tizzle Ticket",
-    "slug": "tizzle-ticket",
+    "name": "Tizzle",
+    "slug": "tizzle",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tizzle-ticket",
+    "scheme": "tizzle",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.tizzle.ticket"
+      "bundleIdentifier": "app.tizzle"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundImage": "./assets/images/adaptive-icon-background.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "app.tizzle.ticket",
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "package": "app.tizzle",
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",
@@ -50,7 +47,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Tizzle Ticket needs camera access to scan ticket QR codes."
+          "cameraPermission": "Tizzle needs camera access to scan ticket QR codes."
         }
       ],
       "@react-native-community/datetimepicker"

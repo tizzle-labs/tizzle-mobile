@@ -1,4 +1,4 @@
-# Design System — Tizzle Ticket
+# Design System — Tizzle
 
 ## Product Context
 

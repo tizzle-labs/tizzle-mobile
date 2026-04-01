@@ -1,5 +1,5 @@
 {
-  "name": "tizzle-ticket",
+  "name": "tizzle",
   "scripts": {
     "android": "expo run:android",
     "android:build": "expo prebuild -p android",
@@ -16,7 +16,7 @@
     "start": "expo start",
     "web": "expo start --web"
   },
-  "displayName": "Tizzle Ticket",
+  "displayName": "Tizzle",
   "description": "On-chain event ticketing on Solana",
   "keywords": [
     "expo",

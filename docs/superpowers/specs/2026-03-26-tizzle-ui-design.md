@@ -1,4 +1,4 @@
-# Tizzle Ticket — UI Design Spec
+# Tizzle — UI Design Spec
 
 _Date: 2026-03-26_
 
