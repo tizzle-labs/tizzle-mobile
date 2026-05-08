@@ -18,8 +18,8 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: 'rgba(28, 28, 30, 0.85)',
-          borderTopColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.border,
           borderTopWidth: 1,
           paddingBottom: (insets.bottom || 8) + 6,
           paddingTop: 8,

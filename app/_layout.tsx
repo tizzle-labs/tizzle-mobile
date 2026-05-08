@@ -5,11 +5,12 @@ import { Colors } from '@/constants/colors'
 import { useTrackLocations } from '@/hooks/use-track-locations'
 import { PortalHost } from '@rn-primitives/portal'
 import { useFonts } from 'expo-font'
+import * as NavigationBar from 'expo-navigation-bar'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
-import { useCallback } from 'react'
-import { View } from 'react-native'
+import { useCallback, useEffect } from 'react'
+import { Platform, View } from 'react-native'
 import 'react-native-reanimated'
 
 SplashScreen.preventAutoHideAsync()
@@ -26,6 +27,12 @@ export default function RootLayout() {
     'DMSans-Medium': require('../assets/fonts/DMSans-Medium.ttf'),
     'GeistMono-Regular': require('../assets/fonts/GeistMono-Regular.ttf'),
   })
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return
+    NavigationBar.setBackgroundColorAsync(Colors.surface)
+    NavigationBar.setButtonStyleAsync('light')
+  }, [])
 
   const onLayoutRootView = useCallback(async () => {
     if (loaded) {
