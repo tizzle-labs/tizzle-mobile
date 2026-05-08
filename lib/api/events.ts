@@ -55,7 +55,12 @@ export interface CreateEventPayload {
   unlockTime: string
 }
 
-export async function getEvents(params?: { limit?: number }): Promise<Event[]> {
+export async function getEvents(params?: {
+  limit?: number
+  offset?: number
+  sortBy?: 'created_at' | 'start_time'
+  organizationPda?: string
+}): Promise<Event[]> {
   const { data } = await apiClient.get('/v1/events', { params })
   return data
 }

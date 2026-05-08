@@ -35,13 +35,14 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="explore/index"
+        name="explore"
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <Ionicons name="compass-outline" size={28} color={color} />,
         }}
         listeners={{ tabPress: handleTabPress }}
       />
+      <Tabs.Screen name="explore/events" options={{ href: null }} />
       <Tabs.Screen
         name="tickets/index"
         options={{

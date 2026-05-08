@@ -1,10 +1,9 @@
-import { deriveEventStatus } from '@/components/event/EventStatusChip'
+import { EventRow } from '@/components/event/EventRow'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { useEvents } from '@/hooks/api/use-events'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
-import type { Event } from '@/lib/api/events'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
@@ -13,24 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 function openEvent(eventPda: string) {
   router.push(`/(modals)/event/${eventPda}`)
-}
-
-function formatEventDate(iso: string): string {
-  const date = new Date(iso)
-  const now = new Date()
-  const tomorrow = new Date(now)
-  tomorrow.setDate(now.getDate() + 1)
-  const isToday = date.toDateString() === now.toDateString()
-  const isTomorrow = date.toDateString() === tomorrow.toDateString()
-  const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-  if (isToday) return `Today, ${time}`
-  if (isTomorrow) return `Tomorrow, ${time}`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + `, ${time}`
-}
-
-function shortAddress(addr: string): string {
-  if (!addr || addr.length < 8) return addr
-  return `${addr.slice(0, 4)}...${addr.slice(-4)}`
 }
 
 const USER_PREFERRED_CATEGORIES = ['Tech', 'Community', 'Music']
@@ -55,41 +36,6 @@ const BROWSE_CATEGORIES = [
 ]
 
 const COLUMN_WIDTH = 320
-
-function EventRow({ event, onPress }: { event: Event; onPress: () => void }) {
-  const status = deriveEventStatus(event.startTime, event.endTime, event.unlockTime)
-  const statusColor = status === 'Available' || status === 'Ongoing' ? Colors.accent : Colors.warning
-
-  return (
-    <TouchableOpacity style={styles.recentRow} onPress={onPress} activeOpacity={0.75}>
-      <Image source={{ uri: event.imageUrl }} style={styles.recentThumb} contentFit="cover" />
-      <View style={styles.recentInfo}>
-        <View style={styles.recentTop}>
-          {event.organizationAvatarUrl ? (
-            <Image source={{ uri: event.organizationAvatarUrl }} style={styles.orgAvatar} contentFit="cover" />
-          ) : (
-            <View style={styles.orgAvatarFallback}>
-              <Ionicons name="business-outline" size={10} color={Colors.text3} />
-            </View>
-          )}
-          <Text style={styles.orgName} numberOfLines={1}>
-            {event.organizationName ?? shortAddress(event.organizerAddress)}
-          </Text>
-        </View>
-        <Text style={styles.recentTitle} numberOfLines={2}>
-          {event.title}
-        </Text>
-        <View style={styles.recentBottom}>
-          <View style={styles.dateRow}>
-            <Ionicons name="time-outline" size={11} color={Colors.text3} />
-            <Text style={styles.dateText}>{formatEventDate(event.startTime)}</Text>
-          </View>
-          <Text style={[styles.statusText, { color: statusColor }]}>{status.toUpperCase()}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  )
-}
 
 export default function Explore() {
   const { data: events, isLoading, refetch, isRefetching } = useEvents()
@@ -141,8 +87,13 @@ export default function Explore() {
                 <Text style={styles.sectionTitle}>For You</Text>
                 <Text style={styles.sectionSubtitle}>Based on your interests</Text>
               </View>
-              <TouchableOpacity style={styles.seeAllBtn}>
-                <Text style={styles.seeAllText}>See All</Text>
+              <TouchableOpacity
+                style={styles.seeAllBtn}
+                onPress={() => router.push({ pathname: '/(tabs)/explore/events', params: { type: 'for-you' } })}
+                hitSlop={8}
+              >
+                <Text style={styles.seeAllText}>View All</Text>
+                <Ionicons name="chevron-forward" size={14} color={Colors.text2} />
               </TouchableOpacity>
             </View>
             {forYouEvents.length === 0 ? (
@@ -205,8 +156,13 @@ export default function Explore() {
                   <Text style={styles.sectionTitle}>Recently Added</Text>
                   <Text style={styles.sectionSubtitle}>Fresh on the platform</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllBtn}>
-                  <Text style={styles.seeAllText}>See All</Text>
+                <TouchableOpacity
+                  style={styles.seeAllBtn}
+                  onPress={() => router.push({ pathname: '/(tabs)/explore/events', params: { type: 'recently-added' } })}
+                  hitSlop={8}
+                >
+                  <Text style={styles.seeAllText}>View All</Text>
+                  <Ionicons name="chevron-forward" size={14} color={Colors.text2} />
                 </TouchableOpacity>
               </View>
               <ScrollView
@@ -290,60 +246,16 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: { fontFamily: Fonts.body, fontSize: 12, color: Colors.text2 },
   seeAllBtn: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: 4,
   },
-  seeAllText: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.text2, letterSpacing: ls(10, LS.labelNarrow) },
+  seeAllText: { fontFamily: Fonts.mono, fontSize: 13, color: Colors.text2 },
 
   hScroll: { marginHorizontal: -Spacing.md },
   hScrollContent: { paddingHorizontal: Spacing.md, gap: Spacing.md },
   column: { width: COLUMN_WIDTH },
-
-  // Event row
-  recentRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    alignItems: 'flex-start',
-  },
-  recentThumb: { width: 80, height: 80, borderRadius: 10, backgroundColor: Colors.surface2 },
-  recentInfo: { flex: 1, gap: 5 },
-  recentTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  recentBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  recentTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 15,
-    color: Colors.text1,
-    letterSpacing: ls(15, LS.displaySubtle),
-    lineHeight: 20,
-  },
-  orgAvatar: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.surface2,
-    borderWidth: 1,
-    borderColor: Colors.border2,
-  },
-  orgAvatarFallback: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
-  },
-  orgName: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1, flex: 1 },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  dateText: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1 },
-  statusText: { fontFamily: Fonts.mono, fontSize: 10, letterSpacing: ls(10, LS.labelNarrow) },
 
   // Categories
   catScroll: { marginHorizontal: -Spacing.md, marginTop: Spacing.sm },
