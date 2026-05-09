@@ -1,3 +1,4 @@
+import { EventMap } from '@/components/event/EventMap'
 import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
@@ -124,11 +125,15 @@ export default function EventPreview() {
             </Text>
           </View>
 
-          {/* Map placeholder */}
-          <View style={s.mapPlaceholder}>
-            <Ionicons name="map-outline" size={24} color={Colors.text3} />
-            <Text style={s.mapText}>Map coming soon</Text>
-          </View>
+          {/* Map */}
+          {data.latitude && data.longitude ? (
+            <EventMap latitude={data.latitude} longitude={data.longitude} locationText={data.location} />
+          ) : (
+            <View style={s.mapPlaceholder}>
+              <Ionicons name="map-outline" size={24} color={Colors.text3} />
+              <Text style={s.mapText}>Map unavailable</Text>
+            </View>
+          )}
 
           {/* Venue */}
           {!!data.venueImageUri && (

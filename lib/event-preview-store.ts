@@ -2,6 +2,8 @@ export interface EventPreviewData {
   title: string
   description: string
   location: string
+  latitude?: number
+  longitude?: number
   category: string | null
   imageUri: string | null
   venueImageUri: string | null

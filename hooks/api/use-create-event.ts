@@ -28,6 +28,8 @@ export interface CreateEventInput {
   imageUri?: string
   venueImageUri?: string
   location: string
+  latitude?: number
+  longitude?: number
   category?: string
   capacity: number
   stakeAmount: number
@@ -114,6 +116,8 @@ export function useCreateEvent() {
         title: input.title,
         description: input.description,
         location: input.location,
+        latitude: input.latitude,
+        longitude: input.longitude,
         category: input.category,
         capacity: input.capacity,
         stakeAmount: stakeAmountOnchain.toNumber(),

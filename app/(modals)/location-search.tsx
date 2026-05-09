@@ -69,8 +69,21 @@ export default function LocationSearch() {
     }, 350)
   }, [query])
 
-  function handleSelect(item: Prediction) {
-    resolveLocation(item.description)
+  async function handleSelect(item: Prediction) {
+    try {
+      const params = new URLSearchParams({
+        place_id: item.place_id,
+        fields: 'geometry',
+        key: GOOGLE_PLACES_KEY,
+        sessiontoken: sessionToken.current,
+      })
+      const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?${params}`)
+      const json = await res.json()
+      const loc = json.result?.geometry?.location
+      resolveLocation({ text: item.description, latitude: loc?.lat ?? 0, longitude: loc?.lng ?? 0 })
+    } catch {
+      resolveLocation({ text: item.description, latitude: 0, longitude: 0 })
+    }
     sessionToken.current = Math.random().toString(36).slice(2)
     router.back()
   }

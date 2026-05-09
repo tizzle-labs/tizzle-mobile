@@ -1,10 +1,16 @@
-let _callback: ((location: string) => void) | null = null
+export interface LocationData {
+  text: string
+  latitude: number
+  longitude: number
+}
 
-export function setLocationCallback(cb: (location: string) => void) {
+let _callback: ((location: LocationData) => void) | null = null
+
+export function setLocationCallback(cb: (location: LocationData) => void) {
   _callback = cb
 }
 
-export function resolveLocation(location: string) {
+export function resolveLocation(location: LocationData) {
   _callback?.(location)
   _callback = null
 }

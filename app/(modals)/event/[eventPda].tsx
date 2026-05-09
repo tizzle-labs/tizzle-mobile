@@ -1,4 +1,5 @@
 import { useAuth } from '@/components/auth/auth-provider'
+import { EventMap } from '@/components/event/EventMap'
 import { EventStatusChip, deriveEventStatus } from '@/components/event/EventStatusChip'
 import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
@@ -17,6 +18,7 @@ import {
   ActivityIndicator,
   Dimensions,
   LayoutChangeEvent,
+  Linking,
   Share,
   StyleSheet,
   Text,
@@ -154,11 +156,19 @@ export default function EventDetailModal() {
             </Text>
           </View>
 
-          {/* Map placeholder */}
-          <View style={s.mapPlaceholder}>
-            <Ionicons name="map-outline" size={24} color={Colors.text3} />
-            <Text style={s.mapText}>Map coming soon</Text>
-          </View>
+          {/* Map */}
+          {event.latitude && event.longitude ? (
+            <EventMap latitude={event.latitude} longitude={event.longitude} locationText={event.location} />
+          ) : (
+            <TouchableOpacity
+              style={s.mapPlaceholder}
+              activeOpacity={0.7}
+              onPress={() => Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(event.location)}`)}
+            >
+              <Ionicons name="map-outline" size={24} color={Colors.text3} />
+              <Text style={s.mapText}>Open in Maps</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Venue — only shown if venueImageUrl exists */}
           {!!event.venueImageUrl && (

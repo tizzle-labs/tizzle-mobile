@@ -6,7 +6,7 @@ import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { registerCreateDiscardHandler, setCreateFormDirty } from '@/lib/create-dirty-store'
 import { setDescriptionCallback } from '@/lib/description-callback-store'
 import { setEventPreview } from '@/lib/event-preview-store'
-import { setLocationCallback } from '@/lib/location-callback-store'
+import { setLocationCallback, type LocationData } from '@/lib/location-callback-store'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { PLATFORM_FEE_SOL, useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
@@ -86,6 +86,8 @@ export default function Create() {
   const [eventTitle, setEventTitle] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
+  const [locationLat, setLocationLat] = useState(0)
+  const [locationLng, setLocationLng] = useState(0)
   const [category, setCategory] = useState<string | null>(null)
   const [eventImageUri, setEventImageUri] = useState<string | null>(null)
   const [venueImageUri, setVenueImageUri] = useState<string | null>(null)
@@ -226,6 +228,8 @@ export default function Create() {
     setEventTitle('')
     setDescription('')
     setLocation('')
+    setLocationLat(0)
+    setLocationLng(0)
     setCategory(null)
     setEventImageUri(null)
     setVenueImageUri(null)
@@ -309,6 +313,8 @@ export default function Create() {
         title: eventTitle.trim(),
         description,
         location: location.trim(),
+        latitude: locationLat || undefined,
+        longitude: locationLng || undefined,
         category,
         imageUri: eventImageUri,
         venueImageUri,
@@ -337,6 +343,8 @@ export default function Create() {
       imageUri: eventImageUri ?? undefined,
       venueImageUri: venueImageUri ?? undefined,
       location: location.trim(),
+      latitude: locationLat || undefined,
+      longitude: locationLng || undefined,
       category: category ?? 'others',
       capacity,
       stakeAmount: parsedStake,
@@ -391,7 +399,7 @@ export default function Create() {
           <Text style={styles.headerTitle}>Create Event</Text>
         </View>
         <ScrollView contentContainerStyle={styles.successContent} showsVerticalScrollIndicator={false}>
-          <Text style={styles.successHeading}>TICKETS{'\n'}MINTED</Text>
+          <Text style={styles.successHeading}>TICKETS{'\n'}MINTED🎉</Text>
           <View style={styles.successCard}>
             <Text style={styles.successEventTitle}>{successData.eventTitle}</Text>
             <View style={styles.successDivider} />
@@ -682,7 +690,11 @@ export default function Create() {
             style={styles.card}
             activeOpacity={0.7}
             onPress={() => {
-              setLocationCallback((selected) => setLocation(selected))
+              setLocationCallback(({ text, latitude, longitude }: LocationData) => {
+                setLocation(text)
+                setLocationLat(latitude)
+                setLocationLng(longitude)
+              })
               router.push('/(modals)/location-search')
             }}
           >
@@ -698,6 +710,8 @@ export default function Create() {
                   onPress={(e) => {
                     e.stopPropagation()
                     setLocation('')
+                    setLocationLat(0)
+                    setLocationLng(0)
                   }}
                 >
                   <Ionicons name="close-circle" size={16} color={Colors.text2} />
@@ -849,7 +863,7 @@ export default function Create() {
 
               {/* Gatekeeper Address */}
               <TouchableOpacity
-                style={[styles.iconRow, !gatekeeperValid && styles.iconRowError]}
+                style={styles.iconRow}
                 onPress={() => gatekeeperRef.current?.focus()}
                 activeOpacity={1}
               >

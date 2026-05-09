@@ -9,6 +9,8 @@ export interface Event {
   description: string
   imageUrl: string
   location: string
+  latitude?: number
+  longitude?: number
   category: string
   capacity: number
   stakeAmount: string
@@ -41,6 +43,8 @@ export interface CreateEventPayload {
   description?: string
   imageUrl?: string
   location?: string
+  latitude?: number
+  longitude?: number
   category?: string
   capacity: number
   stakeAmount: number
