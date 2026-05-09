@@ -6,7 +6,7 @@ import { useCameraPermissions } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { AppState, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
+import { AppState, Linking, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type PermStatus = 'granted' | 'denied' | 'undetermined'
@@ -23,24 +23,26 @@ interface PermissionItem {
 
 export default function PermissionsScreen() {
   const insets = useSafeAreaInsets()
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions()
+  const [cameraPermission, requestCameraPermission, getCameraPermission] = useCameraPermissions()
   const [mediaStatus, setMediaStatus] = useState<PermStatus>('undetermined')
 
-  async function refreshMediaStatus() {
-    const result = await ImagePicker.getMediaLibraryPermissionsAsync()
-    setMediaStatus(result.status as PermStatus)
+  async function refreshAll() {
+    const [media] = await Promise.all([ImagePicker.getMediaLibraryPermissionsAsync(), getCameraPermission()])
+    setMediaStatus(media.status as PermStatus)
   }
 
   useEffect(() => {
-    refreshMediaStatus()
+    refreshAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Re-check permissions when returning from iOS Settings
+  // Re-check both permissions when returning from system Settings
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refreshMediaStatus()
+      if (state === 'active') refreshAll()
     })
     return () => sub.remove()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleCameraRequest() {
@@ -72,15 +74,20 @@ export default function PermissionsScreen() {
       status: cameraStatus,
       onRequest: handleCameraRequest,
     },
-    {
-      key: 'media',
-      icon: 'image-outline',
-      iconBg: '#7C3AED',
-      label: 'Photo Library',
-      description: 'Required to upload your profile photo and event cover image',
-      status: mediaStatus,
-      onRequest: handleMediaRequest,
-    },
+    // Android 13+ uses the system photo picker — no user permission needed
+    ...(Platform.OS === 'ios'
+      ? [
+          {
+            key: 'media',
+            icon: 'image-outline',
+            iconBg: '#7C3AED',
+            label: 'Photo Library',
+            description: 'Required to upload your profile photo and event cover image',
+            status: mediaStatus,
+            onRequest: handleMediaRequest,
+          } satisfies PermissionItem,
+        ]
+      : []),
   ]
 
   return (
