@@ -22,3 +22,10 @@ export async function updateMyProfile(payload: {
   const { data } = await apiClient.put('/v1/users/me', payload)
   return data
 }
+
+export async function checkUsernameAvailable(username: string): Promise<boolean> {
+  const { data } = await apiClient.get<{ available: boolean }>('/v1/users/check-username', {
+    params: { username },
+  })
+  return data.available
+}

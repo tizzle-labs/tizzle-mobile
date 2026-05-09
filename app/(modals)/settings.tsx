@@ -190,8 +190,6 @@ const s = StyleSheet.create({
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
   },
   headerTitle: {
     fontFamily: Fonts.display,
@@ -216,11 +214,10 @@ const s = StyleSheet.create({
   group: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
     overflow: 'hidden',
   },
-  divider: { height: 1, backgroundColor: Colors.border, marginLeft: 52 },
+
+  divider: { height: 1, backgroundColor: Colors.border },
 
   row: {
     flexDirection: 'row',
@@ -247,11 +244,8 @@ const s = StyleSheet.create({
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
-    overflow: 'hidden',
   },
-  avatarImg: { width: 44, height: 44 },
+  avatarImg: { width: 44, height: 44, borderRadius: 22 },
   profileInfo: { flex: 1, gap: 2 },
   profileName: {
     fontFamily: Fonts.display,

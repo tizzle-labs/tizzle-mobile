@@ -4,10 +4,11 @@ import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { useUpdateProfile } from '@/hooks/api/use-update-profile'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
+import { checkUsernameAvailable } from '@/lib/api/users'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Image,
@@ -21,6 +22,8 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken'
+
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets()
   const { data: profile, isLoading } = useMyProfile()
@@ -30,12 +33,40 @@ export default function EditProfileScreen() {
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
   const [avatarUri, setAvatarUri] = useState<string | null>(null)
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const NAME_MAX = 30
+  const nameExceeded = name.length > NAME_MAX
 
   useEffect(() => {
     setName(profile?.name ?? '')
     setUsername(profile?.username ?? '')
     setBio(profile?.bio ?? '')
   }, [profile?.name, profile?.username, profile?.bio])
+
+  function handleUsernameChange(value: string) {
+    const stripped = value.replace(/\s/g, '')
+    setUsername(stripped)
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    const trimmed = stripped.trim()
+    if (!trimmed || trimmed === (profile?.username ?? '')) {
+      setUsernameStatus('idle')
+      return
+    }
+
+    setUsernameStatus('checking')
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const available = await checkUsernameAvailable(trimmed)
+        setUsernameStatus(available ? 'available' : 'taken')
+      } catch {
+        setUsernameStatus('idle')
+      }
+    }, 500)
+  }
 
   const isDirty = useMemo(
     () =>
@@ -45,6 +76,8 @@ export default function EditProfileScreen() {
       avatarUri !== null,
     [name, username, bio, avatarUri, profile],
   )
+
+  const canSave = isDirty && usernameStatus !== 'taken' && usernameStatus !== 'checking' && !nameExceeded
 
   async function pickAvatar() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -126,22 +159,33 @@ export default function EditProfileScreen() {
               placeholderTextColor={Colors.text3}
               value={name}
               onChangeText={setName}
-              maxLength={30}
             />
+            {nameExceeded && (
+              <Text style={s.usernameError}>Name must be {NAME_MAX} characters or less</Text>
+            )}
           </View>
 
           <View style={s.fieldGroup}>
             <Text style={s.fieldLabel}>USERNAME</Text>
-            <TextInput
-              style={s.input}
-              placeholder="your-handle"
-              placeholderTextColor={Colors.text3}
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={username}
-              onChangeText={setUsername}
-              maxLength={24}
-            />
+            <View style={s.inputWrap}>
+              <TextInput
+                style={s.input}
+                placeholder="your-handle"
+                placeholderTextColor={Colors.text3}
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={username}
+                onChangeText={handleUsernameChange}
+                maxLength={24}
+              />
+              <View style={s.usernameStatus}>
+                {usernameStatus === 'checking' && <ActivityIndicator size="small" color={Colors.text3} />}
+                {usernameStatus === 'available' && <Ionicons name="checkmark-circle" size={18} color="#22C55E" />}
+                {usernameStatus === 'taken' && <Ionicons name="close-circle" size={18} color={Colors.error} />}
+              </View>
+            </View>
+            {usernameStatus === 'taken' && <Text style={s.usernameError}>Username already taken</Text>}
+            {usernameStatus === 'available' && <Text style={s.usernameOk}>Username is available</Text>}
           </View>
 
           <View style={s.fieldGroup}>
@@ -161,7 +205,7 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
-        <Button onPress={handleSave} loading={isSaving} disabled={!isDirty}>
+        <Button onPress={handleSave} loading={isSaving} disabled={!canSave}>
           Save Changes
         </Button>
       </ScrollView>
@@ -178,8 +222,6 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
     marginBottom: Spacing.md,
   },
   backBtn: {
@@ -189,8 +231,6 @@ const s = StyleSheet.create({
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
   },
   title: { fontFamily: Fonts.display, fontSize: 18, color: Colors.text1, letterSpacing: ls(18, LS.displaySubtle) },
   scroll: { flex: 1 },
@@ -200,8 +240,6 @@ const s = StyleSheet.create({
   avatar: { width: 90, height: 90, borderRadius: 45 },
   avatarFallback: {
     backgroundColor: Colors.surface2,
-    borderWidth: 1,
-    borderColor: Colors.border2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -228,10 +266,9 @@ const s = StyleSheet.create({
     letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
+  inputWrap: { position: 'relative' },
   input: {
     backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border2,
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
     paddingVertical: 13,
@@ -239,6 +276,15 @@ const s = StyleSheet.create({
     fontFamily: Fonts.body,
     fontSize: 15,
   },
+  usernameStatus: {
+    position: 'absolute',
+    right: Spacing.md,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  usernameError: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.error },
+  usernameOk: { fontFamily: Fonts.mono, fontSize: 10, color: '#22C55E' },
   textarea: { minHeight: 96, paddingTop: 13 },
   charCount: { fontFamily: Fonts.mono, fontSize: 9, color: Colors.text3, textAlign: 'right' },
 })
