@@ -79,7 +79,7 @@ export default function Explore() {
               </View>
               <TouchableOpacity
                 style={styles.seeAllBtn}
-                onPress={() => router.push({ pathname: '/(tabs)/explore/events', params: { type: 'for-you' } })}
+                onPress={() => router.push({ pathname: '/(modals)/events', params: { type: 'for-you' } })}
                 hitSlop={8}
               >
                 <Text style={styles.seeAllText}>View All</Text>
@@ -148,7 +148,7 @@ export default function Explore() {
                 </View>
                 <TouchableOpacity
                   style={styles.seeAllBtn}
-                  onPress={() => router.push({ pathname: '/(tabs)/explore/events', params: { type: 'recently-added' } })}
+                  onPress={() => router.push({ pathname: '/(modals)/events', params: { type: 'recently-added' } })}
                   hitSlop={8}
                 >
                   <Text style={styles.seeAllText}>View All</Text>
@@ -205,9 +205,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
-    overflow: 'hidden',
   },
   avatarImg: { width: 38, height: 38, borderRadius: 19 },
   headerTitle: {

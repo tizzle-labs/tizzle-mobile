@@ -1,3 +1,4 @@
+import { Divider } from '@/components/ui/Divider'
 import { EventRow } from '@/components/event/EventRow'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
@@ -109,7 +110,7 @@ export default function EventsScreen() {
             renderItem={({ item }) => (
               <EventRow event={item} onPress={() => router.push(`/(modals)/event/${item.eventPda}`)} />
             )}
-            contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 80 }]}
+            contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + Spacing.lg }]}
             showsVerticalScrollIndicator={false}
             onEndReached={() => {
               if (hasNextPage && !isFetchingNextPage) fetchNextPage()
@@ -118,7 +119,9 @@ export default function EventsScreen() {
             refreshing={isRefetching}
             onRefresh={refetch}
             ListFooterComponent={
-              isFetchingNextPage ? <ActivityIndicator color={Colors.accent} style={styles.footerLoader} /> : null
+              isFetchingNextPage
+                ? <ActivityIndicator color={Colors.accent} style={styles.footerLoader} />
+                : events.length > 0 ? <Divider /> : null
             }
             ListEmptyComponent={
               <View style={styles.empty}>
@@ -143,8 +146,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
     backgroundColor: Colors.bg,
   },
   backBtn: {

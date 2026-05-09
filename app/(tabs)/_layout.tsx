@@ -50,7 +50,6 @@ export default function TabLayout() {
         }}
         listeners={{ tabPress: (e) => guardedTabPress(e, '/(tabs)/explore') }}
       />
-      <Tabs.Screen name="explore/events" options={{ href: null }} />
       <Tabs.Screen
         name="tickets/index"
         options={{
