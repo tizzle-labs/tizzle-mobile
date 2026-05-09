@@ -13,6 +13,7 @@ import { registerCreateDiscardHandler, setCreateFormDirty } from '@/lib/create-d
 import { setDescriptionCallback } from '@/lib/description-callback-store'
 import { setEventPreview } from '@/lib/event-preview-store'
 import { setLocationCallback, type LocationData } from '@/lib/location-callback-store'
+import { formatSol } from '@/lib/format'
 import { Ionicons } from '@expo/vector-icons'
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
@@ -140,7 +141,7 @@ export default function Create() {
   const parsedCapacity = parseInt(capacityValue)
   const capacityValid = !isNaN(parsedCapacity) && parsedCapacity >= 1
   const capacity = parsedCapacity
-  const platformFeeTotal = capacityValid ? (PLATFORM_FEE_SOL * capacity).toFixed(4) : '—'
+  const platformFeeTotal = capacityValid ? formatSol(PLATFORM_FEE_SOL * capacity) : '—'
   // program requires start_time >= now + 30s; use 2min buffer for tx signing latency
   const startInPast = startTime < new Date(Date.now() + 2 * 60 * 1000)
   const timeError = endTime <= startTime
@@ -935,7 +936,7 @@ export default function Create() {
 
           {/* Platform fee note */}
           <Text style={styles.feeNote}>
-            Platform fee: {PLATFORM_FEE_SOL} SOL × {capacityValue || '—'} = {platformFeeTotal} SOL
+            Platform fee: {formatSol(PLATFORM_FEE_SOL)} SOL × {capacityValue || '—'} = {platformFeeTotal} SOL
           </Text>
 
           {/* Preview button */}
