@@ -8,6 +8,7 @@ interface UpdateProfileInput {
   username?: string
   bio?: string
   avatarUri?: string
+  interests?: string[]
 }
 
 export function useUpdateProfile() {
@@ -20,7 +21,7 @@ export function useUpdateProfile() {
         const uploaded = await uploadProfileAvatar(avatarUri)
         avatarUrl = uploaded.url
       }
-      return updateMyProfile({ ...fields, avatarUrl })
+      return updateMyProfile({ ...fields, avatarUrl, interests: fields.interests })
     },
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(userKeys.me, updatedProfile)

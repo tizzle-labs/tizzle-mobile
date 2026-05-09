@@ -6,6 +6,7 @@ export interface UserProfile {
   name: string | null
   avatarUrl: string | null
   bio: string | null
+  interests?: string[]
 }
 
 export async function getMyProfile(): Promise<UserProfile> {
@@ -18,6 +19,7 @@ export async function updateMyProfile(payload: {
   name?: string
   bio?: string
   avatarUrl?: string
+  interests?: string[]
 }): Promise<UserProfile> {
   const { data } = await apiClient.put('/v1/users/me', payload)
   return data

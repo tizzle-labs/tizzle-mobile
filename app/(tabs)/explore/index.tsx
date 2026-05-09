@@ -15,7 +15,7 @@ function openEvent(eventPda: string) {
   router.push(`/(modals)/event/${eventPda}`)
 }
 
-const USER_PREFERRED_CATEGORIES = ['Tech & AI', 'Community', 'Music']
+const FALLBACK_CATEGORIES = ['Tech & AI', 'Community', 'Music']
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = []
@@ -32,8 +32,9 @@ export default function Explore() {
   const { data: profile } = useMyProfile()
   const insets = useSafeAreaInsets()
 
+  const userCategories = profile?.interests?.length ? profile.interests : FALLBACK_CATEGORIES
   const preferredEvents =
-    events?.filter((e) => USER_PREFERRED_CATEGORIES.some((cat) => e.category?.toLowerCase() === cat.toLowerCase())) ??
+    events?.filter((e) => userCategories.some((cat) => e.category?.toLowerCase() === cat.toLowerCase())) ??
     []
   const forYouEvents = preferredEvents.length > 0 ? preferredEvents : (events ?? [])
   const forYouChunks = chunkArray(forYouEvents, 3)
