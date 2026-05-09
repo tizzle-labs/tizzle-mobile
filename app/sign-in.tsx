@@ -181,7 +181,7 @@ export default function SignIn() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1, backgroundColor: '#000' },
   bgImage: {
     ...StyleSheet.absoluteFillObject,
     width: '100%',
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 0,
+    borderRadius: 14,
     padding: 12,
     marginHorizontal: 4,
     justifyContent: 'flex-end',
@@ -222,8 +222,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 4,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
   },
   cardSublabel: {
     fontFamily: Fonts.mono,
