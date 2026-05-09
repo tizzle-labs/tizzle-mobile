@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
+import { registerCreateDiscardHandler, setCreateFormDirty } from '@/lib/create-dirty-store'
 import { setDescriptionCallback } from '@/lib/description-callback-store'
 import { setEventPreview } from '@/lib/event-preview-store'
 import { setLocationCallback } from '@/lib/location-callback-store'
@@ -18,10 +19,11 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import * as Clipboard from 'expo-clipboard'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
-import { router } from 'expo-router'
-import { useRef, useState } from 'react'
+import { router, useFocusEffect } from 'expo-router'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  BackHandler,
   KeyboardAvoidingView,
   Linking,
   Modal,
@@ -121,6 +123,11 @@ export default function Create() {
   const gatekeeperRef = useRef<TextInput>(null)
   const capacityRef = useRef<TextInput>(null)
 
+  // ── Discard confirmation ──────────────────────────────────────────────────
+  const discardSheetRef = useRef<BottomSheetRef>(null)
+  const pendingNav = useRef<string | null>(null)
+  const discardIntended = useRef(false)
+
   // ── Derived ───────────────────────────────────────────────────────────────
   const unlockTime = new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000)
   const stakeTokenMint = tokenMode === 'sol' ? SOL_MINT : splMint
@@ -151,6 +158,43 @@ export default function Create() {
     gatekeeperValid &&
     capacityValid
 
+  // ── Dirty tracking ────────────────────────────────────────────────────────
+  const isDirty =
+    !!orgs?.[0] &&
+    !successData &&
+    (eventTitle.trim().length > 0 ||
+      description.length > 0 ||
+      location.length > 0 ||
+      eventImageUri !== null ||
+      venueImageUri !== null ||
+      gatekeeperAddress.trim().length > 0 ||
+      capacityValue.length > 0 ||
+      feeMode !== 'free' ||
+      stakeAmount !== '0.1' ||
+      tokenMode !== 'sol' ||
+      category !== null)
+
+  useEffect(() => {
+    setCreateFormDirty(isDirty)
+    registerCreateDiscardHandler((dest) => {
+      pendingNav.current = dest
+      discardSheetRef.current?.present()
+    })
+    return () => setCreateFormDirty(false)
+  }, [isDirty])
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isDirty) return
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        pendingNav.current = null
+        discardSheetRef.current?.present()
+        return true
+      })
+      return () => sub.remove()
+    }, [isDirty]),
+  )
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   function clampStake() {
@@ -162,6 +206,20 @@ export default function Create() {
     const v = parseInt(hostFeePercent)
     if (isNaN(v) || v < 1) setHostFeePercent('1')
     else if (v > 100) setHostFeePercent('100')
+  }
+
+  function handleDiscard() {
+    discardIntended.current = true
+    discardSheetRef.current?.dismiss()
+  }
+
+  function handleDiscardSheetDismiss() {
+    if (!discardIntended.current) return
+    discardIntended.current = false
+    resetEventForm()
+    const dest = pendingNav.current
+    pendingNav.current = null
+    if (dest) router.navigate(dest as any)
   }
 
   function resetEventForm() {
@@ -270,8 +328,8 @@ export default function Create() {
     router.push('/(modals)/event-preview')
   }
 
-  async function handleCreateEvent() {
-    if (!org) return
+  async function handleCreateEvent(): Promise<boolean> {
+    if (!org) return false
     const input: CreateEventInput = {
       organizationPda: org.organizationPda,
       title: eventTitle.trim(),
@@ -300,8 +358,10 @@ export default function Create() {
         eventPda: result.eventPda,
         capacity: result.event.capacity,
       })
+      return true
     } catch (e) {
       showErrorFeedback(e, 'Event Creation Failed', 'We could not mint this event right now.')
+      return false
     }
   }
 
@@ -366,9 +426,9 @@ export default function Create() {
             </View>
           </View>
           <View style={styles.successActions}>
-            <Button onPress={() => router.push(`/(modals)/event/${successData.eventPda}`)}>View Event</Button>
-            <Button onPress={resetEventForm} variant="secondary">
-              Create Another
+            <Button onPress={() => { resetEventForm(); router.push(`/(modals)/event/${successData.eventPda}`) }}>View Event</Button>
+            <Button onPress={() => { resetEventForm(); router.replace('/(tabs)/explore') }} variant="secondary">
+              Go to Explore
             </Button>
           </View>
         </ScrollView>
@@ -510,7 +570,7 @@ export default function Create() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 120 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 16 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -1011,6 +1071,24 @@ export default function Create() {
         </View>
       </BottomSheet>
 
+      {/* ── Discard confirmation ────────────────────────────────────────── */}
+      <BottomSheet ref={discardSheetRef} dynamicSizing onDismiss={handleDiscardSheetDismiss}>
+        <View style={styles.discardSheet}>
+          <Text style={styles.discardTitle}>Discard changes?</Text>
+          <Text style={styles.discardSubtitle}>Your event draft will be lost.</Text>
+          <TouchableOpacity style={styles.discardBtn} onPress={handleDiscard} activeOpacity={0.8}>
+            <Text style={styles.discardBtnText}>Discard</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.keepBtn}
+            onPress={() => discardSheetRef.current?.dismiss()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.keepBtnText}>Keep Editing</Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheet>
+
       {/* ── Date picker (Android) ────────────────────────────────────────── */}
       {pickerVisible && Platform.OS === 'android' && (
         <DateTimePicker value={tempDate} mode={pickerChip} onChange={handlePickerChange} />
@@ -1378,6 +1456,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   successActions: { gap: Spacing.md },
+
+  // Discard sheet
+  discardSheet: { paddingBottom: Spacing.sm },
+  discardTitle: { fontFamily: Fonts.display, fontSize: 18, color: Colors.text1, marginBottom: Spacing.xs },
+  discardSubtitle: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, marginBottom: Spacing.lg },
+  discardBtn: {
+    backgroundColor: Colors.error,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  discardBtnText: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1 },
+  keepBtn: { backgroundColor: Colors.surface, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  keepBtnText: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1 },
 
   // Unlock info sheet
   infoText: {

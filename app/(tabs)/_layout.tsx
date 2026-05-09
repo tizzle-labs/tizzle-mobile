@@ -1,5 +1,6 @@
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
+import { isCreateFormDirty, triggerCreateDiscard } from '@/lib/create-dirty-store'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { Tabs } from 'expo-router'
@@ -10,6 +11,14 @@ export default function TabLayout() {
 
   const handleTabPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+  }
+
+  function guardedTabPress(e: any, destination: string) {
+    handleTabPress()
+    if (isCreateFormDirty()) {
+      e.preventDefault()
+      triggerCreateDiscard(destination)
+    }
   }
 
   return (
@@ -39,7 +48,7 @@ export default function TabLayout() {
           title: 'Explore',
           tabBarIcon: ({ color }) => <Ionicons name="compass-outline" size={28} color={color} />,
         }}
-        listeners={{ tabPress: handleTabPress }}
+        listeners={{ tabPress: (e) => guardedTabPress(e, '/(tabs)/explore') }}
       />
       <Tabs.Screen name="explore/events" options={{ href: null }} />
       <Tabs.Screen
@@ -48,7 +57,7 @@ export default function TabLayout() {
           title: 'Tickets',
           tabBarIcon: ({ color }) => <Ionicons name="ticket-outline" size={28} color={color} />,
         }}
-        listeners={{ tabPress: handleTabPress }}
+        listeners={{ tabPress: (e) => guardedTabPress(e, '/(tabs)/tickets') }}
       />
       <Tabs.Screen
         name="create/index"

@@ -18,9 +18,9 @@ export interface EventPreviewData {
 }
 
 let _data: EventPreviewData | null = null
-let _onConfirm: (() => void) | null = null
+let _onConfirm: (() => Promise<boolean>) | null = null
 
-export function setEventPreview(data: EventPreviewData, onConfirm: () => void) {
+export function setEventPreview(data: EventPreviewData, onConfirm: () => Promise<boolean>) {
   _data = data
   _onConfirm = onConfirm
 }
@@ -29,8 +29,10 @@ export function getEventPreview(): EventPreviewData | null {
   return _data
 }
 
-export function confirmEventCreation() {
-  _onConfirm?.()
+export async function confirmEventCreation(): Promise<boolean> {
+  if (!_onConfirm) return false
+  const success = await _onConfirm()
   _data = null
   _onConfirm = null
+  return success
 }

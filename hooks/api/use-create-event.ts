@@ -1,7 +1,7 @@
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createEvent, updateEvent } from '@/lib/api/events'
-import { uploadEventImage } from '@/lib/api/storage'
+import { uploadEventImage, uploadVenueImage } from '@/lib/api/storage'
 import { CONFIG_PDA, deriveEventPda } from '@/lib/solana/program'
 import { BN } from '@coral-xyz/anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
@@ -138,10 +138,10 @@ export function useCreateEvent() {
         }
       }
 
-      // Upload venue image — uses same upload endpoint, stored as venueImageUrl
+      // Upload venue image
       if (input.venueImageUri) {
         try {
-          const uploaded = await uploadEventImage(input.venueImageUri, eventPda.toString())
+          const uploaded = await uploadVenueImage(input.venueImageUri, eventPda.toString())
           event = await updateEvent(eventPda.toString(), { venueImageUrl: uploaded.url })
         } catch {
           /* non-critical */

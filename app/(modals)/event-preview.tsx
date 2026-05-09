@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, useCallback } from 'react'
 import { Dimensions, LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -32,6 +32,17 @@ export default function EventPreview() {
   const bottomSheetRef = useRef<BottomSheet>(null)
   const snapPoints = useMemo(() => ['55%', '90%'], [])
   const [ctaHeight, setCtaHeight] = useState(100)
+  const [isCreating, setIsCreating] = useState(false)
+
+  const handleCreate = useCallback(async () => {
+    setIsCreating(true)
+    const success = await confirmEventCreation()
+    if (success) {
+      router.back()
+    } else {
+      setIsCreating(false)
+    }
+  }, [])
 
   if (!data) {
     router.back()
@@ -174,19 +185,11 @@ export default function EventPreview() {
         style={[s.cta, { paddingBottom: insets.bottom + Spacing.sm }]}
         onLayout={(e: LayoutChangeEvent) => setCtaHeight(e.nativeEvent.layout.height)}
       >
-        <Button
-          variant="secondary"
-          onPress={() => router.back()}
-        >
+        <Button variant="secondary" onPress={() => router.back()} disabled={isCreating}>
           Back
         </Button>
-        <Button
-          onPress={() => {
-            router.back()
-            confirmEventCreation()
-          }}
-        >
-          Create Event
+        <Button onPress={handleCreate} loading={isCreating} disabled={isCreating}>
+          {isCreating ? 'Creating on Solana…' : 'Create Event'}
         </Button>
       </View>
     </GestureHandlerRootView>
