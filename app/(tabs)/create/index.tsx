@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
+import { setDescriptionCallback } from '@/lib/description-callback-store'
 import { setLocationCallback } from '@/lib/location-callback-store'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -115,7 +116,6 @@ export default function Create() {
   const unlockInfoSheetRef = useRef<BottomSheetRef>(null)
 
   // ── Input refs ────────────────────────────────────────────────────────────
-  const descRef = useRef<TextInput>(null)
   const gatekeeperRef = useRef<TextInput>(null)
   const capacityRef = useRef<TextInput>(null)
 
@@ -587,7 +587,14 @@ export default function Create() {
           </TouchableOpacity>
 
           {/* ── Description ──────────────────────────────────────────────── */}
-          <TouchableOpacity style={styles.card} onPress={() => descRef.current?.focus()} activeOpacity={1}>
+          <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.7}
+            onPress={() => {
+              setDescriptionCallback((html) => setDescription(html), description)
+              router.push('/(modals)/event-description')
+            }}
+          >
             <View style={styles.iconRow}>
               <Ionicons
                 name="reorder-three-outline"
@@ -595,17 +602,14 @@ export default function Create() {
                 color={Colors.text2}
                 style={[styles.rowIcon, styles.rowIconTop]}
               />
-              <TextInput
-                ref={descRef}
-                style={styles.descInput}
-                placeholder="Add Description"
-                placeholderTextColor={Colors.text2}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                textAlignVertical="top"
-                scrollEnabled={false}
-              />
+              {description ? (
+                <Text style={styles.descPreview} numberOfLines={3}>
+                  {description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}
+                </Text>
+              ) : (
+                <Text style={[styles.descInput, { color: Colors.text2 }]}>Add Description</Text>
+              )}
+              <Ionicons name="chevron-forward" size={16} color={Colors.text2} style={styles.rowIconTop} />
             </View>
           </TouchableOpacity>
 
@@ -1088,10 +1092,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.body,
     fontSize: 15,
+    paddingVertical: 0,
+  },
+  descPreview: {
+    flex: 1,
+    fontFamily: Fonts.body,
+    fontSize: 15,
     color: Colors.text1,
     paddingVertical: 0,
-    maxHeight: 120,
-    textAlignVertical: 'top',
   },
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1, maxWidth: '60%' },
   rowValue: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1, flexShrink: 1 },
