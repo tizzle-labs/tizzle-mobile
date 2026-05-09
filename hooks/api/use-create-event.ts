@@ -24,11 +24,11 @@ export const PLATFORM_FEE_LAMPORTS = Math.floor(PLATFORM_FEE_SOL * LAMPORTS_PER_
 export interface CreateEventInput {
   organizationPda: string
   title: string
-  description: string
+  description?: string
   imageUri?: string
   venueImageUri?: string
   location: string
-  category: string
+  category?: string
   capacity: number
   stakeAmount: number
   stakeTokenMint: string

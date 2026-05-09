@@ -14,7 +14,7 @@ function openEvent(eventPda: string) {
   router.push(`/(modals)/event/${eventPda}`)
 }
 
-const USER_PREFERRED_CATEGORIES = ['Tech', 'Community', 'Music']
+const USER_PREFERRED_CATEGORIES = ['Tech & AI', 'Community', 'Music']
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = []
@@ -23,16 +23,16 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 }
 
 const BROWSE_CATEGORIES = [
-  { label: 'Tech', icon: '🤖' },
-  { label: 'AI', icon: '🧠' },
-  { label: 'Climate', icon: '🌿' },
-  { label: 'Fitness', icon: '🏃' },
+  { label: 'Tech & AI', icon: '🤖' },
+  { label: 'Climate & Sustainability', icon: '🌿' },
+  { label: 'Health & Wellness', icon: '🧘' },
   { label: 'Food & Drink', icon: '🍜' },
   { label: 'Arts & Culture', icon: '🎨' },
-  { label: 'Wellness', icon: '🧘' },
   { label: 'Music', icon: '🎵' },
   { label: 'Community', icon: '🤝' },
-  { label: 'Sport', icon: '⚽' },
+  { label: 'Sports', icon: '⚽' },
+  { label: 'Business & Professional', icon: '💼' },
+  { label: 'Education', icon: '📚' },
 ]
 
 const COLUMN_WIDTH = 320

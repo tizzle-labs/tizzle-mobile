@@ -7,8 +7,24 @@ import type { Event } from '@/lib/api/events'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect } from 'react'
-import { ActivityIndicator, BackHandler, Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import Animated, { Easing, FadeIn, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import {
+  ActivityIndicator,
+  BackHandler,
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native'
+import Animated, {
+  Easing,
+  FadeIn,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const W = Dimensions.get('window').width
@@ -33,8 +49,9 @@ export default function EventsScreen() {
   const { type } = useLocalSearchParams<{ type: EventListType }>()
   const meta = SCREEN_META[type ?? 'for-you']
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch, isRefetching } =
-    useInfiniteEvents(meta.sortBy)
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch, isRefetching } = useInfiniteEvents(
+    meta.sortBy,
+  )
 
   const events: Event[] = data?.pages.flatMap((page) => page) ?? []
 
@@ -44,6 +61,7 @@ export default function EventsScreen() {
 
   useEffect(() => {
     translateX.value = withTiming(0, { duration: 280, easing: Easing.out(Easing.cubic) })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const slideStyle = useAnimatedStyle(() => ({
@@ -69,47 +87,47 @@ export default function EventsScreen() {
   return (
     <Animated.View style={[styles.container, { paddingTop: insets.top }, slideStyle]}>
       <Animated.View entering={FadeIn.duration(320)} style={styles.inner}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backBtn} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={Colors.text1} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{meta.title}</Text>
-          <Text style={styles.headerSubtitle}>{meta.subtitle}</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backBtn} hitSlop={8}>
+            <Ionicons name="chevron-back" size={22} color={Colors.text1} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>{meta.title}</Text>
+            <Text style={styles.headerSubtitle}>{meta.subtitle}</Text>
+          </View>
+          <View style={styles.headerSpacer} />
         </View>
-        <View style={styles.headerSpacer} />
-      </View>
 
-      {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={Colors.accent} />
-        </View>
-      ) : (
-        <FlatList
-          data={events}
-          keyExtractor={(item) => item.eventPda}
-          renderItem={({ item }) => (
-            <EventRow event={item} onPress={() => router.push(`/(modals)/event/${item.eventPda}`)} />
-          )}
-          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 80 }]}
-          showsVerticalScrollIndicator={false}
-          onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) fetchNextPage()
-          }}
-          onEndReachedThreshold={0.4}
-          refreshing={isRefetching}
-          onRefresh={refetch}
-          ListFooterComponent={
-            isFetchingNextPage ? <ActivityIndicator color={Colors.accent} style={styles.footerLoader} /> : null
-          }
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="calendar-outline" size={40} color={Colors.text3} />
-              <Text style={styles.emptyText}>No events yet.</Text>
-            </View>
-          }
-        />
-      )}
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={Colors.accent} />
+          </View>
+        ) : (
+          <FlatList
+            data={events}
+            keyExtractor={(item) => item.eventPda}
+            renderItem={({ item }) => (
+              <EventRow event={item} onPress={() => router.push(`/(modals)/event/${item.eventPda}`)} />
+            )}
+            contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 80 }]}
+            showsVerticalScrollIndicator={false}
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+            }}
+            onEndReachedThreshold={0.4}
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            ListFooterComponent={
+              isFetchingNextPage ? <ActivityIndicator color={Colors.accent} style={styles.footerLoader} /> : null
+            }
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Ionicons name="calendar-outline" size={40} color={Colors.text3} />
+                <Text style={styles.emptyText}>No events yet.</Text>
+              </View>
+            }
+          />
+        )}
       </Animated.View>
     </Animated.View>
   )

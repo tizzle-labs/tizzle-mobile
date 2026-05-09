@@ -18,6 +18,7 @@
         "backgroundImage": "./assets/images/adaptive-icon-background.png"
       },
       "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "pan",
       "package": "app.tizzle",
       "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },

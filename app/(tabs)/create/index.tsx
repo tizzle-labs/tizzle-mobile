@@ -1,7 +1,9 @@
-import { ScreenHeader } from '@/components/layout/ScreenHeader'
+import { BottomSheet, type BottomSheetRef } from '@/components/ui/BottomSheet'
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { Button } from '@/components/ui/Button'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
+import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { PLATFORM_FEE_SOL, useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
@@ -14,7 +16,7 @@ import * as Clipboard from 'expo-clipboard'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Linking,
@@ -27,6 +29,31 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatDate(d: Date) {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`
+}
+
+function formatTime(d: Date) {
+  let h = d.getHours()
+  const m = String(d.getMinutes()).padStart(2, '0')
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${h}:${m} ${ampm}`
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type PickerField = 'startTime' | 'endTime'
+type PickerChip = 'date' | 'time'
+type TokenMode = 'sol' | 'spl'
+type FeeMode = 'free' | 'paid'
+type CapacityMode = 'unlimited' | 'limited'
 
 interface SuccessData {
   txHash: string
@@ -35,76 +62,98 @@ interface SuccessData {
   capacity: number
 }
 
-type PickerField = 'startTime' | 'endTime'
-type StakeMode = 'SOL' | 'SPL'
-type FeeMode = 'free' | 'fee'
-
-const CATEGORIES = ['Music', 'Tech', 'Art', 'Sports', 'Gaming', 'Education', 'Community', 'Other']
-
-function formatDateTime(date: Date): string {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const h = String(date.getHours()).padStart(2, '0')
-  const m = String(date.getMinutes()).padStart(2, '0')
-  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()} ${date.getFullYear()} · ${h}:${m}`
-}
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Create() {
+  const insets = useSafeAreaInsets()
   const { data: orgs, isLoading: orgsLoading } = useMyOrganizations()
   const createOrg = useCreateOrganization()
   const createEvent = useCreateEvent()
 
-  // Org form
+  // ── Org form ──────────────────────────────────────────────────────────────
   const [orgName, setOrgName] = useState('')
   const [orgDesc, setOrgDesc] = useState('')
   const [orgTwitter, setOrgTwitter] = useState('')
   const [orgDiscord, setOrgDiscord] = useState('')
   const [orgImageUri, setOrgImageUri] = useState<string | null>(null)
 
-  // Event form
+  // ── Event form ────────────────────────────────────────────────────────────
   const [eventTitle, setEventTitle] = useState('')
-  const [eventDesc, setEventDesc] = useState('')
+  const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
-  const [category, setCategory] = useState('Music')
-  const [capacity, setCapacity] = useState('100')
+  const [category, setCategory] = useState<string | null>(null)
   const [eventImageUri, setEventImageUri] = useState<string | null>(null)
   const [venueImageUri, setVenueImageUri] = useState<string | null>(null)
+  const [gatekeeperAddress, setGatekeeperAddress] = useState('')
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
 
-  // Stake settings
-  const [stakeMode, setStakeMode] = useState<StakeMode>('SOL')
-  const [stakeAmount, setStakeAmount] = useState('0.1')
+  // ── Stake token ───────────────────────────────────────────────────────────
+  const [tokenMode, setTokenMode] = useState<TokenMode>('sol')
   const [splMint, setSplMint] = useState('')
   const [splSymbol, setSplSymbol] = useState('')
   const [splDecimals, setSplDecimals] = useState('6')
 
-  // Host fee
+  // ── Ticket settings ───────────────────────────────────────────────────────
   const [feeMode, setFeeMode] = useState<FeeMode>('free')
+  const [stakeAmount, setStakeAmount] = useState('0.1')
   const [hostFeePercent, setHostFeePercent] = useState('10')
+  const [capacityMode, setCapacityMode] = useState<CapacityMode>('unlimited')
+  const [capacityValue, setCapacityValue] = useState('100')
 
-  // Date/time
+  // ── Date/time ─────────────────────────────────────────────────────────────
   const [startTime, setStartTime] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
   const [endTime, setEndTime] = useState(() => new Date(Date.now() + 27 * 60 * 60 * 1000))
   const [pickerField, setPickerField] = useState<PickerField>('startTime')
-  const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date')
+  const [pickerChip, setPickerChip] = useState<PickerChip>('date')
   const [pickerVisible, setPickerVisible] = useState(false)
   const [tempDate, setTempDate] = useState(new Date())
 
+  // ── Sheet refs ────────────────────────────────────────────────────────────
+  const categorySheetRef = useRef<BottomSheetRef>(null)
+  const stakeSheetRef = useRef<BottomSheetRef>(null)
+  const feeSheetRef = useRef<BottomSheetRef>(null)
+  const unlockInfoSheetRef = useRef<BottomSheetRef>(null)
+
+  // ── Input refs ────────────────────────────────────────────────────────────
+  const locationRef = useRef<TextInput>(null)
+  const descRef = useRef<TextInput>(null)
+  const gatekeeperRef = useRef<TextInput>(null)
+  const capacityRef = useRef<TextInput>(null)
+
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const unlockTime = new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const stakeTokenMint = tokenMode === 'sol' ? SOL_MINT : splMint
+  const stakeTokenSymbol = tokenMode === 'sol' ? 'SOL' : splSymbol
+  const stakeTokenDecimals = tokenMode === 'sol' ? 9 : parseInt(splDecimals) || 6
+  const capacity = capacityMode === 'unlimited' ? 10000 : parseInt(capacityValue) || 100
+  const platformFeeTotal = (PLATFORM_FEE_SOL * capacity).toFixed(4)
+  const timeError = endTime <= startTime
+  const splValid = tokenMode === 'sol' || (splMint.trim().length > 0 && splSymbol.trim().length > 0)
+  const canSubmit =
+    eventTitle.trim().length > 0 &&
+    location.trim().length > 0 &&
+    !timeError &&
+    splValid
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   function resetEventForm() {
     setEventTitle('')
-    setEventDesc('')
+    setDescription('')
     setLocation('')
-    setCategory('Music')
-    setCapacity('100')
+    setCategory(null)
     setEventImageUri(null)
     setVenueImageUri(null)
-    setStakeMode('SOL')
-    setStakeAmount('0.1')
+    setGatekeeperAddress('')
+    setTokenMode('sol')
     setSplMint('')
     setSplSymbol('')
     setSplDecimals('6')
     setFeeMode('free')
+    setStakeAmount('0.1')
     setHostFeePercent('10')
+    setCapacityMode('unlimited')
+    setCapacityValue('100')
     setStartTime(new Date(Date.now() + 24 * 60 * 60 * 1000))
     setEndTime(new Date(Date.now() + 27 * 60 * 60 * 1000))
     setSuccessData(null)
@@ -124,25 +173,31 @@ export default function Create() {
     })
     if (!result.canceled) {
       if (target === 'org') setOrgImageUri(result.assets[0].uri)
-      else if (target === 'event') setEventImageUri(result.assets[0].uri)
-      else setVenueImageUri(result.assets[0].uri)
+      else if (target === 'venue') setVenueImageUri(result.assets[0].uri)
+      else setEventImageUri(result.assets[0].uri)
     }
   }
 
-  function openPicker(field: PickerField) {
-    const current = field === 'startTime' ? startTime : endTime
+  function openPicker(field: PickerField, chip: PickerChip) {
     setPickerField(field)
-    setPickerMode('date')
-    setTempDate(current)
+    setPickerChip(chip)
+    setTempDate(new Date(field === 'startTime' ? startTime : endTime))
     setPickerVisible(true)
   }
 
-  function commitValue(field: PickerField, newDate: Date) {
-    if (field === 'startTime') {
-      setStartTime(newDate)
-      if (newDate >= endTime) setEndTime(new Date(newDate.getTime() + 3 * 60 * 60 * 1000))
+  function commitPickerValue(field: PickerField, chip: PickerChip, selected: Date) {
+    const current = field === 'startTime' ? startTime : endTime
+    const updated = new Date(current)
+    if (chip === 'date') {
+      updated.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate())
     } else {
-      setEndTime(newDate)
+      updated.setHours(selected.getHours(), selected.getMinutes(), 0, 0)
+    }
+    if (field === 'startTime') {
+      setStartTime(updated)
+      if (updated >= endTime) setEndTime(new Date(updated.getTime() + 3 * 60 * 60 * 1000))
+    } else {
+      setEndTime(updated)
     }
   }
 
@@ -153,34 +208,55 @@ export default function Create() {
     }
     if (Platform.OS === 'android') {
       setPickerVisible(false)
-      if (pickerMode === 'date') {
-        const current = pickerField === 'startTime' ? startTime : endTime
-        const merged = new Date(current)
-        merged.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate())
-        setTempDate(merged)
-        setTimeout(() => {
-          setPickerMode('time')
-          setPickerVisible(true)
-        }, 100)
-      } else {
-        const final = new Date(tempDate)
-        final.setHours(selected.getHours(), selected.getMinutes(), 0, 0)
-        commitValue(pickerField, final)
-      }
+      commitPickerValue(pickerField, pickerChip, selected)
     } else {
       setTempDate(selected)
     }
   }
 
-  function handleIosDone() {
-    commitValue(pickerField, tempDate)
-    setPickerVisible(false)
+  async function handleCreateEvent() {
+    if (!org) return
+    const input: CreateEventInput = {
+      organizationPda: org.organizationPda,
+      title: eventTitle.trim(),
+      description: description.trim() || undefined,
+      imageUri: eventImageUri ?? undefined,
+      venueImageUri: venueImageUri ?? undefined,
+      location: location.trim(),
+      category: category ?? undefined,
+      capacity,
+      stakeAmount: parseFloat(stakeAmount) || 0.1,
+      stakeTokenMint,
+      stakeTokenSymbol,
+      stakeTokenDecimals,
+      hostFeeEnabled: feeMode === 'paid',
+      hostFeePercent: feeMode === 'paid' ? parseInt(hostFeePercent) || 0 : 0,
+      startTime,
+      endTime,
+      unlockTime: new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000),
+      gatekeeperAddress: gatekeeperAddress.trim() || undefined,
+    }
+    try {
+      const result = await createEvent.mutateAsync(input)
+      setSuccessData({
+        txHash: result.signature,
+        eventTitle: result.event.title,
+        eventPda: result.eventPda,
+        capacity: result.event.capacity,
+      })
+    } catch (e) {
+      showErrorFeedback(e, 'Event Creation Failed', 'We could not mint this event right now.')
+    }
   }
+
+  // ── Loading ───────────────────────────────────────────────────────────────
 
   if (orgsLoading) {
     return (
-      <View style={styles.container}>
-        <ScreenHeader title="CREATE" />
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Create Event</Text>
+        </View>
         <View style={styles.center}>
           <ActivityIndicator color={Colors.accent} />
         </View>
@@ -190,27 +266,26 @@ export default function Create() {
 
   const org = orgs?.[0]
 
+  // ── Success ───────────────────────────────────────────────────────────────
+
   if (successData) {
     return (
-      <View style={styles.container}>
-        <ScreenHeader title="CREATE" />
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Create Event</Text>
+        </View>
         <ScrollView contentContainerStyle={styles.successContent} showsVerticalScrollIndicator={false}>
           <Text style={styles.successHeading}>TICKETS{'\n'}MINTED</Text>
-
           <View style={styles.successCard}>
             <Text style={styles.successEventTitle}>{successData.eventTitle}</Text>
-
             <View style={styles.successDivider} />
-
-            {/* Capacity */}
             <View style={styles.successRow}>
               <Text style={styles.successLabel}>CAPACITY</Text>
-              <Text style={styles.successValue}>{successData.capacity} tickets</Text>
+              <Text style={styles.successValue}>
+                {successData.capacity >= 10000 ? 'Unlimited' : `${successData.capacity} tickets`}
+              </Text>
             </View>
-
             <View style={styles.successDivider} />
-
-            {/* Transaction hash — copyable + open in explorer */}
             <View style={styles.successRow}>
               <Text style={styles.successLabel}>TRANSACTION</Text>
               <View style={styles.txActions}>
@@ -222,7 +297,7 @@ export default function Create() {
                   <Text style={styles.successHash} numberOfLines={1}>
                     {successData.txHash.slice(0, 8)}…{successData.txHash.slice(-8)}
                   </Text>
-                  <Ionicons name="copy-outline" size={15} color={Colors.text3} />
+                  <Ionicons name="copy-outline" size={15} color={Colors.text2} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.txLinkBtn}
@@ -234,7 +309,6 @@ export default function Create() {
               </View>
             </View>
           </View>
-
           <View style={styles.successActions}>
             <Button onPress={() => router.push(`/(modals)/event/${successData.eventPda}`)}>View Event</Button>
             <Button onPress={resetEventForm} variant="secondary">
@@ -246,10 +320,14 @@ export default function Create() {
     )
   }
 
+  // ── Create Org ────────────────────────────────────────────────────────────
+
   if (!org) {
     return (
-      <View style={styles.container}>
-        <ScreenHeader title="CREATE" />
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Create Event</Text>
+        </View>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.createOrgHeader}>
             <Text style={styles.createOrgTitle}>Create Organization</Text>
@@ -260,7 +338,7 @@ export default function Create() {
               <Image source={{ uri: orgImageUri }} style={styles.orgAvatarImg} contentFit="cover" />
             ) : (
               <View style={styles.orgAvatarFallback}>
-                <Ionicons name="business-outline" size={32} color={Colors.text3} />
+                <Ionicons name="business-outline" size={32} color={Colors.text2} />
               </View>
             )}
             <View style={styles.orgAvatarBadge}>
@@ -274,7 +352,7 @@ export default function Create() {
               <TextInput
                 style={styles.input}
                 placeholder="e.g. Tizzle Events"
-                placeholderTextColor={Colors.text3}
+                placeholderTextColor={Colors.text2}
                 value={orgName}
                 onChangeText={setOrgName}
                 maxLength={50}
@@ -285,7 +363,7 @@ export default function Create() {
               <TextInput
                 style={[styles.input, styles.multiline]}
                 placeholder="What does your organization do?"
-                placeholderTextColor={Colors.text3}
+                placeholderTextColor={Colors.text2}
                 value={orgDesc}
                 onChangeText={setOrgDesc}
                 multiline
@@ -299,7 +377,7 @@ export default function Create() {
               <TextInput
                 style={styles.input}
                 placeholder="@yourhandle"
-                placeholderTextColor={Colors.text3}
+                placeholderTextColor={Colors.text2}
                 autoCapitalize="none"
                 autoCorrect={false}
                 value={orgTwitter}
@@ -308,11 +386,11 @@ export default function Create() {
               />
             </View>
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>DISCORD SERVER / USERNAME</Text>
+              <Text style={styles.fieldLabel}>DISCORD</Text>
               <TextInput
                 style={styles.input}
                 placeholder="discord.gg/yourserver"
-                placeholderTextColor={Colors.text3}
+                placeholderTextColor={Colors.text2}
                 autoCapitalize="none"
                 autoCorrect={false}
                 value={orgDiscord}
@@ -346,380 +424,539 @@ export default function Create() {
     )
   }
 
-  async function handleCreateEvent() {
-    if (!org) return
-    const input: CreateEventInput = {
-      organizationPda: org.organizationPda,
-      title: eventTitle.trim(),
-      description: eventDesc.trim(),
-      imageUri: eventImageUri ?? undefined,
-      venueImageUri: venueImageUri ?? undefined,
-      location: location.trim(),
-      category,
-      capacity: parseInt(capacity) || 100,
-      stakeAmount: parseFloat(stakeAmount) || 0.1,
-      stakeTokenMint: stakeMode === 'SOL' ? SOL_MINT : splMint.trim(),
-      stakeTokenSymbol: stakeMode === 'SOL' ? 'SOL' : splSymbol.trim(),
-      stakeTokenDecimals: stakeMode === 'SOL' ? 9 : parseInt(splDecimals) || 6,
-      hostFeeEnabled: feeMode === 'fee',
-      hostFeePercent: feeMode === 'fee' ? parseInt(hostFeePercent) || 0 : 0,
-      startTime,
-      endTime,
-      unlockTime: new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000),
-    }
-    try {
-      const result = await createEvent.mutateAsync(input)
-      setSuccessData({
-        txHash: result.signature,
-        eventTitle: result.event.title,
-        eventPda: result.eventPda,
-        capacity: result.event.capacity,
-      })
-    } catch (e) {
-      showErrorFeedback(e, 'Event Creation Failed', 'We could not mint this event right now.')
-    }
-  }
+  // ── Event Form ────────────────────────────────────────────────────────────
 
-  const splValid = stakeMode === 'SOL' || (splMint.trim().length > 30 && splSymbol.trim().length > 0)
-  const feeValid = feeMode === 'free' || (parseInt(hostFeePercent) > 0 && parseInt(hostFeePercent) <= 100)
-  const canSubmit = eventTitle.trim() && location.trim() && endTime > startTime && splValid && feeValid
+  const selectedCategory = EVENT_CATEGORIES.find((c) => c.label === category)
+  const tokenLabel = tokenMode === 'sol' ? 'SOL' : splSymbol ? splSymbol : 'SPL Token'
+  const stakeLabel = `${stakeAmount} ${tokenLabel}`
+  const feeLabel = feeMode === 'free' ? 'Free' : `${hostFeePercent}%`
 
   return (
-    <View style={styles.container}>
-      <ScreenHeader title="Create Event" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Create Event</Text>
+        <View style={styles.headerOrg}>
+          {org.avatarUrl ? (
+            <Image source={{ uri: org.avatarUrl }} style={styles.headerOrgAvatar} contentFit="cover" />
+          ) : (
+            <View style={styles.headerOrgAvatarFallback}>
+              <Ionicons name="business-outline" size={10} color={Colors.text2} />
+            </View>
+          )}
+          <Text style={styles.headerOrgName} numberOfLines={1}>
+            {org.name}
+          </Text>
+          <Ionicons name="chevron-down" size={14} color={Colors.text2} />
+        </View>
+      </View>
+
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        style={styles.scroll}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 120 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.orgBadge}>
-          {org.avatarUrl ? (
-            <Image source={{ uri: org.avatarUrl }} style={styles.orgBadgeAvatar} contentFit="cover" />
-          ) : (
-            <View style={styles.orgBadgeAvatarFallback}>
-              <Ionicons name="business-outline" size={10} color={Colors.text3} />
-            </View>
-          )}
-          <Text style={styles.orgLabel}>{org.name}</Text>
-        </View>
-
-        {/* Cover image */}
-        <TouchableOpacity style={styles.imagePicker} onPress={() => pickImage('event')} activeOpacity={0.8}>
+        {/* ── Event Cover Image ─────────────────────────────────────────── */}
+        <TouchableOpacity style={styles.imagePicker} onPress={() => pickImage('event')} activeOpacity={0.85}>
           {eventImageUri ? (
             <Image source={{ uri: eventImageUri }} style={styles.imagePreview} contentFit="cover" />
           ) : (
             <View style={styles.imagePlaceholder}>
-              <Ionicons name="image-outline" size={28} color={Colors.text3} />
-              <Text style={styles.imagePlaceholderText}>Add Event Image</Text>
-              <Text style={styles.imagePlaceholderHint}>1:1 recommended</Text>
+              <Ionicons name="image-outline" size={32} color={Colors.text2} />
+              <Text style={styles.imagePlaceholderText}>Add Event Cover</Text>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Basic info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Event Info</Text>
-          <View style={styles.card}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>TITLE *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Solana Builder Meetup"
-                placeholderTextColor={Colors.text3}
-                value={eventTitle}
-                onChangeText={setEventTitle}
-                maxLength={80}
-              />
+        {/* ── Event Name ───────────────────────────────────────────────── */}
+        <View style={styles.card}>
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Event Name"
+            placeholderTextColor={Colors.text2}
+            value={eventTitle}
+            onChangeText={setEventTitle}
+            maxLength={80}
+          />
+        </View>
+
+        {/* ── Date & Time ──────────────────────────────────────────────── */}
+        <View style={styles.card}>
+          {/* Start */}
+          <View style={styles.dtRow}>
+            <View style={styles.dtLeft}>
+              <View style={styles.dtDotFilled} />
+              <Text style={styles.dtLabel}>Start</Text>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>DESCRIPTION</Text>
-              <TextInput
-                style={[styles.input, styles.multiline]}
-                placeholder="Describe the event…"
-                placeholderTextColor={Colors.text3}
-                value={eventDesc}
-                onChangeText={setEventDesc}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+            <View style={styles.dtChips}>
+              <TouchableOpacity style={styles.dtChip} onPress={() => openPicker('startTime', 'date')} activeOpacity={0.7}>
+                <Ionicons name="calendar-outline" size={13} color={Colors.text2} />
+                <Text style={styles.dtChipText}>{formatDate(startTime)}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.dtChip} onPress={() => openPicker('startTime', 'time')} activeOpacity={0.7}>
+                <Ionicons name="time-outline" size={13} color={Colors.text2} />
+                <Text style={styles.dtChipText}>{formatTime(startTime)}</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>LOCATION *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Jakarta / Online"
-                placeholderTextColor={Colors.text3}
-                value={location}
-                onChangeText={setLocation}
-              />
+          </View>
+
+          <View style={styles.dtConnectorRow}>
+            <View style={styles.dtConnectorSpacer} />
+            <View style={styles.dtConnectorLine} />
+          </View>
+
+          {/* End */}
+          <View style={styles.dtRow}>
+            <View style={styles.dtLeft}>
+              <View style={[styles.dtDotEmpty, timeError && styles.dtDotError]} />
+              <Text style={[styles.dtLabel, timeError && styles.dtLabelError]}>End</Text>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>CATEGORY</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                {CATEGORIES.map((cat) => (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[styles.categoryChip, category === cat && styles.categoryChipActive]}
-                    onPress={() => setCategory(cat)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.categoryChipText, category === cat && styles.categoryChipTextActive]}>
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+            <View style={styles.dtChips}>
+              <TouchableOpacity
+                style={[styles.dtChip, timeError && styles.dtChipError]}
+                onPress={() => openPicker('endTime', 'date')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="calendar-outline" size={13} color={timeError ? Colors.error : Colors.text2} />
+                <Text style={[styles.dtChipText, timeError && styles.dtChipTextError]}>{formatDate(endTime)}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.dtChip, timeError && styles.dtChipError]}
+                onPress={() => openPicker('endTime', 'time')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="time-outline" size={13} color={timeError ? Colors.error : Colors.text2} />
+                <Text style={[styles.dtChipText, timeError && styles.dtChipTextError]}>{formatTime(endTime)}</Text>
+              </TouchableOpacity>
             </View>
+          </View>
+
+          <View style={styles.dtConnectorRow}>
+            <View style={styles.dtConnectorSpacer} />
+            <View style={styles.dtConnectorLine} />
+          </View>
+
+          {/* Unlock — read-only, auto endTime + 7 days */}
+          <View style={styles.dtRow}>
+            <View style={styles.dtLeft}>
+              <Ionicons name="lock-open-outline" size={12} color={Colors.text2} />
+              <Text style={styles.dtLabelDim}>Unlock</Text>
+              <TouchableOpacity
+                onPress={() => unlockInfoSheetRef.current?.present()}
+                hitSlop={8}
+                activeOpacity={0.6}
+              >
+                <Ionicons name="help-circle-outline" size={14} color={Colors.text2} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.dtReadOnly}>
+              {formatDate(unlockTime)} · {formatTime(unlockTime)}
+            </Text>
           </View>
         </View>
 
-        {/* Date & Time */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Date & Time</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.fieldGroup} onPress={() => openPicker('startTime')} activeOpacity={0.7}>
-              <Text style={styles.fieldLabel}>START</Text>
-              <View style={styles.dateRow}>
-                <Ionicons name="calendar-outline" size={14} color={Colors.text3} />
-                <Text style={styles.dateValue}>{formatDateTime(startTime)}</Text>
-              </View>
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.fieldGroup} onPress={() => openPicker('endTime')} activeOpacity={0.7}>
-              <Text style={styles.fieldLabel}>END</Text>
-              <View style={styles.dateRow}>
-                <Ionicons name="calendar-outline" size={14} color={Colors.text3} />
-                <Text style={[styles.dateValue, endTime <= startTime && styles.dateValueError]}>
-                  {formatDateTime(endTime)}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            {endTime <= startTime && <Text style={styles.fieldError}>End time must be after start time</Text>}
-            <View style={styles.divider} />
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>UNLOCK (AUTO)</Text>
-              <View style={styles.dateRow}>
-                <Ionicons name="lock-open-outline" size={14} color={Colors.text3} />
-                <Text style={[styles.dateValue, styles.dateValueMuted]}>
-                  {formatDateTime(new Date(endTime.getTime() + 7 * 24 * 60 * 60 * 1000))}
-                </Text>
-              </View>
-              <Text style={styles.unlockHint}>Stake released 7 days after event ends</Text>
-            </View>
+        {/* ── Location ─────────────────────────────────────────────────── */}
+        <TouchableOpacity style={styles.card} onPress={() => locationRef.current?.focus()} activeOpacity={1}>
+          <View style={styles.iconRow}>
+            <Ionicons name="location-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
+            <TextInput
+              ref={locationRef}
+              style={styles.rowInput}
+              placeholder="Choose Location"
+              placeholderTextColor={Colors.text2}
+              value={location}
+              onChangeText={setLocation}
+              returnKeyType="done"
+            />
           </View>
-        </View>
+        </TouchableOpacity>
 
-        {/* Venue Image */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Venue Photo</Text>
-          <TouchableOpacity style={styles.venuePickerBtn} onPress={() => pickImage('venue')} activeOpacity={0.8}>
+        {/* ── Description ──────────────────────────────────────────────── */}
+        <TouchableOpacity style={styles.card} onPress={() => descRef.current?.focus()} activeOpacity={1}>
+          <View style={styles.iconRow}>
+            <Ionicons
+              name="reorder-three-outline"
+              size={18}
+              color={Colors.text2}
+              style={[styles.rowIcon, styles.rowIconTop]}
+            />
+            <TextInput
+              ref={descRef}
+              style={styles.descInput}
+              placeholder="Add Description"
+              placeholderTextColor={Colors.text2}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              textAlignVertical="top"
+              scrollEnabled={false}
+            />
+          </View>
+        </TouchableOpacity>
+
+        {/* ── Venue Photo ──────────────────────────────────────────────── */}
+        <TouchableOpacity style={styles.card} onPress={() => pickImage('venue')} activeOpacity={0.85}>
+          <View style={styles.iconRow}>
+            <Ionicons name="business-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
             {venueImageUri ? (
-              <Image source={{ uri: venueImageUri }} style={styles.venuePreview} contentFit="cover" />
+              <>
+                <Image source={{ uri: venueImageUri }} style={styles.venueThumbnail} contentFit="cover" />
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation()
+                    setVenueImageUri(null)
+                  }}
+                  hitSlop={8}
+                >
+                  <Ionicons name="close-circle" size={20} color={Colors.text2} />
+                </TouchableOpacity>
+              </>
             ) : (
-              <View style={styles.venuePlaceholder}>
-                <Ionicons name="business-outline" size={24} color={Colors.text3} />
-                <Text style={styles.imagePlaceholderText}>Add Venue Photo</Text>
-                <Text style={styles.imagePlaceholderHint}>Optional</Text>
-              </View>
+              <>
+                <Text style={styles.rowPlaceholder}>Add Venue Photo</Text>
+                <Ionicons name="chevron-forward" size={16} color={Colors.text2} />
+              </>
             )}
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
 
-        {/* Ticket Settings */}
+        {/* ── Ticketing ────────────────────────────────────────────────── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ticket Settings</Text>
+          <Text style={styles.sectionLabel}>Ticketing</Text>
           <View style={styles.card}>
+            {/* Stake */}
+            <TouchableOpacity
+              style={styles.iconRow}
+              onPress={() => stakeSheetRef.current?.present()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="wallet-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
+              <Text style={styles.rowLabel}>Stake</Text>
+              <View style={styles.rowRight}>
+                <Text style={styles.rowValue}>{stakeLabel}</Text>
+                <Ionicons name="chevron-forward" size={16} color={Colors.text2} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.cardDivider} />
+
+            {/* Host Fee */}
+            <TouchableOpacity
+              style={styles.iconRow}
+              onPress={() => feeSheetRef.current?.present()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="cash-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
+              <Text style={styles.rowLabel}>Host Fee</Text>
+              <View style={styles.rowRight}>
+                <Text style={styles.rowValue}>{feeLabel}</Text>
+                <Ionicons name="chevron-forward" size={16} color={Colors.text2} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.cardDivider} />
+
             {/* Capacity */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>CAPACITY</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="100"
-                placeholderTextColor={Colors.text3}
-                value={capacity}
-                onChangeText={setCapacity}
-                keyboardType="number-pad"
-              />
-            </View>
-            <View style={styles.divider} />
-            {/* Stake token tabs */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>STAKE TOKEN</Text>
-              <View style={styles.stakeTabs}>
-                <TouchableOpacity
-                  style={[styles.stakeTab, stakeMode === 'SOL' && styles.stakeTabActive]}
-                  onPress={() => setStakeMode('SOL')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.stakeTabText, stakeMode === 'SOL' && styles.stakeTabTextActive]}>SOL</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.stakeTab, stakeMode === 'SPL' && styles.stakeTabActive]}
-                  onPress={() => setStakeMode('SPL')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.stakeTabText, stakeMode === 'SPL' && styles.stakeTabTextActive]}>SPL Token</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.divider} />
-            {/* Stake amount */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>
-                STAKE AMOUNT {stakeMode === 'SOL' ? '(SOL)' : `(${splSymbol || 'TOKEN'})`}
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder={stakeMode === 'SOL' ? '0.1' : '10'}
-                placeholderTextColor={Colors.text3}
-                value={stakeAmount}
-                onChangeText={setStakeAmount}
-                keyboardType="decimal-pad"
-              />
-            </View>
-            {/* SPL-only fields */}
-            {stakeMode === 'SPL' && (
-              <>
-                <View style={styles.divider} />
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>TOKEN MINT ADDRESS *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                    placeholderTextColor={Colors.text3}
-                    value={splMint}
-                    onChangeText={setSplMint}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
+            <TouchableOpacity
+              style={styles.iconRow}
+              onPress={() => {
+                if (capacityMode === 'unlimited') {
+                  setCapacityMode('limited')
+                  setTimeout(() => capacityRef.current?.focus(), 50)
+                } else {
+                  setCapacityMode('unlimited')
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="people-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
+              <Text style={styles.rowLabel}>Capacity</Text>
+              {capacityMode === 'unlimited' ? (
+                <View style={styles.rowRight}>
+                  <Text style={styles.rowValue}>Unlimited</Text>
+                  <Ionicons name="chevron-expand" size={16} color={Colors.text2} />
                 </View>
-                <View style={styles.divider} />
-                <View style={styles.fieldRow}>
-                  <View style={[styles.fieldGroup, { flex: 2 }]}>
-                    <Text style={styles.fieldLabel}>TOKEN SYMBOL *</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="e.g. USDC"
-                      placeholderTextColor={Colors.text3}
-                      value={splSymbol}
-                      onChangeText={setSplSymbol}
-                      autoCapitalize="characters"
-                      maxLength={10}
-                    />
-                  </View>
-                  <View style={styles.fieldRowDivider} />
-                  <View style={[styles.fieldGroup, { flex: 1 }]}>
-                    <Text style={styles.fieldLabel}>DECIMALS</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="6"
-                      placeholderTextColor={Colors.text3}
-                      value={splDecimals}
-                      onChangeText={setSplDecimals}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                    />
-                  </View>
-                </View>
-              </>
-            )}
+              ) : (
+                <TextInput
+                  ref={capacityRef}
+                  style={styles.capacityInput}
+                  value={capacityValue}
+                  onChangeText={setCapacityValue}
+                  keyboardType="number-pad"
+                  maxLength={5}
+                  returnKeyType="done"
+                />
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Host Fee */}
+        {/* ── Options ──────────────────────────────────────────────────── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Host Fee</Text>
+          <Text style={styles.sectionLabel}>Options</Text>
           <View style={styles.card}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>TICKET TYPE</Text>
-              <View style={styles.stakeTabs}>
-                <TouchableOpacity
-                  style={[styles.stakeTab, feeMode === 'free' && styles.stakeTabActive]}
-                  onPress={() => setFeeMode('free')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.stakeTabText, feeMode === 'free' && styles.stakeTabTextActive]}>Free</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.stakeTab, feeMode === 'fee' && styles.stakeTabActive]}
-                  onPress={() => setFeeMode('fee')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.stakeTabText, feeMode === 'fee' && styles.stakeTabTextActive]}>With Fee</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            {feeMode === 'fee' && (
-              <>
-                <View style={styles.divider} />
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>HOST FEE PERCENT (1–100)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 10"
-                    placeholderTextColor={Colors.text3}
-                    value={hostFeePercent}
-                    onChangeText={setHostFeePercent}
-                    keyboardType="number-pad"
-                    maxLength={3}
-                  />
-                </View>
-                <View style={styles.divider} />
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>WHAT THIS MEANS</Text>
-                  <Text style={styles.feeNote}>
-                    {parseInt(hostFeePercent) || 0}% of each attendee{"'"}s stake will go to you as host fee. The rest
-                    is returned to attendees who check in.
-                  </Text>
-                </View>
-              </>
-            )}
-            <View style={styles.divider} />
-            <View style={styles.platformFeeRow}>
-              <View style={styles.platformFeeLeft}>
-                <Text style={styles.fieldLabel}>PLATFORM FEE</Text>
-                <Text style={styles.platformFeeFormula}>
-                  {PLATFORM_FEE_SOL} SOL × {parseInt(capacity) || 100} tickets
+            {/* Category */}
+            <TouchableOpacity
+              style={styles.iconRow}
+              onPress={() => categorySheetRef.current?.present()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="grid-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
+              <Text style={styles.rowLabel}>Category</Text>
+              <View style={styles.rowRight}>
+                <Text style={styles.rowValue}>
+                  {selectedCategory ? `${selectedCategory.icon} ${selectedCategory.label}` : 'None'}
                 </Text>
+                <Ionicons name="chevron-expand" size={16} color={Colors.text2} />
               </View>
-              <View style={styles.platformFeeRight}>
-                <Text style={styles.platformFeeTotal}>
-                  {(PLATFORM_FEE_SOL * (parseInt(capacity) || 100)).toFixed(4)}
-                </Text>
-                <Text style={styles.platformFeeUnit}>SOL</Text>
-              </View>
-            </View>
+            </TouchableOpacity>
+
+            <View style={styles.cardDivider} />
+
+            {/* Gatekeeper Address */}
+            <TouchableOpacity style={styles.iconRow} onPress={() => gatekeeperRef.current?.focus()} activeOpacity={1}>
+              <Ionicons name="key-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
+              <TextInput
+                ref={gatekeeperRef}
+                style={styles.rowInput}
+                placeholder="Gatekeeper Address (default: you)"
+                placeholderTextColor={Colors.text2}
+                value={gatekeeperAddress}
+                onChangeText={setGatekeeperAddress}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="done"
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
-        <Button onPress={handleCreateEvent} loading={createEvent.isPending} disabled={!canSubmit}>
-          {createEvent.isPending ? 'Creating on Solana…' : 'Create Event'}
+        {/* Platform fee note */}
+        <Text style={styles.feeNote}>
+          Platform fee: {PLATFORM_FEE_SOL} SOL × {capacityMode === 'unlimited' ? '10,000' : capacityValue} ={' '}
+          {platformFeeTotal} SOL
+        </Text>
+
+        {/* Create button */}
+        <Button
+          onPress={handleCreateEvent}
+          loading={createEvent.isPending}
+          disabled={!canSubmit || createEvent.isPending}
+        >
+          {createEvent.isPending ? 'Creating on Solana…' : 'Create'}
         </Button>
       </ScrollView>
 
+      {/* ── Category Sheet ───────────────────────────────────────────────── */}
+      <BottomSheet ref={categorySheetRef} title="Category" scrollable snapPoints={['70%']}>
+        {EVENT_CATEGORIES.map((cat) => (
+          <TouchableOpacity
+            key={cat.label}
+            style={[styles.categoryRow, category === cat.label && styles.categoryRowActive]}
+            onPress={() => {
+              setCategory(cat.label)
+              categorySheetRef.current?.dismiss()
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.categoryIcon}>{cat.icon}</Text>
+            <Text style={[styles.categoryRowLabel, category === cat.label && styles.categoryRowLabelActive]}>
+              {cat.label}
+            </Text>
+            {category === cat.label && <Ionicons name="checkmark" size={18} color={Colors.accent} />}
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity
+          style={styles.categoryRow}
+          onPress={() => {
+            setCategory(null)
+            categorySheetRef.current?.dismiss()
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.categoryIcon}>—</Text>
+          <Text style={[styles.categoryRowLabel, category === null && styles.categoryRowLabelActive]}>None</Text>
+          {category === null && <Ionicons name="checkmark" size={18} color={Colors.accent} />}
+        </TouchableOpacity>
+      </BottomSheet>
+
+      {/* ── Stake Sheet ──────────────────────────────────────────────────── */}
+      <BottomSheet ref={stakeSheetRef} title="Stake" scrollable snapPoints={['70%']}>
+        <Text style={styles.fieldLabel}>TOKEN</Text>
+        <View style={[styles.feeTabs, { marginTop: 8 }]}>
+          <TouchableOpacity
+            style={[styles.feeTab, tokenMode === 'sol' && styles.feeTabActive]}
+            onPress={() => setTokenMode('sol')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.feeTabText, tokenMode === 'sol' && styles.feeTabTextActive]}>SOL</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.feeTab, tokenMode === 'spl' && styles.feeTabActive]}
+            onPress={() => setTokenMode('spl')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.feeTabText, tokenMode === 'spl' && styles.feeTabTextActive]}>SPL Token</Text>
+          </TouchableOpacity>
+        </View>
+
+        {tokenMode === 'spl' && (
+          <View style={[styles.feeFields, { marginTop: Spacing.sm }]}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>MINT ADDRESS</Text>
+              <BottomSheetTextInput
+                style={styles.input}
+                placeholder="e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                placeholderTextColor={Colors.text2}
+                value={splMint}
+                onChangeText={setSplMint}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>SYMBOL</Text>
+              <BottomSheetTextInput
+                style={styles.input}
+                placeholder="e.g. USDC"
+                placeholderTextColor={Colors.text2}
+                value={splSymbol}
+                onChangeText={setSplSymbol}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={10}
+              />
+            </View>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>DECIMALS</Text>
+              <BottomSheetTextInput
+                style={styles.input}
+                placeholder="6"
+                placeholderTextColor={Colors.text2}
+                value={splDecimals}
+                onChangeText={setSplDecimals}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
+          </View>
+        )}
+
+        <View style={[styles.sheetDivider, { marginVertical: Spacing.md }]} />
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>AMOUNT ({tokenLabel})</Text>
+          <BottomSheetTextInput
+            style={styles.input}
+            placeholder="0.1"
+            placeholderTextColor={Colors.text2}
+            value={stakeAmount}
+            onChangeText={setStakeAmount}
+            keyboardType="decimal-pad"
+          />
+        </View>
+
+        <View style={{ marginTop: Spacing.md }}>
+          <Button onPress={() => stakeSheetRef.current?.dismiss()}>Done</Button>
+        </View>
+      </BottomSheet>
+
+      {/* ── Host Fee Sheet ───────────────────────────────────────────────── */}
+      <BottomSheet ref={feeSheetRef} title="Host Fee" scrollable snapPoints={['55%']}>
+        <View style={styles.feeTabs}>
+          <TouchableOpacity
+            style={[styles.feeTab, feeMode === 'free' && styles.feeTabActive]}
+            onPress={() => setFeeMode('free')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.feeTabText, feeMode === 'free' && styles.feeTabTextActive]}>Free</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.feeTab, feeMode === 'paid' && styles.feeTabActive]}
+            onPress={() => setFeeMode('paid')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.feeTabText, feeMode === 'paid' && styles.feeTabTextActive]}>Paid</Text>
+          </TouchableOpacity>
+        </View>
+
+        {feeMode === 'free' ? (
+          <Text style={[styles.feeDesc, { marginTop: Spacing.sm }]}>
+            Attendees stake {stakeAmount} {tokenLabel} as a commitment deposit. The full amount is returned when they
+            check in.
+          </Text>
+        ) : (
+          <View style={[styles.feeFields, { marginTop: Spacing.sm }]}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>HOST FEE % (1–100)</Text>
+              <BottomSheetTextInput
+                style={styles.input}
+                placeholder="10"
+                placeholderTextColor={Colors.text2}
+                value={hostFeePercent}
+                onChangeText={setHostFeePercent}
+                keyboardType="number-pad"
+                maxLength={3}
+              />
+            </View>
+            <Text style={styles.feeDesc}>
+              Attendees stake {stakeAmount} {tokenLabel}. You keep {hostFeePercent}% when they check in — attendees
+              receive the remaining {100 - (parseInt(hostFeePercent) || 0)}%.
+            </Text>
+          </View>
+        )}
+
+        <View style={{ marginTop: Spacing.md }}>
+          <Button onPress={() => feeSheetRef.current?.dismiss()}>Done</Button>
+        </View>
+      </BottomSheet>
+
+      {/* ── Unlock Info Sheet ────────────────────────────────────────────── */}
+      <BottomSheet ref={unlockInfoSheetRef} title="What is Unlock?" dynamicSizing>
+        <Text style={styles.infoText}>
+          The <Text style={styles.infoHighlight}>Unlock Date</Text> is automatically set to{' '}
+          <Text style={styles.infoHighlight}>7 days after the event ends</Text>. It marks when staked funds become
+          eligible for settlement.
+        </Text>
+        <Text style={styles.infoText}>
+          After the event, Tizzle enters a settlement window. Attendees who checked in receive their stake back (minus
+          any host fee). No-shows forfeit their stake.
+        </Text>
+        <Text style={styles.infoText}>
+          The 7-day buffer gives organizers time to finalize attendance records before funds are released on-chain.
+        </Text>
+        <View style={styles.infoRow}>
+          <Ionicons name="time-outline" size={16} color={Colors.accent} />
+          <Text style={styles.infoCaption}>Unlock = End Date + 7 days (automatic)</Text>
+        </View>
+      </BottomSheet>
+
+      {/* ── Date picker (Android) ────────────────────────────────────────── */}
       {pickerVisible && Platform.OS === 'android' && (
-        <DateTimePicker
-          value={pickerMode === 'date' ? (pickerField === 'startTime' ? startTime : endTime) : tempDate}
-          mode={pickerMode}
-          onChange={handlePickerChange}
-        />
+        <DateTimePicker value={tempDate} mode={pickerChip} onChange={handlePickerChange} />
       )}
+
+      {/* ── Date picker (iOS) ────────────────────────────────────────────── */}
       {Platform.OS === 'ios' && (
         <Modal visible={pickerVisible} transparent animationType="slide">
           <View style={styles.pickerOverlay}>
             <View style={styles.pickerContainer}>
               <DateTimePicker
                 value={tempDate}
-                mode="datetime"
+                mode={pickerChip}
                 display="spinner"
                 onChange={handlePickerChange}
                 textColor={Colors.text1}
               />
-              <Button onPress={handleIosDone}>Done</Button>
+              <Button
+                onPress={() => {
+                  commitPickerValue(pickerField, pickerChip, tempDate)
+                  setPickerVisible(false)
+                }}
+              >
+                Done
+              </Button>
             </View>
           </View>
         </Modal>
@@ -728,129 +965,228 @@ export default function Create() {
   )
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scrollContent: { padding: Spacing.md, gap: Spacing.lg, paddingBottom: 160 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: Spacing.md, paddingTop: Spacing.md, gap: Spacing.sm },
 
-  orgBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  orgBadgeAvatar: { width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.surface2 },
-  orgBadgeAvatarFallback: {
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  headerTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 18,
+    color: Colors.text1,
+    letterSpacing: ls(18, LS.displaySubtle),
+  },
+  headerOrg: { flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: 140 },
+  headerOrgAvatar: { width: 24, height: 24, borderRadius: 12 },
+  headerOrgAvatarFallback: {
     width: 24,
     height: 24,
     borderRadius: 12,
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
   },
-  orgLabel: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text1 },
+  headerOrgName: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text2, flex: 1 },
 
-  imagePicker: { borderRadius: 16, overflow: 'hidden', marginBottom: Spacing.xs },
+  // Event cover image
+  imagePicker: { borderRadius: 16, overflow: 'hidden' },
   imagePreview: { width: '100%', aspectRatio: 1 },
   imagePlaceholder: {
     width: '100%',
     aspectRatio: 1,
-    borderWidth: 1,
-    borderColor: Colors.border2,
-    borderStyle: 'dashed',
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    backgroundColor: Colors.surface,
+    gap: 8,
   },
   imagePlaceholderText: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text2 },
-  imagePlaceholderHint: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
-  },
 
-  section: { gap: Spacing.sm },
-  sectionTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 18,
-    color: Colors.text1,
-    letterSpacing: ls(18, LS.displaySubtle),
-  },
-
+  // Card
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
   },
-  divider: { height: 1, backgroundColor: Colors.border },
+  cardDivider: { height: 1, backgroundColor: Colors.border, marginLeft: 42 },
 
-  fieldGroup: { paddingVertical: Spacing.md, gap: 6 },
-  fieldLabel: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
-    textTransform: 'uppercase',
+  // Title input
+  titleInput: {
+    fontFamily: Fonts.display,
+    fontSize: 22,
+    color: Colors.text1,
+    letterSpacing: ls(22, LS.displaySubtle),
+    paddingVertical: 18,
   },
-  input: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1, paddingVertical: 0 },
-  multiline: { minHeight: 64, textAlignVertical: 'top' },
 
-  categoryScroll: { marginTop: 4 },
-  categoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.border2,
-    marginRight: 8,
-    backgroundColor: Colors.surface2,
+  // DateTime
+  dtRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 10 },
+  dtLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 76 },
+  dtDotFilled: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.text2 },
+  dtDotEmpty: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: Colors.text2,
+    backgroundColor: 'transparent',
   },
-  categoryChipActive: { backgroundColor: Colors.accent, borderColor: Colors.accent },
-  categoryChipText: {
+  dtDotError: { borderColor: Colors.error },
+  dtConnectorRow: { flexDirection: 'row', alignItems: 'center', height: 10 },
+  dtConnectorSpacer: { width: 4 },
+  dtConnectorLine: {
+    width: 0,
+    height: 10,
+    borderLeftWidth: 2,
+    borderLeftColor: Colors.border2,
+    borderStyle: 'dashed',
+    marginLeft: 3,
+  },
+  dtLabel: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text2 },
+  dtLabelDim: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text2 },
+  dtLabelError: { color: Colors.error },
+  dtReadOnly: { flex: 1, fontFamily: Fonts.body, fontSize: 13, color: Colors.text2, textAlign: 'right' },
+  dtChips: { flexDirection: 'row', gap: 6, flex: 1, justifyContent: 'flex-end' },
+  dtChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: Colors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  dtChipError: { backgroundColor: 'rgba(255,59,48,0.15)' },
+  dtChipText: { fontFamily: Fonts.bodyMedium, fontSize: 12, color: Colors.text1 },
+  dtChipTextError: { color: Colors.error },
+
+  // Icon rows
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 12,
+    minHeight: 54,
+  },
+  rowIcon: { width: 18 },
+  rowIconTop: { alignSelf: 'flex-start', marginTop: 2 },
+  rowLabel: { flex: 1, fontFamily: Fonts.body, fontSize: 15, color: Colors.text1 },
+  rowInput: { flex: 1, fontFamily: Fonts.body, fontSize: 15, color: Colors.text1, paddingVertical: 0 },
+  rowPlaceholder: { flex: 1, fontFamily: Fonts.body, fontSize: 15, color: Colors.text2 },
+  descInput: {
+    flex: 1,
+    fontFamily: Fonts.body,
+    fontSize: 15,
+    color: Colors.text1,
+    paddingVertical: 0,
+    maxHeight: 120,
+    textAlignVertical: 'top',
+  },
+  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  rowValue: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text2 },
+  switch: { marginLeft: 'auto' },
+
+  // Venue thumbnail
+  venueThumbnail: { flex: 1, height: 52, borderRadius: 8 },
+
+  // Capacity inline input
+  capacityInput: {
+    fontFamily: Fonts.bodyMedium,
+    fontSize: 15,
+    color: Colors.accent,
+    textAlign: 'right',
+    minWidth: 60,
+    paddingVertical: 0,
+  },
+
+  // Section
+  section: { gap: 8 },
+  sectionLabel: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text2, paddingLeft: 4 },
+
+  // Fee note
+  feeNote: {
     fontFamily: Fonts.mono,
     fontSize: 10,
     color: Colors.text2,
     letterSpacing: ls(10, LS.labelNarrow),
+    textAlign: 'center',
   },
-  categoryChipTextActive: { color: Colors.bg },
 
-  stakeTabs: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  stakeTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border2,
-    backgroundColor: Colors.surface2,
+  // Category rows (inside BottomSheet)
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  stakeTabActive: { backgroundColor: Colors.accent, borderColor: Colors.accent },
-  stakeTabText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text2, letterSpacing: ls(11, LS.labelNarrow) },
-  stakeTabTextActive: { color: Colors.bg },
+  categoryRowActive: { backgroundColor: 'transparent' },
+  categoryIcon: { fontSize: 20, width: 24, textAlign: 'center' },
+  categoryRowLabel: { flex: 1, fontFamily: Fonts.body, fontSize: 15, color: Colors.text2 },
+  categoryRowLabelActive: { color: Colors.text1 },
 
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dateValue: { fontFamily: Fonts.body, fontSize: 15, color: Colors.text1 },
-  dateValueMuted: { color: Colors.text2 },
-  dateValueError: { color: Colors.error },
-  fieldError: {
+  // Fee / token tabs (inside BottomSheet)
+  feeTabs: { flexDirection: 'row', gap: 8 },
+  feeTab: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+  },
+  feeTabActive: { backgroundColor: Colors.accent },
+  feeTabText: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text2 },
+  feeTabTextActive: { color: Colors.bg },
+  feeDesc: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text2, lineHeight: 20 },
+  feeFields: { gap: Spacing.md },
+  sheetDivider: { height: 1, backgroundColor: Colors.border },
+
+  // Common field
+  fieldGroup: { gap: 6 },
+  fieldLabel: {
     fontFamily: Fonts.mono,
     fontSize: 9,
-    color: Colors.error,
+    color: Colors.text2,
     letterSpacing: ls(9, LS.labelWide),
-    paddingBottom: Spacing.sm,
+    textTransform: 'uppercase',
   },
-  unlockHint: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.text3,
-    letterSpacing: ls(9, LS.labelWide),
-    marginTop: 2,
+  input: {
+    fontFamily: Fonts.body,
+    fontSize: 15,
+    color: Colors.text1,
+    backgroundColor: Colors.surface,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.sm,
+  },
+  multiline: { minHeight: 64, textAlignVertical: 'top' },
+
+  // iOS date picker
+  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  pickerContainer: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: Spacing.md,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.md,
   },
 
-  fieldRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  fieldRowDivider: { width: 1, backgroundColor: Colors.border, alignSelf: 'stretch', marginVertical: Spacing.md },
-
+  // Create org flow
   createOrgHeader: { gap: 6, marginBottom: Spacing.lg },
   createOrgTitle: { fontFamily: Fonts.display, fontSize: 28, color: Colors.text1, letterSpacing: ls(28, LS.display) },
   createOrgSubtitle: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, lineHeight: 20 },
@@ -861,8 +1197,6 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     backgroundColor: Colors.surface2,
-    borderWidth: 1,
-    borderColor: Colors.border2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -883,7 +1217,7 @@ const styles = StyleSheet.create({
   orgAvatarHint: {
     fontFamily: Fonts.body,
     fontSize: 12,
-    color: Colors.text3,
+    color: Colors.text2,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -891,52 +1225,13 @@ const styles = StyleSheet.create({
   orgNote: {
     fontFamily: Fonts.mono,
     fontSize: 9,
-    color: Colors.text3,
+    color: Colors.text2,
     textAlign: 'center',
     letterSpacing: ls(9, LS.labelWide),
     marginTop: Spacing.sm,
   },
 
-  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  pickerContainer: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: Spacing.md,
-    paddingBottom: Spacing.xl,
-  },
-
-  venuePickerBtn: { borderRadius: 12, overflow: 'hidden' },
-  venuePreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12 },
-  venuePlaceholder: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderWidth: 1,
-    borderColor: Colors.border2,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: Colors.surface,
-  },
-  feeNote: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text2, lineHeight: 20 },
-  platformFeeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-  },
-  platformFeeLeft: { gap: 3 },
-  platformFeeFormula: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text3 },
-  platformFeeRight: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  platformFeeTotal: {
-    fontFamily: Fonts.display,
-    fontSize: 20,
-    color: Colors.text1,
-    letterSpacing: ls(20, LS.displaySubtle),
-  },
-  platformFeeUnit: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text3 },
+  // Success
   successContent: { flexGrow: 1, padding: Spacing.md, gap: Spacing.xl, justifyContent: 'center', paddingBottom: 80 },
   successHeading: {
     fontFamily: Fonts.display,
@@ -946,18 +1241,12 @@ const styles = StyleSheet.create({
     lineHeight: 62,
   },
   successCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
-    overflow: 'hidden',
   },
   successDivider: { height: 1, backgroundColor: Colors.border },
-  successRow: {
-    paddingVertical: Spacing.md,
-    gap: 8,
-  },
+  successRow: { paddingVertical: Spacing.md, gap: 8 },
   successEventTitle: {
     fontFamily: Fonts.display,
     fontSize: 22,
@@ -968,7 +1257,7 @@ const styles = StyleSheet.create({
   successLabel: {
     fontFamily: Fonts.mono,
     fontSize: 9,
-    color: Colors.text3,
+    color: Colors.text2,
     letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
@@ -983,8 +1272,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: Colors.border2,
     minHeight: 44,
   },
   successHash: { flex: 1, fontFamily: Fonts.mono, fontSize: 13, color: Colors.text2 },
@@ -993,10 +1280,37 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
     backgroundColor: Colors.surface2,
-    borderWidth: 1,
-    borderColor: Colors.border2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   successActions: { gap: Spacing.md },
+
+  // Unlock info sheet
+  infoText: {
+    fontFamily: Fonts.body,
+    fontSize: 14,
+    color: Colors.text2,
+    lineHeight: 22,
+    marginBottom: Spacing.md,
+  },
+  infoHighlight: {
+    fontFamily: Fonts.bodyMedium,
+    color: Colors.text1,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Colors.surface2,
+    borderRadius: 10,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  infoCaption: {
+    fontFamily: Fonts.mono,
+    fontSize: 11,
+    color: Colors.accent,
+    letterSpacing: ls(11, LS.labelNarrow),
+  },
 })
