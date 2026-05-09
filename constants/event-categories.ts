@@ -6,7 +6,7 @@ export const EVENT_CATEGORIES = [
   { label: 'Arts & Culture', icon: '🎨' },
   { label: 'Music', icon: '🎵' },
   { label: 'Community', icon: '🤝' },
-  { label: 'Sports', icon: '⚽' },
+  { label: 'Sports', icon: '🏃' },
   { label: 'Business & Professional', icon: '💼' },
   { label: 'Education', icon: '📚' },
 ] as const
