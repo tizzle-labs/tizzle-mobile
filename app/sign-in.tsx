@@ -77,7 +77,7 @@ export default function SignIn() {
       await signIn()
       try {
         const profile = await getMyProfile()
-        router.replace(profile.name?.trim() ? '/(tabs)/explore' : '/onboarding')
+        router.replace(profile.username?.trim() ? '/(tabs)/explore' : '/onboarding')
       } catch {
         router.replace('/onboarding')
       }

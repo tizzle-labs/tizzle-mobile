@@ -71,6 +71,11 @@ export async function getEvents(params?: {
   return data
 }
 
+export async function getForYouEvents(params?: { limit?: number; offset?: number }): Promise<Event[]> {
+  const { data } = await apiClient.get('/v1/events/for-you', { params })
+  return data
+}
+
 export async function getEventByPda(eventPda: string): Promise<Event> {
   const { data } = await apiClient.get(`/v1/events/${eventPda}`)
   return data

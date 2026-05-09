@@ -3,7 +3,7 @@ import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
-import { useEvents } from '@/hooks/api/use-events'
+import { useEvents, useForYouEvents } from '@/hooks/api/use-events'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
@@ -14,8 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 function openEvent(eventPda: string) {
   router.push(`/(modals)/event/${eventPda}`)
 }
-
-const FALLBACK_CATEGORIES = ['Tech & AI', 'Community', 'Music']
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = []
@@ -29,19 +27,15 @@ const COLUMN_WIDTH = 320
 
 export default function Explore() {
   const { data: events, isLoading, refetch, isRefetching } = useEvents()
+  const { data: forYouEvents = [], refetch: refetchForYou, isRefetching: isRefetchingForYou } = useForYouEvents()
   const { data: profile } = useMyProfile()
   const insets = useSafeAreaInsets()
 
-  const userCategories = profile?.interests?.length ? profile.interests : FALLBACK_CATEGORIES
-  const preferredEvents =
-    events?.filter((e) => userCategories.some((cat) => e.category?.toLowerCase() === cat.toLowerCase())) ??
-    []
-  const forYouEvents = preferredEvents.length > 0 ? preferredEvents : (events ?? [])
-  const forYouChunks = chunkArray(forYouEvents, 3)
+  const forYouChunks = chunkArray(forYouEvents.slice(0, 6), 3)
 
   const recentEvents = [...(events ?? [])]
     .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
-    .slice(0, 12)
+    .slice(0, 6)
   const recentChunks = chunkArray(recentEvents, 3)
 
   return (
@@ -60,7 +54,7 @@ export default function Explore() {
         </TouchableOpacity>
       </View>
 
-      {isLoading ? (
+      {isLoading && !events ? (
         <View style={styles.center}>
           <ActivityIndicator color={Colors.accent} />
         </View>
@@ -69,7 +63,7 @@ export default function Explore() {
           style={styles.scroll}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.accent} />}
+          refreshControl={<RefreshControl refreshing={isRefetching || isRefetchingForYou} onRefresh={() => { refetch(); refetchForYou() }} tintColor={Colors.accent} />}
         >
           {/* For You */}
           <View style={[styles.section, { marginTop: Spacing.lg }]}>
