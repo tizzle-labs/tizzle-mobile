@@ -23,10 +23,12 @@ interface Props {
   scrollable?: boolean
   snapPoints?: (string | number)[]
   dynamicSizing?: boolean
+  onDismiss?: () => void
+  keyboardBehavior?: 'extend' | 'interactive' | 'fillParent'
 }
 
 export const BottomSheet = forwardRef<BottomSheetRef, Props>(
-  ({ title, children, scrollable = false, snapPoints, dynamicSizing = false }, ref) => {
+  ({ title, children, scrollable = false, snapPoints, dynamicSizing = false, onDismiss, keyboardBehavior = 'extend' }, ref) => {
     const modalRef = useRef<BottomSheetModal>(null)
     const insets = useSafeAreaInsets()
     const [isOpen, setIsOpen] = useState(false)
@@ -63,8 +65,9 @@ export const BottomSheet = forwardRef<BottomSheetRef, Props>(
         backgroundStyle={styles.background}
         handleIndicatorStyle={styles.handle}
         enablePanDownToClose
-        keyboardBehavior="extend"
+        keyboardBehavior={keyboardBehavior}
         keyboardBlurBehavior="restore"
+        onDismiss={onDismiss}
         onChange={(index) => setIsOpen(index >= 0)}
       >
         {scrollable ? (

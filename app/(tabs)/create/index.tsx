@@ -4,6 +4,7 @@ import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { setDescriptionCallback } from '@/lib/description-callback-store'
+import { setEventPreview } from '@/lib/event-preview-store'
 import { setLocationCallback } from '@/lib/location-callback-store'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -86,6 +87,7 @@ export default function Create() {
   const [category, setCategory] = useState<string | null>(null)
   const [eventImageUri, setEventImageUri] = useState<string | null>(null)
   const [venueImageUri, setVenueImageUri] = useState<string | null>(null)
+  const [venueImageName, setVenueImageName] = useState<string | null>(null)
   const [gatekeeperAddress, setGatekeeperAddress] = useState('')
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
 
@@ -124,13 +126,43 @@ export default function Create() {
   const stakeTokenMint = tokenMode === 'sol' ? SOL_MINT : splMint
   const stakeTokenSymbol = tokenMode === 'sol' ? 'SOL' : splSymbol
   const stakeTokenDecimals = tokenMode === 'sol' ? 9 : parseInt(splDecimals) || 6
-  const capacity = parseInt(capacityValue) || 10000
+  const parsedCapacity = parseInt(capacityValue)
+  const capacityValid = capacityValue === '' || (!isNaN(parsedCapacity) && parsedCapacity >= 1)
+  const capacity = capacityValue === '' ? 10000 : parsedCapacity
   const platformFeeTotal = (PLATFORM_FEE_SOL * capacity).toFixed(4)
+  // program requires start_time >= now + 30s; use 2min buffer for tx signing latency
+  const startInPast = startTime < new Date(Date.now() + 2 * 60 * 1000)
   const timeError = endTime <= startTime
   const splValid = tokenMode === 'sol' || (splMint.trim().length > 0 && splSymbol.trim().length > 0)
-  const canSubmit = eventTitle.trim().length > 0 && location.trim().length > 0 && !timeError && splValid
+  const parsedStake = parseFloat(stakeAmount)
+  const stakeValid = !isNaN(parsedStake) && parsedStake > 0
+  const parsedHostFee = parseInt(hostFeePercent)
+  const hostFeeValid = feeMode === 'free' || (!isNaN(parsedHostFee) && parsedHostFee >= 1 && parsedHostFee <= 100)
+  const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
+  const gatekeeperValid = gatekeeperAddress.trim() === '' || BASE58_RE.test(gatekeeperAddress.trim())
+  const canSubmit =
+    eventTitle.trim().length > 0 &&
+    location.trim().length > 0 &&
+    !startInPast &&
+    !timeError &&
+    splValid &&
+    stakeValid &&
+    hostFeeValid &&
+    gatekeeperValid &&
+    capacityValid
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  function clampStake() {
+    const v = parseFloat(stakeAmount)
+    if (isNaN(v) || v <= 0) setStakeAmount('0.1')
+  }
+
+  function clampHostFee() {
+    const v = parseInt(hostFeePercent)
+    if (isNaN(v) || v < 1) setHostFeePercent('1')
+    else if (v > 100) setHostFeePercent('100')
+  }
 
   function resetEventForm() {
     setEventTitle('')
@@ -139,6 +171,7 @@ export default function Create() {
     setCategory(null)
     setEventImageUri(null)
     setVenueImageUri(null)
+    setVenueImageName(null)
     setGatekeeperAddress('')
     setTokenMode('sol')
     setSplMint('')
@@ -166,9 +199,12 @@ export default function Create() {
       quality: 0.8,
     })
     if (!result.canceled) {
-      if (target === 'org') setOrgImageUri(result.assets[0].uri)
-      else if (target === 'venue') setVenueImageUri(result.assets[0].uri)
-      else setEventImageUri(result.assets[0].uri)
+      const asset = result.assets[0]
+      if (target === 'org') setOrgImageUri(asset.uri)
+      else if (target === 'venue') {
+        setVenueImageUri(asset.uri)
+        setVenueImageName(asset.fileName ?? asset.uri.split('/').pop() ?? 'photo')
+      } else setEventImageUri(asset.uri)
     }
   }
 
@@ -208,6 +244,32 @@ export default function Create() {
     }
   }
 
+  function handlePreview() {
+    if (!org) return
+    setEventPreview(
+      {
+        title: eventTitle.trim(),
+        description,
+        location: location.trim(),
+        category,
+        imageUri: eventImageUri,
+        venueImageUri,
+        capacity,
+        stakeAmount: parsedStake,
+        stakeTokenSymbol,
+        startTime,
+        endTime,
+        unlockTime,
+        organizationName: org.name,
+        organizationAvatarUrl: org.avatarUrl,
+        hostFeeEnabled: feeMode === 'paid',
+        hostFeePercent: parsedHostFee,
+      },
+      handleCreateEvent,
+    )
+    router.push('/(modals)/event-preview')
+  }
+
   async function handleCreateEvent() {
     if (!org) return
     const input: CreateEventInput = {
@@ -219,7 +281,7 @@ export default function Create() {
       location: location.trim(),
       category: category ?? 'others',
       capacity,
-      stakeAmount: parseFloat(stakeAmount) || 0.1,
+      stakeAmount: parsedStake,
       stakeTokenMint,
       stakeTokenSymbol,
       stakeTokenDecimals,
@@ -481,25 +543,25 @@ export default function Create() {
             {/* Start */}
             <View style={styles.dtRow}>
               <View style={styles.dtLeft}>
-                <View style={styles.dtDotFilled} />
-                <Text style={styles.dtLabel}>Start</Text>
+                <View style={[styles.dtDotFilled, startInPast && styles.dtDotError]} />
+                <Text style={[styles.dtLabel, startInPast && styles.dtLabelError]}>Start</Text>
               </View>
               <View style={styles.dtChips}>
                 <TouchableOpacity
-                  style={styles.dtChip}
+                  style={[styles.dtChip, startInPast && styles.dtChipError]}
                   onPress={() => openPicker('startTime', 'date')}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="calendar-outline" size={13} color={Colors.text2} />
-                  <Text style={styles.dtChipText}>{formatDate(startTime)}</Text>
+                  <Ionicons name="calendar-outline" size={13} color={startInPast ? Colors.error : Colors.text2} />
+                  <Text style={[styles.dtChipText, startInPast && styles.dtChipTextError]}>{formatDate(startTime)}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.dtChip}
+                  style={[styles.dtChip, startInPast && styles.dtChipError]}
                   onPress={() => openPicker('startTime', 'time')}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="time-outline" size={13} color={Colors.text2} />
-                  <Text style={styles.dtChipText}>{formatTime(startTime)}</Text>
+                  <Ionicons name="time-outline" size={13} color={startInPast ? Colors.error : Colors.text2} />
+                  <Text style={[styles.dtChipText, startInPast && styles.dtChipTextError]}>{formatTime(startTime)}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -620,10 +682,14 @@ export default function Create() {
               {venueImageUri ? (
                 <>
                   <Image source={{ uri: venueImageUri }} style={styles.venueThumbnail} contentFit="cover" />
+                  <Text style={styles.rowValue} numberOfLines={1} ellipsizeMode="middle">
+                    {venueImageName}
+                  </Text>
                   <TouchableOpacity
                     onPress={(e) => {
                       e.stopPropagation()
                       setVenueImageUri(null)
+                      setVenueImageName(null)
                     }}
                     hitSlop={8}
                   >
@@ -677,11 +743,16 @@ export default function Create() {
 
               {/* Capacity */}
               <TouchableOpacity style={styles.iconRow} onPress={() => capacityRef.current?.focus()} activeOpacity={1}>
-                <Ionicons name="people-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
-                <Text style={styles.rowLabel}>Capacity</Text>
+                <Ionicons
+                  name="people-outline"
+                  size={18}
+                  color={!capacityValid ? Colors.error : Colors.text2}
+                  style={styles.rowIcon}
+                />
+                <Text style={[styles.rowLabel, !capacityValid && { color: Colors.error }]}>Capacity</Text>
                 <TextInput
                   ref={capacityRef}
-                  style={styles.capacityInput}
+                  style={[styles.capacityInput, !capacityValid && { color: Colors.error }]}
                   value={capacityValue}
                   onChangeText={setCapacityValue}
                   placeholder="e.g. 500"
@@ -717,11 +788,20 @@ export default function Create() {
               <View style={styles.cardDivider} />
 
               {/* Gatekeeper Address */}
-              <TouchableOpacity style={styles.iconRow} onPress={() => gatekeeperRef.current?.focus()} activeOpacity={1}>
-                <Ionicons name="key-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
+              <TouchableOpacity
+                style={[styles.iconRow, !gatekeeperValid && styles.iconRowError]}
+                onPress={() => gatekeeperRef.current?.focus()}
+                activeOpacity={1}
+              >
+                <Ionicons
+                  name="key-outline"
+                  size={18}
+                  color={!gatekeeperValid ? Colors.error : Colors.text2}
+                  style={styles.rowIcon}
+                />
                 <TextInput
                   ref={gatekeeperRef}
-                  style={styles.rowInput}
+                  style={[styles.rowInput, !gatekeeperValid && { color: Colors.error }]}
                   placeholder="Gatekeeper Address (default: you)"
                   placeholderTextColor={Colors.text2}
                   value={gatekeeperAddress}
@@ -739,13 +819,9 @@ export default function Create() {
             Platform fee: {PLATFORM_FEE_SOL} SOL × {capacityValue || '10,000'} = {platformFeeTotal} SOL
           </Text>
 
-          {/* Create button */}
-          <Button
-            onPress={handleCreateEvent}
-            loading={createEvent.isPending}
-            disabled={!canSubmit || createEvent.isPending}
-          >
-            {createEvent.isPending ? 'Creating on Solana…' : 'Create'}
+          {/* Preview button */}
+          <Button onPress={handlePreview} disabled={!canSubmit}>
+            Preview Event
           </Button>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -784,7 +860,7 @@ export default function Create() {
       </BottomSheet>
 
       {/* ── Stake Sheet ──────────────────────────────────────────────────── */}
-      <BottomSheet ref={stakeSheetRef} title="Stake" scrollable snapPoints={['70%']}>
+      <BottomSheet ref={stakeSheetRef} title="Stake" scrollable dynamicSizing keyboardBehavior={tokenMode === 'sol' ? 'interactive' : 'extend'} onDismiss={clampStake}>
         <Text style={styles.sheetFieldLabel}>TOKEN</Text>
         <View style={[styles.feeTabs, { marginTop: 8 }]}>
           <TouchableOpacity
@@ -850,22 +926,23 @@ export default function Create() {
         <View style={styles.fieldGroup}>
           <Text style={styles.sheetFieldLabel}>AMOUNT ({tokenLabel})</Text>
           <BottomSheetTextInput
-            style={styles.input}
+            style={[styles.input, !stakeValid && styles.inputError]}
             placeholder="0.1"
             placeholderTextColor={Colors.text2}
             value={stakeAmount}
             onChangeText={setStakeAmount}
             keyboardType="decimal-pad"
           />
+          {!stakeValid && <Text style={styles.fieldError}>Must be greater than 0</Text>}
         </View>
 
         <View style={{ marginTop: Spacing.md }}>
-          <Button onPress={() => stakeSheetRef.current?.dismiss()}>Done</Button>
+          <Button onPress={() => { clampStake(); stakeSheetRef.current?.dismiss() }}>Done</Button>
         </View>
       </BottomSheet>
 
       {/* ── Host Fee Sheet ───────────────────────────────────────────────── */}
-      <BottomSheet ref={feeSheetRef} title="Host Fee" scrollable snapPoints={['55%']}>
+      <BottomSheet ref={feeSheetRef} title="Host Fee" scrollable dynamicSizing keyboardBehavior="interactive" onDismiss={clampHostFee}>
         <View style={styles.feeTabs}>
           <TouchableOpacity
             style={[styles.feeTab, feeMode === 'free' && styles.feeTabActive]}
@@ -893,7 +970,7 @@ export default function Create() {
             <View style={styles.fieldGroup}>
               <Text style={styles.sheetFieldLabel}>HOST FEE % (1–100)</Text>
               <BottomSheetTextInput
-                style={styles.input}
+                style={[styles.input, !hostFeeValid && styles.inputError]}
                 placeholder="10"
                 placeholderTextColor={Colors.text2}
                 value={hostFeePercent}
@@ -901,6 +978,7 @@ export default function Create() {
                 keyboardType="number-pad"
                 maxLength={3}
               />
+              {!hostFeeValid && <Text style={styles.fieldError}>Must be between 1 and 100</Text>}
             </View>
             <Text style={styles.feeDesc}>
               Attendees stake {stakeAmount} {tokenLabel}. You keep {hostFeePercent}% when they check in — attendees
@@ -910,27 +988,26 @@ export default function Create() {
         )}
 
         <View style={{ marginTop: Spacing.md }}>
-          <Button onPress={() => feeSheetRef.current?.dismiss()}>Done</Button>
+          <Button onPress={() => { clampHostFee(); feeSheetRef.current?.dismiss() }}>Done</Button>
         </View>
       </BottomSheet>
 
       {/* ── Unlock Info Sheet ────────────────────────────────────────────── */}
       <BottomSheet ref={unlockInfoSheetRef} title="What is Unlock?" dynamicSizing>
         <Text style={styles.infoText}>
-          The <Text style={styles.infoHighlight}>Unlock Date</Text> is automatically set to{' '}
-          <Text style={styles.infoHighlight}>7 days after the event ends</Text>. It marks when staked funds become
-          eligible for settlement.
+          The <Text style={styles.infoHighlight}>Unlock Date</Text> marks when staked funds become claimable on-chain.
+          It is automatically set to <Text style={styles.infoHighlight}>7 days after the event ends</Text>.
         </Text>
         <Text style={styles.infoText}>
-          After the event, Tizzle enters a settlement window. Attendees who checked in receive their stake back (minus
-          any host fee). No-shows forfeit their stake.
+          After this date, attendees who were checked in must <Text style={styles.infoHighlight}>manually claim</Text>{' '}
+          their stake back via the app. No-shows forfeit their stake to the organizer.
         </Text>
         <Text style={styles.infoText}>
-          The 7-day buffer gives organizers time to finalize attendance records before funds are released on-chain.
+          The 7-day buffer gives organizers time to finalize attendance records before funds are unlocked on-chain.
         </Text>
         <View style={styles.infoRow}>
           <Ionicons name="time-outline" size={16} color={Colors.accent} />
-          <Text style={styles.infoCaption}>Unlock = End Date + 7 days (automatic)</Text>
+          <Text style={styles.infoCaption}>Unlock = End Date + 7 days</Text>
         </View>
       </BottomSheet>
 
@@ -1046,7 +1123,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.text2,
     backgroundColor: 'transparent',
   },
-  dtDotError: { borderColor: Colors.error },
+  dtDotError: { borderColor: Colors.error, backgroundColor: Colors.error },
   dtConnectorRow: { flexDirection: 'row', alignItems: 'center', height: 10 },
   dtConnectorSpacer: { width: 4 },
   dtConnectorLine: {
@@ -1106,7 +1183,7 @@ const styles = StyleSheet.create({
   switch: { marginLeft: 'auto' },
 
   // Venue thumbnail
-  venueThumbnail: { flex: 1, height: 52, borderRadius: 8 },
+  venueThumbnail: { width: 44, height: 44, borderRadius: 8, flexShrink: 0 },
 
   // Capacity inline input
   capacityInput: {
@@ -1187,6 +1264,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: Spacing.sm,
   },
+  inputError: { borderWidth: 1, borderColor: Colors.error },
+  fieldError: { fontFamily: Fonts.body, fontSize: 12, color: Colors.error },
+  iconRowError: { backgroundColor: 'rgba(255,59,48,0.08)', borderRadius: 8 },
   multiline: { minHeight: 64, textAlignVertical: 'top' },
 
   // iOS date picker

@@ -170,6 +170,7 @@ export default function EventDescription() {
       return true
     })
     return () => sub.remove()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content])
 
   return (
