@@ -80,9 +80,9 @@ export default function LocationSearch() {
       const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?${params}`)
       const json = await res.json()
       const loc = json.result?.geometry?.location
-      resolveLocation({ text: item.description, latitude: loc?.lat ?? 0, longitude: loc?.lng ?? 0 })
+      resolveLocation({ text: item.structured_formatting.main_text, locationDetail: item.structured_formatting.secondary_text, latitude: loc?.lat ?? 0, longitude: loc?.lng ?? 0 })
     } catch {
-      resolveLocation({ text: item.description, latitude: 0, longitude: 0 })
+      resolveLocation({ text: item.structured_formatting.main_text, locationDetail: item.structured_formatting.secondary_text, latitude: 0, longitude: 0 })
     }
     sessionToken.current = Math.random().toString(36).slice(2)
     router.back()

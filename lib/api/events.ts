@@ -9,6 +9,7 @@ export interface Event {
   description: string
   imageUrl: string
   location: string
+  locationDetail?: string
   latitude?: number
   longitude?: number
   category: string
@@ -43,6 +44,7 @@ export interface CreateEventPayload {
   description?: string
   imageUrl?: string
   location?: string
+  locationDetail?: string
   latitude?: number
   longitude?: number
   category?: string

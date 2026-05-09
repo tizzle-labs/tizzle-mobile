@@ -3,16 +3,16 @@ import { Button } from '@/components/ui/Button'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
-import { registerCreateDiscardHandler, setCreateFormDirty } from '@/lib/create-dirty-store'
-import { setDescriptionCallback } from '@/lib/description-callback-store'
-import { setEventPreview } from '@/lib/event-preview-store'
-import { setLocationCallback, type LocationData } from '@/lib/location-callback-store'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { PLATFORM_FEE_SOL, useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
 import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
 import { showErrorFeedback } from '@/lib/app-feedback'
+import { registerCreateDiscardHandler, setCreateFormDirty } from '@/lib/create-dirty-store'
+import { setDescriptionCallback } from '@/lib/description-callback-store'
+import { setEventPreview } from '@/lib/event-preview-store'
+import { setLocationCallback, type LocationData } from '@/lib/location-callback-store'
 import { Ionicons } from '@expo/vector-icons'
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
@@ -86,6 +86,7 @@ export default function Create() {
   const [eventTitle, setEventTitle] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
+  const [locationDetail, setLocationDetail] = useState('')
   const [locationLat, setLocationLat] = useState(0)
   const [locationLng, setLocationLng] = useState(0)
   const [category, setCategory] = useState<string | null>(null)
@@ -105,7 +106,8 @@ export default function Create() {
   const [feeMode, setFeeMode] = useState<FeeMode>('free')
   const [stakeAmount, setStakeAmount] = useState('0.1')
   const [hostFeePercent, setHostFeePercent] = useState('10')
-  const [capacityValue, setCapacityValue] = useState('')
+  const [capacityValue, setCapacityValue] = useState('100')
+  const [capacityTouched, setCapacityTouched] = useState(false)
 
   // ── Date/time ─────────────────────────────────────────────────────────────
   const [startTime, setStartTime] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
@@ -136,9 +138,9 @@ export default function Create() {
   const stakeTokenSymbol = tokenMode === 'sol' ? 'SOL' : splSymbol
   const stakeTokenDecimals = tokenMode === 'sol' ? 9 : parseInt(splDecimals) || 6
   const parsedCapacity = parseInt(capacityValue)
-  const capacityValid = capacityValue === '' || (!isNaN(parsedCapacity) && parsedCapacity >= 1)
-  const capacity = capacityValue === '' ? 10000 : parsedCapacity
-  const platformFeeTotal = (PLATFORM_FEE_SOL * capacity).toFixed(4)
+  const capacityValid = !isNaN(parsedCapacity) && parsedCapacity >= 1
+  const capacity = parsedCapacity
+  const platformFeeTotal = capacityValid ? (PLATFORM_FEE_SOL * capacity).toFixed(4) : '—'
   // program requires start_time >= now + 30s; use 2min buffer for tx signing latency
   const startInPast = startTime < new Date(Date.now() + 2 * 60 * 1000)
   const timeError = endTime <= startTime
@@ -170,7 +172,7 @@ export default function Create() {
       eventImageUri !== null ||
       venueImageUri !== null ||
       gatekeeperAddress.trim().length > 0 ||
-      capacityValue.length > 0 ||
+      capacityValue !== '100' ||
       feeMode !== 'free' ||
       stakeAmount !== '0.1' ||
       tokenMode !== 'sol' ||
@@ -228,6 +230,7 @@ export default function Create() {
     setEventTitle('')
     setDescription('')
     setLocation('')
+    setLocationDetail('')
     setLocationLat(0)
     setLocationLng(0)
     setCategory(null)
@@ -242,7 +245,8 @@ export default function Create() {
     setFeeMode('free')
     setStakeAmount('0.1')
     setHostFeePercent('10')
-    setCapacityValue('')
+    setCapacityValue('100')
+    setCapacityTouched(false)
     setStartTime(new Date(Date.now() + 24 * 60 * 60 * 1000))
     setEndTime(new Date(Date.now() + 27 * 60 * 60 * 1000))
     setSuccessData(null)
@@ -313,6 +317,7 @@ export default function Create() {
         title: eventTitle.trim(),
         description,
         location: location.trim(),
+        locationDetail: locationDetail.trim() || undefined,
         latitude: locationLat || undefined,
         longitude: locationLng || undefined,
         category,
@@ -343,6 +348,7 @@ export default function Create() {
       imageUri: eventImageUri ?? undefined,
       venueImageUri: venueImageUri ?? undefined,
       location: location.trim(),
+      locationDetail: locationDetail.trim() || undefined,
       latitude: locationLat || undefined,
       longitude: locationLng || undefined,
       category: category ?? 'others',
@@ -434,8 +440,21 @@ export default function Create() {
             </View>
           </View>
           <View style={styles.successActions}>
-            <Button onPress={() => { resetEventForm(); router.push(`/(modals)/event/${successData.eventPda}`) }}>View Event</Button>
-            <Button onPress={() => { resetEventForm(); router.replace('/(tabs)/explore') }} variant="secondary">
+            <Button
+              onPress={() => {
+                resetEventForm()
+                router.push(`/(modals)/event/${successData.eventPda}`)
+              }}
+            >
+              View Event
+            </Button>
+            <Button
+              onPress={() => {
+                resetEventForm()
+                router.replace('/(tabs)/explore')
+              }}
+              variant="secondary"
+            >
               Go to Explore
             </Button>
           </View>
@@ -583,7 +602,11 @@ export default function Create() {
           keyboardShouldPersistTaps="handled"
         >
           {/* ── Event Cover Image ─────────────────────────────────────────── */}
-          <TouchableOpacity style={styles.imagePicker} onPress={() => pickImage('event')} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={eventImageUri ? styles.imagePicker : styles.imagePickerEmpty}
+            onPress={() => pickImage('event')}
+            activeOpacity={0.85}
+          >
             {eventImageUri ? (
               <Image source={{ uri: eventImageUri }} style={styles.imagePreview} contentFit="cover" />
             ) : (
@@ -621,7 +644,9 @@ export default function Create() {
                   activeOpacity={0.7}
                 >
                   <Ionicons name="calendar-outline" size={13} color={startInPast ? Colors.error : Colors.text2} />
-                  <Text style={[styles.dtChipText, startInPast && styles.dtChipTextError]}>{formatDate(startTime)}</Text>
+                  <Text style={[styles.dtChipText, startInPast && styles.dtChipTextError]}>
+                    {formatDate(startTime)}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.dtChip, startInPast && styles.dtChipError]}
@@ -629,7 +654,9 @@ export default function Create() {
                   activeOpacity={0.7}
                 >
                   <Ionicons name="time-outline" size={13} color={startInPast ? Colors.error : Colors.text2} />
-                  <Text style={[styles.dtChipText, startInPast && styles.dtChipTextError]}>{formatTime(startTime)}</Text>
+                  <Text style={[styles.dtChipText, startInPast && styles.dtChipTextError]}>
+                    {formatTime(startTime)}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -690,8 +717,9 @@ export default function Create() {
             style={styles.card}
             activeOpacity={0.7}
             onPress={() => {
-              setLocationCallback(({ text, latitude, longitude }: LocationData) => {
+              setLocationCallback(({ text, locationDetail: ld, latitude, longitude }: LocationData) => {
                 setLocation(text)
+                setLocationDetail(ld)
                 setLocationLat(latitude)
                 setLocationLng(longitude)
               })
@@ -700,9 +728,23 @@ export default function Create() {
           >
             <View style={styles.iconRow}>
               <Ionicons name="location-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
-              <Text style={[styles.rowInput, !location && { color: Colors.text2 }]} numberOfLines={1}>
-                {location || 'Choose Location'}
-              </Text>
+              {location ? (
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowInput} numberOfLines={1}>
+                    {location}
+                  </Text>
+                  {!!locationDetail && (
+                    <Text
+                      style={[styles.rowInput, { fontSize: 12, color: Colors.text2, marginTop: 1 }]}
+                      numberOfLines={1}
+                    >
+                      {locationDetail}
+                    </Text>
+                  )}
+                </View>
+              ) : (
+                <Text style={[styles.rowInput, { color: Colors.text2, flex: 1 }]}>Choose Location</Text>
+              )}
               {location ? (
                 <TouchableOpacity
                   hitSlop={8}
@@ -710,6 +752,7 @@ export default function Create() {
                   onPress={(e) => {
                     e.stopPropagation()
                     setLocation('')
+                    setLocationDetail('')
                     setLocationLat(0)
                     setLocationLng(0)
                   }}
@@ -733,14 +776,17 @@ export default function Create() {
           >
             <View style={styles.iconRow}>
               <Ionicons
-                name="reorder-three-outline"
+                name="reorder-four-outline"
                 size={18}
                 color={Colors.text2}
                 style={[styles.rowIcon, styles.rowIconTop]}
               />
               {description ? (
                 <Text style={styles.descPreview} numberOfLines={3}>
-                  {description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}
+                  {description
+                    .replace(/<[^>]*>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim()}
                 </Text>
               ) : (
                 <Text style={[styles.descInput, { color: Colors.text2 }]}>Add Description</Text>
@@ -820,16 +866,19 @@ export default function Create() {
                 <Ionicons
                   name="people-outline"
                   size={18}
-                  color={!capacityValid ? Colors.error : Colors.text2}
+                  color={capacityTouched && !capacityValid ? Colors.error : Colors.text2}
                   style={styles.rowIcon}
                 />
-                <Text style={[styles.rowLabel, !capacityValid && { color: Colors.error }]}>Capacity</Text>
+                <Text style={[styles.rowLabel, capacityTouched && !capacityValid && { color: Colors.error }]}>
+                  Capacity
+                </Text>
                 <TextInput
                   ref={capacityRef}
-                  style={[styles.capacityInput, !capacityValid && { color: Colors.error }]}
+                  style={[styles.capacityInput, capacityTouched && !capacityValid && { color: Colors.error }]}
                   value={capacityValue}
                   onChangeText={setCapacityValue}
-                  placeholder="e.g. 500"
+                  onBlur={() => setCapacityTouched(true)}
+                  placeholder="100"
                   placeholderTextColor={Colors.text2}
                   keyboardType="number-pad"
                   maxLength={5}
@@ -862,11 +911,7 @@ export default function Create() {
               <View style={styles.cardDivider} />
 
               {/* Gatekeeper Address */}
-              <TouchableOpacity
-                style={styles.iconRow}
-                onPress={() => gatekeeperRef.current?.focus()}
-                activeOpacity={1}
-              >
+              <TouchableOpacity style={styles.iconRow} onPress={() => gatekeeperRef.current?.focus()} activeOpacity={1}>
                 <Ionicons
                   name="key-outline"
                   size={18}
@@ -890,7 +935,7 @@ export default function Create() {
 
           {/* Platform fee note */}
           <Text style={styles.feeNote}>
-            Platform fee: {PLATFORM_FEE_SOL} SOL × {capacityValue || '10,000'} = {platformFeeTotal} SOL
+            Platform fee: {PLATFORM_FEE_SOL} SOL × {capacityValue || '—'} = {platformFeeTotal} SOL
           </Text>
 
           {/* Preview button */}
@@ -934,7 +979,14 @@ export default function Create() {
       </BottomSheet>
 
       {/* ── Stake Sheet ──────────────────────────────────────────────────── */}
-      <BottomSheet ref={stakeSheetRef} title="Stake" scrollable dynamicSizing keyboardBehavior={tokenMode === 'sol' ? 'interactive' : 'extend'} onDismiss={clampStake}>
+      <BottomSheet
+        ref={stakeSheetRef}
+        title="Stake"
+        scrollable
+        dynamicSizing
+        keyboardBehavior={tokenMode === 'sol' ? 'interactive' : 'extend'}
+        onDismiss={clampStake}
+      >
         <Text style={styles.sheetFieldLabel}>TOKEN</Text>
         <View style={[styles.feeTabs, { marginTop: 8 }]}>
           <TouchableOpacity
@@ -1011,12 +1063,26 @@ export default function Create() {
         </View>
 
         <View style={{ marginTop: Spacing.md }}>
-          <Button onPress={() => { clampStake(); stakeSheetRef.current?.dismiss() }}>Done</Button>
+          <Button
+            onPress={() => {
+              clampStake()
+              stakeSheetRef.current?.dismiss()
+            }}
+          >
+            Done
+          </Button>
         </View>
       </BottomSheet>
 
       {/* ── Host Fee Sheet ───────────────────────────────────────────────── */}
-      <BottomSheet ref={feeSheetRef} title="Host Fee" scrollable dynamicSizing keyboardBehavior="interactive" onDismiss={clampHostFee}>
+      <BottomSheet
+        ref={feeSheetRef}
+        title="Host Fee"
+        scrollable
+        dynamicSizing
+        keyboardBehavior="interactive"
+        onDismiss={clampHostFee}
+      >
         <View style={styles.feeTabs}>
           <TouchableOpacity
             style={[styles.feeTab, feeMode === 'free' && styles.feeTabActive]}
@@ -1062,7 +1128,14 @@ export default function Create() {
         )}
 
         <View style={{ marginTop: Spacing.md }}>
-          <Button onPress={() => { clampHostFee(); feeSheetRef.current?.dismiss() }}>Done</Button>
+          <Button
+            onPress={() => {
+              clampHostFee()
+              feeSheetRef.current?.dismiss()
+            }}
+          >
+            Done
+          </Button>
         </View>
       </BottomSheet>
 
@@ -1151,8 +1224,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   headerTitle: {
     fontFamily: Fonts.display,
@@ -1174,12 +1245,16 @@ const styles = StyleSheet.create({
 
   // Event cover image
   imagePicker: { borderRadius: 16, overflow: 'hidden' },
+  imagePickerEmpty: {
+    borderRadius: 16,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: Colors.border2,
+  },
   imagePreview: { width: '100%', aspectRatio: 1 },
   imagePlaceholder: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: Colors.surface2,
-    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,

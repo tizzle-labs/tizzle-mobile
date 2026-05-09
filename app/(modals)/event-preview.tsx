@@ -108,21 +108,22 @@ export default function EventPreview() {
 
           {/* Date + time */}
           <View style={s.metaRow}>
-            <Ionicons name="calendar-outline" size={13} color={Colors.text3} />
+            <Ionicons name="calendar-outline" size={16} color={Colors.text3} />
             <Text style={s.metaText}>{fmtDate(data.startTime)}</Text>
             <Text style={s.metaDot}>·</Text>
-            <Ionicons name="time-outline" size={13} color={Colors.text3} />
+            <Ionicons name="time-outline" size={16} color={Colors.text3} />
             <Text style={s.metaText}>
               {fmtTime(data.startTime)} - {fmtTime(data.endTime)}
             </Text>
           </View>
 
           {/* Location */}
-          <View style={s.metaRow}>
-            <Ionicons name="location-outline" size={13} color={Colors.text3} />
-            <Text style={s.metaText} numberOfLines={1}>
-              {data.location}
-            </Text>
+          <View style={[s.metaRow, { alignItems: 'flex-start' }]}>
+            <Ionicons name="location-outline" size={16} color={Colors.text3} style={{ marginTop: 2 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={s.metaText}>{data.location}</Text>
+              {!!data.locationDetail && <Text style={s.metaSubText}>{data.locationDetail}</Text>}
+            </View>
           </View>
 
           {/* Map */}
@@ -155,10 +156,7 @@ export default function EventPreview() {
                 </View>
                 <View style={s.detailCard}>
                   <Text style={s.detailLabel}>CATEGORY</Text>
-                  <Text style={s.detailValue} numberOfLines={1} adjustsFontSizeToFit>
-                    {categoryDisplay}
-                  </Text>
-                  <Text style={s.detailSub}>type</Text>
+                  <Text style={s.detailValue}>{categoryDisplay}</Text>
                 </View>
               </View>
               <View style={s.detailCardWide}>
@@ -265,7 +263,8 @@ const s = StyleSheet.create({
   orgInlineName: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text2, flex: 1 },
 
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text2 },
+  metaText: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text1 },
+  metaSubText: { fontFamily: Fonts.body, fontSize: 12, color: Colors.text2, marginTop: 2 },
   metaDot: { color: Colors.text3, fontSize: 13 },
 
   mapPlaceholder: {
@@ -284,7 +283,7 @@ const s = StyleSheet.create({
   sectionTitle: {
     fontFamily: Fonts.display,
     fontSize: 16,
-    color: Colors.text1,
+    color: Colors.text2,
     letterSpacing: ls(16, LS.displaySubtle),
   },
 
@@ -296,16 +295,12 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface2,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
     padding: Spacing.md,
     gap: 4,
   },
   detailCardWide: {
     backgroundColor: Colors.surface2,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
     padding: Spacing.md,
     gap: 4,
   },
@@ -331,7 +326,7 @@ const s = StyleSheet.create({
     lineHeight: 34,
   },
 
-  description: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, lineHeight: 22 },
+  description: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text1, lineHeight: 22 },
 
   cta: {
     position: 'absolute',
@@ -340,9 +335,7 @@ const s = StyleSheet.create({
     right: 0,
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
-    backgroundColor: Colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    backgroundColor: Colors.surface2,
     gap: Spacing.sm,
   },
 })

@@ -28,6 +28,7 @@ export interface CreateEventInput {
   imageUri?: string
   venueImageUri?: string
   location: string
+  locationDetail?: string
   latitude?: number
   longitude?: number
   category?: string
@@ -116,6 +117,7 @@ export function useCreateEvent() {
         title: input.title,
         description: input.description,
         location: input.location,
+        locationDetail: input.locationDetail,
         latitude: input.latitude,
         longitude: input.longitude,
         category: input.category,

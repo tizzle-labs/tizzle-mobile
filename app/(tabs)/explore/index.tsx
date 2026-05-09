@@ -2,6 +2,7 @@ import { EventRow } from '@/components/event/EventRow'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
+import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { useEvents } from '@/hooks/api/use-events'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
 import { Ionicons } from '@expo/vector-icons'
@@ -22,18 +23,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks
 }
 
-const BROWSE_CATEGORIES = [
-  { label: 'Tech & AI', icon: '🤖' },
-  { label: 'Climate & Sustainability', icon: '🌿' },
-  { label: 'Health & Wellness', icon: '🧘' },
-  { label: 'Food & Drink', icon: '🍜' },
-  { label: 'Arts & Culture', icon: '🎨' },
-  { label: 'Music', icon: '🎵' },
-  { label: 'Community', icon: '🤝' },
-  { label: 'Sports', icon: '⚽' },
-  { label: 'Business & Professional', icon: '💼' },
-  { label: 'Education', icon: '📚' },
-]
+const BROWSE_CATEGORIES = EVENT_CATEGORIES
 
 const COLUMN_WIDTH = 320
 
@@ -207,8 +197,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
     backgroundColor: Colors.bg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   avatarBtn: {
     width: 38,
@@ -269,8 +257,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 11,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.border2,
     backgroundColor: Colors.surface,
   },
   categoryTileIcon: { fontSize: 18 },

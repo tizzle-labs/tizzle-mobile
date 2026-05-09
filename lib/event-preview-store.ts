@@ -2,6 +2,7 @@ export interface EventPreviewData {
   title: string
   description: string
   location: string
+  locationDetail?: string
   latitude?: number
   longitude?: number
   category: string | null

@@ -1,5 +1,6 @@
 export interface LocationData {
   text: string
+  locationDetail: string
   latitude: number
   longitude: number
 }
