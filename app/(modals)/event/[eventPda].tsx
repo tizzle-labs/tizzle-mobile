@@ -13,8 +13,8 @@ import { showErrorFeedback } from '@/lib/app-feedback'
 import { Ionicons } from '@expo/vector-icons'
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Image } from 'expo-image'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useMemo, useRef, useState } from 'react'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
@@ -44,7 +44,13 @@ function shortAddr(addr: string) {
 
 export default function EventDetailModal() {
   const { eventPda } = useLocalSearchParams<{ eventPda: string }>()
-  const { data: event, isLoading } = useEventDetail(eventPda)
+  const { data: event, isLoading, refetch } = useEventDetail(eventPda)
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch()
+    }, [refetch]),
+  )
   const { data: myRegistrations } = useMyRegistrations()
   const { walletAddress } = useAuth()
   const insets = useSafeAreaInsets()

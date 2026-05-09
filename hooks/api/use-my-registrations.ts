@@ -13,5 +13,6 @@ export function useMyRegistrations() {
     queryKey: registrationKeys.my,
     queryFn: getMyRegistrations,
     enabled: isAuthenticated,
+    staleTime: 0,
   })
 }

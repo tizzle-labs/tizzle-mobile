@@ -8,8 +8,8 @@ import type { Registration } from '@/lib/api/registrations'
 import { deriveTicketStatus, type TicketStatus } from '@/lib/ticket-status'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
-import { router } from 'expo-router'
-import { useMemo } from 'react'
+import { router, useFocusEffect } from 'expo-router'
+import { useCallback, useMemo } from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -102,6 +102,13 @@ export default function Tickets() {
   const { data: events, refetch: refetchEvents, isRefetching: isRefetchingEvents } = useEvents()
   const insets = useSafeAreaInsets()
   const eventsByPda = useMemo(() => new Map((events ?? []).map((e) => [e.eventPda, e])), [events])
+  useFocusEffect(
+    useCallback(() => {
+      refetch()
+      refetchEvents()
+    }, [refetch, refetchEvents]),
+  )
+
   const onRefresh = () => {
     void Promise.all([refetch(), refetchEvents()])
   }
@@ -121,7 +128,15 @@ export default function Tickets() {
             { paddingTop: insets.top + Spacing.sm, paddingBottom: insets.bottom + 80 },
           ]}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.accent}
+              colors={[Colors.accent]}
+              progressBackgroundColor={Colors.bg}
+            />
+          }
         >
           <View style={s.header}>
             <Text style={s.headerTitle}>My Tickets</Text>

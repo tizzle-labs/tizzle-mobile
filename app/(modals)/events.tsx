@@ -5,7 +5,7 @@ import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { eventKeys, useInfiniteEvents, useInfiniteForYouEvents } from '@/hooks/api/use-events'
+import { eventKeys, useInfiniteEvents, useInfiniteForYouEvents, useInfiniteEventsByCategory } from '@/hooks/api/use-events'
 import { useUpdateProfile } from '@/hooks/api/use-update-profile'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
 import type { Event } from '@/lib/api/events'
@@ -19,6 +19,7 @@ import {
   BackHandler,
   Dimensions,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -36,20 +37,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const W = Dimensions.get('window').width
 
-type EventListType = 'for-you' | 'recently-added'
-
-const SCREEN_META: Record<EventListType, { title: string; subtitle: string; sortBy: 'created_at' | 'start_time' }> = {
-  'for-you': {
-    title: 'For You',
-    subtitle: 'Based on your interests',
-    sortBy: 'created_at',
-  },
-  'recently-added': {
-    title: 'Recently Added',
-    subtitle: 'Fresh on the platform',
-    sortBy: 'start_time',
-  },
-}
+type EventListType = 'for-you' | 'recently-added' | 'category'
 
 // ─── Interests bottom sheet ───────────────────────────────────────────────────
 
@@ -137,13 +125,16 @@ function InterestsSheet({
 
 export default function EventsScreen() {
   const insets = useSafeAreaInsets()
-  const { type } = useLocalSearchParams<{ type: EventListType }>()
-  const meta = SCREEN_META[type ?? 'for-you']
+  const { type, category } = useLocalSearchParams<{ type: EventListType; category?: string }>()
   const queryClient = useQueryClient()
 
-  const allEventsQuery = useInfiniteEvents(meta.sortBy)
+  const title = type === 'for-you' ? 'For You' : type === 'recently-added' ? 'Recently Added' : (category ?? 'Events')
+  const subtitle = type === 'for-you' ? 'Based on your interests' : type === 'recently-added' ? 'Fresh on the platform' : 'Events in this category'
+
+  const allEventsQuery = useInfiniteEvents('created_at')
   const forYouQuery = useInfiniteForYouEvents()
-  const query = type === 'for-you' ? forYouQuery : allEventsQuery
+  const categoryQuery = useInfiniteEventsByCategory(category ?? '')
+  const query = type === 'for-you' ? forYouQuery : type === 'category' ? categoryQuery : allEventsQuery
 
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch, isRefetching } = query
   const events: Event[] = query.data?.pages.flatMap((page) => page) ?? []
@@ -176,6 +167,12 @@ export default function EventsScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      refetch()
+    }, [refetch]),
+  )
+
+  useFocusEffect(
+    useCallback(() => {
       const sub = BackHandler.addEventListener('hardwareBackPress', () => {
         handleBack()
         return true
@@ -196,8 +193,8 @@ export default function EventsScreen() {
             <Ionicons name="chevron-back" size={22} color={Colors.text1} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{meta.title}</Text>
-            <Text style={styles.headerSubtitle}>{meta.subtitle}</Text>
+            <Text style={styles.headerTitle}>{title}</Text>
+            <Text style={styles.headerSubtitle}>{subtitle}</Text>
           </View>
           {type === 'for-you' ? (
             <TouchableOpacity style={styles.optionsBtn} hitSlop={8} onPress={() => sheetRef.current?.snapToIndex(0)}>
@@ -225,8 +222,15 @@ export default function EventsScreen() {
               if (hasNextPage && !isFetchingNextPage) fetchNextPage()
             }}
             onEndReachedThreshold={0.4}
-            refreshing={isRefetching}
-            onRefresh={refetch}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={refetch}
+                tintColor={Colors.accent}
+                colors={[Colors.accent]}
+                progressBackgroundColor={Colors.bg}
+              />
+            }
             ListFooterComponent={
               isFetchingNextPage ? (
                 <ActivityIndicator color={Colors.accent} style={styles.footerLoader} />

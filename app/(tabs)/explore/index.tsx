@@ -7,7 +7,8 @@ import { useEvents, useForYouEvents } from '@/hooks/api/use-events'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
+import { useCallback } from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -31,10 +32,17 @@ export default function Explore() {
   const { data: profile } = useMyProfile()
   const insets = useSafeAreaInsets()
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch()
+      refetchForYou()
+    }, [refetch, refetchForYou]),
+  )
+
   const forYouChunks = chunkArray(forYouEvents.slice(0, 6), 3)
 
   const recentEvents = [...(events ?? [])]
-    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 6)
   const recentChunks = chunkArray(recentEvents, 3)
 
@@ -63,7 +71,15 @@ export default function Explore() {
           style={styles.scroll}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isRefetching || isRefetchingForYou} onRefresh={() => { refetch(); refetchForYou() }} tintColor={Colors.accent} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching || isRefetchingForYou}
+              onRefresh={() => { refetch(); refetchForYou() }}
+              tintColor={Colors.accent}
+              colors={[Colors.accent]}
+              progressBackgroundColor={Colors.bg}
+            />
+          }
         >
           {/* For You */}
           <View style={[styles.section, { marginTop: Spacing.lg }]}>
@@ -115,7 +131,7 @@ export default function Explore() {
               <View style={styles.catRows}>
                 <View style={styles.catRow}>
                   {BROWSE_CATEGORIES.slice(0, 5).map((cat) => (
-                    <TouchableOpacity key={cat.label} style={styles.categoryTile} activeOpacity={0.7}>
+                    <TouchableOpacity key={cat.label} style={styles.categoryTile} activeOpacity={0.7} onPress={() => router.push({ pathname: '/(modals)/events', params: { type: 'category', category: cat.label } })}>
                       <Text style={styles.categoryTileIcon}>{cat.icon}</Text>
                       <Text style={styles.categoryTileLabel}>{cat.label}</Text>
                     </TouchableOpacity>
@@ -123,7 +139,7 @@ export default function Explore() {
                 </View>
                 <View style={styles.catRow}>
                   {BROWSE_CATEGORIES.slice(5).map((cat) => (
-                    <TouchableOpacity key={cat.label} style={styles.categoryTile} activeOpacity={0.7}>
+                    <TouchableOpacity key={cat.label} style={styles.categoryTile} activeOpacity={0.7} onPress={() => router.push({ pathname: '/(modals)/events', params: { type: 'category', category: cat.label } })}>
                       <Text style={styles.categoryTileIcon}>{cat.icon}</Text>
                       <Text style={styles.categoryTileLabel}>{cat.label}</Text>
                     </TouchableOpacity>

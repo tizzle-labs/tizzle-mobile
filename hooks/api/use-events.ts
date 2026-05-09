@@ -7,6 +7,7 @@ const PAGE_SIZE = 20
 export const eventKeys = {
   all: ['events'] as const,
   forYou: ['events', 'for-you'] as const,
+  category: (cat: string) => ['events', 'category', cat] as const,
   infinite: (sortBy: 'created_at' | 'start_time') => ['events', 'infinite', sortBy] as const,
   detail: (pda: string) => ['events', pda] as const,
 }
@@ -25,7 +26,21 @@ export function useForYouEvents() {
     queryKey: eventKeys.forYou,
     queryFn: () => getForYouEvents(),
     enabled: isAuthenticated,
-    staleTime: 30_000,
+    staleTime: 0,
+  })
+}
+
+export function useInfiniteEventsByCategory(category: string) {
+  return useInfiniteQuery({
+    queryKey: [...eventKeys.category(category), 'infinite'] as const,
+    queryFn: ({ pageParam }) => getEvents({ limit: PAGE_SIZE, offset: pageParam, category, sortBy: 'start_time' }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < PAGE_SIZE) return undefined
+      return allPages.reduce((total, page) => total + page.length, 0)
+    },
+    enabled: !!category,
+    staleTime: 0,
   })
 }
 
@@ -40,7 +55,7 @@ export function useInfiniteForYouEvents() {
       return allPages.reduce((total, page) => total + page.length, 0)
     },
     enabled: isAuthenticated,
-    staleTime: 30_000,
+    staleTime: 0,
   })
 }
 

@@ -33,6 +33,7 @@ export interface Event {
   organizationName: string | null
   organizationAvatarUrl: string | null
   venueImageUrl: string | null
+  createdAt: string
 }
 
 export interface CreateEventPayload {
@@ -66,6 +67,7 @@ export async function getEvents(params?: {
   offset?: number
   sortBy?: 'created_at' | 'start_time'
   organizationPda?: string
+  category?: string
 }): Promise<Event[]> {
   const { data } = await apiClient.get('/v1/events', { params })
   return data

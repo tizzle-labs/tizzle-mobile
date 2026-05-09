@@ -7,5 +7,6 @@ export function useEventDetail(eventPda: string) {
     queryKey: eventKeys.detail(eventPda),
     queryFn: () => getEventByPda(eventPda),
     enabled: !!eventPda,
+    staleTime: 0,
   })
 }
