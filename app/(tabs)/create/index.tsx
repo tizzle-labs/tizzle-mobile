@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
+import { setLocationCallback } from '@/lib/location-callback-store'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { PLATFORM_FEE_SOL, useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
@@ -114,7 +115,6 @@ export default function Create() {
   const unlockInfoSheetRef = useRef<BottomSheetRef>(null)
 
   // ── Input refs ────────────────────────────────────────────────────────────
-  const locationRef = useRef<TextInput>(null)
   const descRef = useRef<TextInput>(null)
   const gatekeeperRef = useRef<TextInput>(null)
   const capacityRef = useRef<TextInput>(null)
@@ -556,18 +556,33 @@ export default function Create() {
           </View>
 
           {/* ── Location ─────────────────────────────────────────────────── */}
-          <TouchableOpacity style={styles.card} onPress={() => locationRef.current?.focus()} activeOpacity={1}>
+          <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.7}
+            onPress={() => {
+              setLocationCallback((selected) => setLocation(selected))
+              router.push('/(modals)/location-search')
+            }}
+          >
             <View style={styles.iconRow}>
               <Ionicons name="location-outline" size={18} color={Colors.text2} style={styles.rowIcon} />
-              <TextInput
-                ref={locationRef}
-                style={styles.rowInput}
-                placeholder="Choose Location"
-                placeholderTextColor={Colors.text2}
-                value={location}
-                onChangeText={setLocation}
-                returnKeyType="done"
-              />
+              <Text style={[styles.rowInput, !location && { color: Colors.text2 }]} numberOfLines={1}>
+                {location || 'Choose Location'}
+              </Text>
+              {location ? (
+                <TouchableOpacity
+                  hitSlop={8}
+                  activeOpacity={0.7}
+                  onPress={(e) => {
+                    e.stopPropagation()
+                    setLocation('')
+                  }}
+                >
+                  <Ionicons name="close-circle" size={16} color={Colors.text2} />
+                </TouchableOpacity>
+              ) : (
+                <Ionicons name="chevron-forward" size={16} color={Colors.text2} />
+              )}
             </View>
           </TouchableOpacity>
 
