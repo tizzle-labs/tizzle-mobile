@@ -6,7 +6,8 @@ import { useMyProfile } from '@/hooks/api/use-user-profile'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useState } from 'react'
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 function SettingRow({
@@ -56,6 +57,8 @@ export default function SettingsScreen() {
   const { walletAddress, signOut } = useAuth()
   const { data: profile } = useMyProfile()
 
+  const [disconnecting, setDisconnecting] = useState(false)
+
   const displayName = profile?.name || profile?.username || 'Anonymous'
   const username = profile?.username
     ? `@${profile.username}`
@@ -64,8 +67,13 @@ export default function SettingsScreen() {
       : ''
 
   async function handleSignOut() {
-    await signOut()
-    router.replace('/sign-in')
+    setDisconnecting(true)
+    try {
+      await signOut()
+      router.replace('/sign-in')
+    } finally {
+      setDisconnecting(false)
+    }
   }
 
   return (
@@ -159,14 +167,22 @@ export default function SettingsScreen() {
 
         {/* ── Disconnect ── */}
         <Group>
-          <SettingRow
-            icon="log-out-outline"
-            iconBg={Colors.error}
-            label="Disconnect Wallet"
+          <TouchableOpacity
+            style={s.row}
             onPress={handleSignOut}
-            danger
-            showChevron={false}
-          />
+            activeOpacity={0.7}
+            disabled={disconnecting}
+          >
+            <View style={[s.rowIcon, { backgroundColor: Colors.error }]}>
+              {disconnecting
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Ionicons name="log-out-outline" size={16} color="#fff" />
+              }
+            </View>
+            <Text style={[s.rowLabel, s.rowLabelDanger]}>
+              {disconnecting ? 'Disconnecting...' : 'Disconnect Wallet'}
+            </Text>
+          </TouchableOpacity>
         </Group>
       </ScrollView>
     </View>

@@ -34,13 +34,13 @@ module.exports = {
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#000000',
         dark: {
           backgroundColor: '#000000',
-          image: './assets/images/splash-icon.png',
+          image: './assets/images/tizzle-logo-icon.png',
         },
-        image: './assets/images/splash-icon.png',
-        imageWidth: 200,
+        image: './assets/images/tizzle-logo-icon.png',
+        imageWidth: 120,
         resizeMode: 'contain',
       },
     ],
