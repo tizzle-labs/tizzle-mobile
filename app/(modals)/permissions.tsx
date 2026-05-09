@@ -2,12 +2,87 @@ import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { Ionicons } from '@expo/vector-icons'
+import { useCameraPermissions } from 'expo-camera'
+import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { AppState, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+type PermStatus = 'granted' | 'denied' | 'undetermined'
+
+interface PermissionItem {
+  key: string
+  icon: string
+  iconBg: string
+  label: string
+  description: string
+  status: PermStatus
+  onRequest: () => Promise<void>
+}
 
 export default function PermissionsScreen() {
   const insets = useSafeAreaInsets()
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions()
+  const [mediaStatus, setMediaStatus] = useState<PermStatus>('undetermined')
+
+  async function refreshMediaStatus() {
+    const result = await ImagePicker.getMediaLibraryPermissionsAsync()
+    setMediaStatus(result.status as PermStatus)
+  }
+
+  useEffect(() => {
+    refreshMediaStatus()
+  }, [])
+
+  // Re-check permissions when returning from iOS Settings
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshMediaStatus()
+    })
+    return () => sub.remove()
+  }, [])
+
+  async function handleCameraRequest() {
+    if (cameraPermission?.status === 'denied') {
+      await Linking.openSettings()
+    } else {
+      await requestCameraPermission()
+    }
+  }
+
+  async function handleMediaRequest() {
+    if (mediaStatus === 'denied') {
+      await Linking.openSettings()
+    } else {
+      const result = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      setMediaStatus(result.status as PermStatus)
+    }
+  }
+
+  const cameraStatus = (cameraPermission?.status ?? 'undetermined') as PermStatus
+
+  const permissions: PermissionItem[] = [
+    {
+      key: 'camera',
+      icon: 'camera-outline',
+      iconBg: '#1D4ED8',
+      label: 'Camera',
+      description: 'Required to scan QR codes for event check-in',
+      status: cameraStatus,
+      onRequest: handleCameraRequest,
+    },
+    {
+      key: 'media',
+      icon: 'image-outline',
+      iconBg: '#7C3AED',
+      label: 'Photo Library',
+      description: 'Required to upload your profile photo and event cover image',
+      status: mediaStatus,
+      onRequest: handleMediaRequest,
+    },
+  ]
+
   return (
     <View style={[s.container, { paddingTop: insets.top + Spacing.sm }]}>
       <View style={s.header}>
@@ -17,13 +92,50 @@ export default function PermissionsScreen() {
         <Text style={s.title}>Permissions</Text>
         <View style={{ width: 38 }} />
       </View>
-      <View style={s.body}>
-        <Ionicons name="shield-checkmark-outline" size={48} color={Colors.text3} />
-        <Text style={s.emptyTitle}>Coming Soon</Text>
-        {/* TODO: Implement permissions — camera, location, notifications */}
-        <Text style={s.emptyBody}>App permissions will appear here.</Text>
-      </View>
+
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={[s.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={s.sectionLabel}>App Permissions</Text>
+        <View style={s.group}>
+          {permissions.map((item, i) => (
+            <PermissionRow key={item.key} item={item} showDivider={i < permissions.length - 1} />
+          ))}
+        </View>
+
+        <Text style={s.hint}>If a permission is blocked, tap to open system settings and enable it manually.</Text>
+      </ScrollView>
     </View>
+  )
+}
+
+function PermissionRow({ item, showDivider }: { item: PermissionItem; showDivider: boolean }) {
+  const isGranted = item.status === 'granted'
+  const isDenied = item.status === 'denied'
+
+  return (
+    <>
+      <View style={s.row}>
+        <View style={[s.rowIcon, { backgroundColor: item.iconBg }]}>
+          <Ionicons name={item.icon as any} size={18} color="#fff" />
+        </View>
+        <View style={s.rowBody}>
+          <Text style={s.rowLabel}>{item.label}</Text>
+          <Text style={s.rowDesc}>{item.description}</Text>
+          {isDenied && <Text style={s.openSettings}>Tap to open Settings</Text>}
+        </View>
+        <Switch
+          value={isGranted}
+          onValueChange={() => (isGranted ? Linking.openSettings() : item.onRequest())}
+          trackColor={{ false: Colors.surface2, true: Colors.accent }}
+          thumbColor="#fff"
+          ios_backgroundColor={Colors.surface2}
+        />
+      </View>
+      {showDivider && <View style={s.divider} />}
+    </>
   )
 }
 
@@ -35,8 +147,7 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    marginBottom: Spacing.sm,
   },
   backBtn: {
     width: 38,
@@ -45,17 +156,56 @@ const s = StyleSheet.create({
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
   },
   title: { fontFamily: Fonts.display, fontSize: 18, color: Colors.text1, letterSpacing: ls(18, LS.displaySubtle) },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.xl },
-  emptyTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 22,
-    color: Colors.text1,
-    letterSpacing: ls(22, LS.display),
+
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: Spacing.md, gap: Spacing.sm },
+
+  sectionLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 11,
+    color: Colors.text3,
+    letterSpacing: ls(11, LS.labelWide),
+    textTransform: 'uppercase',
+    paddingHorizontal: Spacing.xs,
     marginTop: Spacing.sm,
   },
-  emptyBody: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, textAlign: 'center', lineHeight: 20 },
+
+  group: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
+  },
+  rowIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  rowBody: { flex: 1, gap: 3 },
+  rowLabel: { fontFamily: Fonts.bodyMedium, fontSize: 15, color: Colors.text1 },
+  rowDesc: { fontFamily: Fonts.body, fontSize: 12, color: Colors.text3, lineHeight: 17 },
+  openSettings: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.accent, marginTop: 4 },
+
+  divider: { height: 1, backgroundColor: Colors.border, marginLeft: 52 + Spacing.md },
+
+  hint: {
+    fontFamily: Fonts.body,
+    fontSize: 12,
+    color: Colors.text3,
+    lineHeight: 18,
+    paddingHorizontal: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
 })
