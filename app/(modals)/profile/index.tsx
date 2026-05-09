@@ -203,8 +203,6 @@ const s = StyleSheet.create({
   avatar: { width: 80, height: 80, borderRadius: 40 },
   avatarFallback: {
     backgroundColor: Colors.surface2,
-    borderWidth: 1,
-    borderColor: Colors.border2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -298,8 +296,6 @@ const s = StyleSheet.create({
   emptyInline: {
     paddingVertical: Spacing.lg,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: 12,
     backgroundColor: Colors.surface,
   },

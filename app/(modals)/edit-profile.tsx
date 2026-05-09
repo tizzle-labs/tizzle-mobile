@@ -39,6 +39,11 @@ export default function EditProfileScreen() {
   const NAME_MAX = 30
   const nameExceeded = name.length > NAME_MAX
 
+  const USERNAME_MIN = 3
+  const USERNAME_MAX = 24
+  const usernameTouched = username !== (profile?.username ?? '')
+  const usernameTooShort = usernameTouched && username.trim().length > 0 && username.trim().length < USERNAME_MIN
+
   useEffect(() => {
     setName(profile?.name ?? '')
     setUsername(profile?.username ?? '')
@@ -52,7 +57,7 @@ export default function EditProfileScreen() {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
     const trimmed = stripped.trim()
-    if (!trimmed || trimmed === (profile?.username ?? '')) {
+    if (!trimmed || trimmed === (profile?.username ?? '') || trimmed.length < USERNAME_MIN) {
       setUsernameStatus('idle')
       return
     }
@@ -77,7 +82,7 @@ export default function EditProfileScreen() {
     [name, username, bio, avatarUri, profile],
   )
 
-  const canSave = isDirty && usernameStatus !== 'taken' && usernameStatus !== 'checking' && !nameExceeded
+  const canSave = isDirty && usernameStatus !== 'taken' && usernameStatus !== 'checking' && !nameExceeded && !usernameTooShort
 
   async function pickAvatar() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -176,7 +181,7 @@ export default function EditProfileScreen() {
                 autoCorrect={false}
                 value={username}
                 onChangeText={handleUsernameChange}
-                maxLength={24}
+                maxLength={USERNAME_MAX}
               />
               <View style={s.usernameStatus}>
                 {usernameStatus === 'checking' && <ActivityIndicator size="small" color={Colors.text3} />}
@@ -184,8 +189,9 @@ export default function EditProfileScreen() {
                 {usernameStatus === 'taken' && <Ionicons name="close-circle" size={18} color={Colors.error} />}
               </View>
             </View>
-            {usernameStatus === 'taken' && <Text style={s.usernameError}>Username already taken</Text>}
-            {usernameStatus === 'available' && <Text style={s.usernameOk}>Username is available</Text>}
+            {usernameTooShort && <Text style={s.usernameError}>Username must be at least {USERNAME_MIN} characters</Text>}
+            {!usernameTooShort && usernameStatus === 'taken' && <Text style={s.usernameError}>Username already taken</Text>}
+            {!usernameTooShort && usernameStatus === 'available' && <Text style={s.usernameOk}>Username is available</Text>}
           </View>
 
           <View style={s.fieldGroup}>
