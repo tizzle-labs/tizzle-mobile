@@ -151,15 +151,38 @@ export default function EventDetailModal() {
           </View>
 
           {/* Date + time */}
-          <View style={s.metaRow}>
-            <Ionicons name="calendar-outline" size={16} color={Colors.text3} />
-            <Text style={s.metaText}>{fmtDate(event.startTime)}</Text>
-            <Text style={s.metaDot}>·</Text>
-            <Ionicons name="time-outline" size={16} color={Colors.text3} />
-            <Text style={s.metaText}>
-              {fmtTime(event.startTime)} - {fmtTime(event.endTime)}
-            </Text>
-          </View>
+          {new Date(event.startTime).toDateString() === new Date(event.endTime).toDateString() ? (
+            <View style={s.metaRow}>
+              <Ionicons name="calendar-outline" size={16} color={Colors.text3} />
+              <Text style={s.metaText}>{fmtDate(event.startTime)}</Text>
+              <Text style={s.metaDot}>·</Text>
+              <Ionicons name="time-outline" size={16} color={Colors.text3} />
+              <Text style={s.metaText}>{fmtTime(event.startTime)} – {fmtTime(event.endTime)}</Text>
+            </View>
+          ) : (
+            <>
+              <View style={s.metaBlock}>
+                <Text style={s.metaLabel}>Start</Text>
+                <View style={s.metaRow}>
+                  <Ionicons name="calendar-outline" size={16} color={Colors.text3} />
+                  <Text style={s.metaText}>{fmtDate(event.startTime)}</Text>
+                  <Text style={s.metaDot}>·</Text>
+                  <Ionicons name="time-outline" size={16} color={Colors.text3} />
+                  <Text style={s.metaText}>{fmtTime(event.startTime)}</Text>
+                </View>
+              </View>
+              <View style={s.metaBlock}>
+                <Text style={s.metaLabel}>End</Text>
+                <View style={s.metaRow}>
+                  <Ionicons name="flag-outline" size={16} color={Colors.text3} />
+                  <Text style={s.metaText}>{fmtDate(event.endTime)}</Text>
+                  <Text style={s.metaDot}>·</Text>
+                  <Ionicons name="time-outline" size={16} color={Colors.text3} />
+                  <Text style={s.metaText}>{fmtTime(event.endTime)}</Text>
+                </View>
+              </View>
+            </>
+          )}
 
           {/* Location */}
           <View style={[s.metaRow, { alignItems: 'flex-start' }]}>
@@ -341,7 +364,9 @@ const s = StyleSheet.create({
   },
   orgInlineName: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text2, flex: 1 },
 
+  metaBlock: { gap: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  metaLabel: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.text3, letterSpacing: ls(10, LS.labelWide) },
   metaText: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text1 },
   metaSubText: { fontFamily: Fonts.body, fontSize: 12, color: Colors.text2, marginTop: 2 },
   metaDot: { color: Colors.text3, fontSize: 13 },

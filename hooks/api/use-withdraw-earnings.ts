@@ -3,13 +3,13 @@ import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import type { Event } from '@/lib/api/events'
 import { deriveEscrowVaultPda } from '@/lib/solana/program'
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
+import { ComputeBudgetProgram, PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { eventKeys } from './use-events'
 
 export function useWithdrawEarnings(event: Event | undefined) {
-  const { connection, accounts, signAndSendTransactions } = useMobileWallet()
+  const { connection, accounts, signTransactions } = useMobileWallet()
   const program = useTizzleProgram()
   const queryClient = useQueryClient()
 
@@ -45,12 +45,12 @@ export function useWithdrawEarnings(event: Event | undefined) {
       const message = new TransactionMessage({
         payerKey: organizerPubkey,
         recentBlockhash: latestBlockhash.blockhash,
-        instructions: [ix],
+        instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }), ix],
       }).compileToV0Message()
 
       const tx = new VersionedTransaction(message)
-      const result = await signAndSendTransactions(tx, 0)
-      const signature = Array.isArray(result) ? result[0] : result
+      const signedTx = await signTransactions(tx)
+      const signature = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: true })
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       return { signature }

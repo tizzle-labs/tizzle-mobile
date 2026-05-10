@@ -1,11 +1,11 @@
 import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { checkInRegistration } from '@/lib/api/registrations'
-import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
+import { ComputeBudgetProgram, PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
 import { useMutation } from '@tanstack/react-query'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 
 export function useCheckIn() {
-  const { connection, accounts, signAndSendTransactions } = useMobileWallet()
+  const { connection, accounts, signTransactions } = useMobileWallet()
   const program = useTizzleProgram()
 
   return useMutation({
@@ -29,13 +29,13 @@ export function useCheckIn() {
       const message = new TransactionMessage({
         payerKey: gatekeeperPubkey,
         recentBlockhash: latestBlockhash.blockhash,
-        instructions: [ix],
+        instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }), ix],
       }).compileToV0Message()
 
       const tx = new VersionedTransaction(message)
 
-      const result = await signAndSendTransactions(tx, 0)
-      const signature = Array.isArray(result) ? result[0] : result
+      const signedTx = await signTransactions(tx)
+      const signature = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: true })
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       return checkInRegistration(registrationPda)

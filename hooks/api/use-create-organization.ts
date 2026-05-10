@@ -2,13 +2,13 @@ import { useTizzleProgram } from '@/hooks/solana/use-tizzle-program'
 import { createOrganization, updateOrganization } from '@/lib/api/organizations'
 import { uploadOrganizationAvatar } from '@/lib/api/storage'
 import { deriveOrganizationPda } from '@/lib/solana/program'
-import { SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
+import { ComputeBudgetProgram, SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { organizationKeys } from './use-my-organizations'
 
 export function useCreateOrganization() {
-  const { connection, accounts, signAndSendTransactions } = useMobileWallet()
+  const { connection, accounts, signTransactions } = useMobileWallet()
   const program = useTizzleProgram()
   const queryClient = useQueryClient()
 
@@ -54,15 +54,12 @@ export function useCreateOrganization() {
       const message = new TransactionMessage({
         payerKey: ownerPubkey,
         recentBlockhash: latestBlockhash.blockhash,
-        instructions: [ix],
+        instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }), ix],
       }).compileToV0Message()
 
       const tx = new VersionedTransaction(message)
-      // Pass minContextSlot=0 — wallet app uses its own RPC which may lag behind ours,
-      // causing "reverted during simulation" if we pass our current slot
-      const result = await signAndSendTransactions(tx, 0)
-      const signature = Array.isArray(result) ? result[0] : result
-      if (!signature) throw new Error('No signature returned from wallet')
+      const signedTx = await signTransactions(tx)
+      const signature = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: true })
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       // Create the backend record first — this establishes the organizationPda in the DB

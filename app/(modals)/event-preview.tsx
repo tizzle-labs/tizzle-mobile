@@ -51,6 +51,7 @@ export default function EventPreview() {
   const categoryEntry = EVENT_CATEGORIES.find((c) => c.label === data.category)
   const categoryDisplay = categoryEntry ? `${categoryEntry.icon} ${categoryEntry.label}` : '🌐 Others'
   const capacityDisplay = data.capacity >= 10000 ? 'Unlimited' : `${data.capacity}`
+  const sameDay = data.startTime.toDateString() === data.endTime.toDateString()
 
   return (
     <GestureHandlerRootView style={s.container}>
@@ -104,15 +105,38 @@ export default function EventPreview() {
           </View>
 
           {/* Date + time */}
-          <View style={s.metaRow}>
-            <Ionicons name="calendar-outline" size={16} color={Colors.text3} />
-            <Text style={s.metaText}>{fmtDate(data.startTime)}</Text>
-            <Text style={s.metaDot}>·</Text>
-            <Ionicons name="time-outline" size={16} color={Colors.text3} />
-            <Text style={s.metaText}>
-              {fmtTime(data.startTime)} - {fmtTime(data.endTime)}
-            </Text>
-          </View>
+          {sameDay ? (
+            <View style={s.metaRow}>
+              <Ionicons name="calendar-outline" size={16} color={Colors.text3} />
+              <Text style={s.metaText}>{fmtDate(data.startTime)}</Text>
+              <Text style={s.metaDot}>·</Text>
+              <Ionicons name="time-outline" size={16} color={Colors.text3} />
+              <Text style={s.metaText}>{fmtTime(data.startTime)} – {fmtTime(data.endTime)}</Text>
+            </View>
+          ) : (
+            <>
+              <View style={s.metaBlock}>
+                <Text style={s.metaLabel}>Start</Text>
+                <View style={s.metaRow}>
+                  <Ionicons name="calendar-outline" size={16} color={Colors.text3} />
+                  <Text style={s.metaText}>{fmtDate(data.startTime)}</Text>
+                  <Text style={s.metaDot}>·</Text>
+                  <Ionicons name="time-outline" size={16} color={Colors.text3} />
+                  <Text style={s.metaText}>{fmtTime(data.startTime)}</Text>
+                </View>
+              </View>
+              <View style={s.metaBlock}>
+                <Text style={s.metaLabel}>End</Text>
+                <View style={s.metaRow}>
+                  <Ionicons name="flag-outline" size={16} color={Colors.text3} />
+                  <Text style={s.metaText}>{fmtDate(data.endTime)}</Text>
+                  <Text style={s.metaDot}>·</Text>
+                  <Ionicons name="time-outline" size={16} color={Colors.text3} />
+                  <Text style={s.metaText}>{fmtTime(data.endTime)}</Text>
+                </View>
+              </View>
+            </>
+          )}
 
           {/* Location */}
           <View style={[s.metaRow, { alignItems: 'flex-start' }]}>
@@ -259,7 +283,9 @@ const s = StyleSheet.create({
   },
   orgInlineName: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text2, flex: 1 },
 
+  metaBlock: { gap: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  metaLabel: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.text3, letterSpacing: ls(10, LS.labelWide) },
   metaText: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text1 },
   metaSubText: { fontFamily: Fonts.body, fontSize: 12, color: Colors.text2, marginTop: 2 },
   metaDot: { color: Colors.text3, fontSize: 13 },

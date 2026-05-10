@@ -6,6 +6,7 @@ import { CONFIG_PDA, deriveEventPda } from '@/lib/solana/program'
 import { BN } from '@coral-xyz/anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import {
+  ComputeBudgetProgram,
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
@@ -46,7 +47,7 @@ export interface CreateEventInput {
 }
 
 export function useCreateEvent() {
-  const { connection, accounts, signAndSendTransactions } = useMobileWallet()
+  const { connection, accounts, signTransactions } = useMobileWallet()
   const program = useTizzleProgram()
   const queryClient = useQueryClient()
 
@@ -109,13 +110,12 @@ export function useCreateEvent() {
       const message = new TransactionMessage({
         payerKey: organizerPubkey,
         recentBlockhash: latestBlockhash.blockhash,
-        instructions: [ix],
+        instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }), ix],
       }).compileToV0Message()
 
       const tx = new VersionedTransaction(message)
-      const result = await signAndSendTransactions(tx, 0)
-      const signature = Array.isArray(result) ? result[0] : result
-      if (!signature) throw new Error('No signature returned from wallet')
+      const signedTx = await signTransactions(tx)
+      const signature = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: true })
       await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed')
 
       // Create backend record first
