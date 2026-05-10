@@ -10,9 +10,10 @@ import { router, Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useCallback, useEffect, useRef } from 'react'
-import { Platform } from 'react-native'
+import { Platform, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -31,7 +32,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS !== 'android') return
-    NavigationBar.setBackgroundColorAsync(Colors.surface)
+    NavigationBar.setBackgroundColorAsync(Colors.surface2)
     NavigationBar.setButtonStyleAsync('light')
   }, [])
 
@@ -66,6 +67,7 @@ export default function RootLayout() {
 function RootNavigator() {
   const { isAuthenticated, isReady } = useAuth()
   const prevIsAuthenticated = useRef<boolean | null>(null)
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     if (!isReady) return
@@ -79,17 +81,34 @@ function RootNavigator() {
   if (!isReady) return null
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}>
-      <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="+not-found" />
-      </Stack.Protected>
-      <Stack.Protected guard={!isAuthenticated}>
-        <Stack.Screen name="sign-in" />
-      </Stack.Protected>
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}>
+        <Stack.Protected guard={isAuthenticated}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="+not-found" />
+        </Stack.Protected>
+        <Stack.Protected guard={!isAuthenticated}>
+          <Stack.Screen name="sign-in" />
+        </Stack.Protected>
+      </Stack>
+      {Platform.OS === 'android' && insets.bottom > 0 && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: insets.bottom,
+            backgroundColor: Colors.surface2,
+            elevation: 999,
+            zIndex: 999,
+          }}
+        />
+      )}
+    </>
   )
 }

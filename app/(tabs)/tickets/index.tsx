@@ -43,8 +43,6 @@ const STATUS_META: Record<TicketStatus, { color: string; label: string }> = {
   'no-show': { color: Colors.warning, label: 'NO-SHOW' },
   cancelled: { color: Colors.text3, label: 'CANCELLED' },
 }
-const TICKET_BG = '#f0efeb'
-const TICKET_TEXT = '#1A1200'
 
 function TicketCard({ registration: reg, event }: { registration: Registration; event?: Event }) {
   const status = ticketStatus(reg, event)
@@ -62,26 +60,33 @@ function TicketCard({ registration: reg, event }: { registration: Registration; 
       <View style={s.ticketTop}>
         <Image source={{ uri: event?.imageUrl }} style={s.ticketImg} contentFit="cover" />
         <View style={s.ticketInfo}>
-          <Text style={s.orgText} numberOfLines={1}>
-            {event?.location ?? 'Location TBA'}
-          </Text>
           <Text style={s.ticketTitle} numberOfLines={2}>
             {event?.title ?? 'Untitled Event'}
           </Text>
-          <View style={s.dateRow}>
-            <Ionicons name="calendar-outline" size={11} color={TICKET_TEXT} />
-            <Text style={s.dateText}>
+          <View style={s.metaRow}>
+            <Ionicons name="calendar-outline" size={11} color={Colors.text3} />
+            <Text style={s.metaText}>
               {event ? `${fmtDate(event.startTime)}, ${fmtTime(event.startTime)}` : fmtDate(reg.registeredAt)}
             </Text>
           </View>
+          <View style={s.metaRow}>
+            <Ionicons name="location-outline" size={11} color={Colors.text3} />
+            <Text style={s.metaText} numberOfLines={1}>
+              {event?.location ?? 'Location TBA'}
+            </Text>
+          </View>
         </View>
-        <Text style={s.statusLabel}>{m.label}</Text>
+        <Text style={[s.statusLabel, { color: m.color }]}>{m.label}</Text>
       </View>
 
       {/* Tear line */}
       <View style={s.tearRow}>
         <View style={s.notchL} />
-        <View style={s.tearDash} />
+        <View style={s.tearDash}>
+          {Array.from({ length: 40 }).map((_, i) => (
+            <View key={i} style={s.dash} />
+          ))}
+        </View>
         <View style={s.notchR} />
       </View>
 
@@ -91,7 +96,7 @@ function TicketCard({ registration: reg, event }: { registration: Registration; 
           <Text style={s.refLabel}>REGISTERED</Text>
           <Text style={s.refVal}>{fmtDate(reg.registeredAt)}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={16} color={TICKET_TEXT} />
+        <Ionicons name="chevron-forward" size={16} color={Colors.text3} />
       </View>
     </TouchableOpacity>
   )
@@ -201,36 +206,27 @@ const s = StyleSheet.create({
   },
   list: { gap: Spacing.md },
   ticket: {
-    backgroundColor: TICKET_BG,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   stamp: { position: 'absolute', top: 8, right: 8, width: 100, height: 100, opacity: 0.9, zIndex: 10 },
   ticketTop: { flexDirection: 'row', padding: Spacing.md, gap: Spacing.md, alignItems: 'flex-start' },
-  ticketImg: { width: 68, height: 68, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.15)', flexShrink: 0 },
-  ticketInfo: { flex: 1, gap: 3, minWidth: 0 },
-  orgText: {
-    fontFamily: Fonts.mono,
-    fontSize: 10,
-    color: TICKET_TEXT,
-    letterSpacing: ls(10, LS.labelNarrow),
-    opacity: 0.6,
-  },
+  ticketImg: { width: 68, height: 68, borderRadius: 10, backgroundColor: Colors.surface, flexShrink: 0 },
+  ticketInfo: { flex: 1, gap: 4, minWidth: 0 },
   ticketTitle: {
     fontFamily: Fonts.display,
     fontSize: 15,
-    color: TICKET_TEXT,
+    color: Colors.text1,
     letterSpacing: ls(15, LS.displaySubtle),
     lineHeight: 19,
   },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  dateText: { fontFamily: Fonts.mono, fontSize: 10, color: TICKET_TEXT, opacity: 0.6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaText: { fontFamily: Fonts.bodyMedium, fontSize: 11, color: Colors.text1, flex: 1 },
   statusLabel: {
     fontFamily: Fonts.mono,
     fontSize: 9,
     letterSpacing: ls(9, LS.label),
-    color: TICKET_TEXT,
-    opacity: 0.7,
     flexShrink: 0,
     marginTop: 2,
   },
@@ -256,12 +252,8 @@ const s = StyleSheet.create({
     marginRight: -7,
     flexShrink: 0,
   },
-  tearDash: {
-    flex: 1,
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    height: 0,
-  },
+  tearDash: { flex: 1, flexDirection: 'row', gap: 5, overflow: 'hidden', alignItems: 'center' },
+  dash: { width: 4, height: 1.5, backgroundColor: Colors.border2, flexShrink: 0 },
   stub: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -273,12 +265,11 @@ const s = StyleSheet.create({
   refLabel: {
     fontFamily: Fonts.mono,
     fontSize: 8,
-    color: TICKET_TEXT,
-    opacity: 0.5,
+    color: Colors.text3,
     letterSpacing: ls(8, LS.labelWide),
     textTransform: 'uppercase',
   },
-  refVal: { fontFamily: Fonts.mono, fontSize: 11, color: TICKET_TEXT, opacity: 0.8 },
+  refVal: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text1 },
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
