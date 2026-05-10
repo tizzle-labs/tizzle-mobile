@@ -45,13 +45,13 @@ export function EventRow({ event, onPress }: EventRowProps) {
       )}
       <View style={styles.info}>
         <View style={styles.top}>
-          {event.organizationAvatarUrl ? (
-            <Image source={{ uri: event.organizationAvatarUrl }} style={styles.orgAvatar} contentFit="cover" />
-          ) : (
-            <View style={styles.orgAvatarFallback}>
-              <Ionicons name="business-outline" size={10} color={Colors.text3} />
-            </View>
-          )}
+          <View style={styles.orgAvatarWrap}>
+            {event.organizationAvatarUrl ? (
+              <Image source={{ uri: event.organizationAvatarUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+            ) : (
+              <Ionicons name="business-outline" size={11} color={Colors.text2} />
+            )}
+          </View>
           <Text style={styles.orgName} numberOfLines={1}>
             {event.organizationName ?? shortAddress(event.organizerAddress)}
           </Text>
@@ -61,11 +61,17 @@ export function EventRow({ event, onPress }: EventRowProps) {
         </Text>
         <View style={styles.bottom}>
           <View style={styles.dateRow}>
-            <Ionicons name="time-outline" size={11} color={Colors.text3} />
+            <Ionicons name="time-outline" size={11} color={Colors.text2} />
             <Text style={styles.dateText}>{formatEventDate(event.startTime)}</Text>
           </View>
           <Text style={[styles.statusText, { color: statusColor }]}>{status.toUpperCase()}</Text>
         </View>
+        {!!event.location && (
+          <View style={styles.locationRow}>
+            <Ionicons name="location-outline" size={11} color={Colors.text2} />
+            <Text style={styles.locationText} numberOfLines={1}>{event.location}</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   )
@@ -92,25 +98,18 @@ const styles = StyleSheet.create({
     letterSpacing: ls(15, LS.displaySubtle),
     lineHeight: 20,
   },
-  orgAvatar: {
+  orgAvatarWrap: {
     width: 18,
     height: 18,
     borderRadius: 9,
     backgroundColor: Colors.surface2,
-    borderWidth: 1,
-    borderColor: Colors.border2,
-  },
-  orgAvatarFallback: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.surface2,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
   },
   orgName: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1, flex: 1 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  locationText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text1, flex: 1 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateText: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1 },
   statusText: { fontFamily: Fonts.mono, fontSize: 10, letterSpacing: ls(10, LS.labelNarrow) },
