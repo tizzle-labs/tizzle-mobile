@@ -139,7 +139,7 @@ const s = StyleSheet.create({
   scrollContent: { paddingHorizontal: Spacing.md, gap: Spacing.md },
 
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
     padding: Spacing.md,
     gap: Spacing.xs,
@@ -149,7 +149,7 @@ const s = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: Colors.surface2,
+    backgroundColor: Colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -158,14 +158,14 @@ const s = StyleSheet.create({
   addr: { flex: 1, fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1 },
 
   solCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
     padding: Spacing.md,
   },
   solTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.sm },
   solLabel: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text3, letterSpacing: ls(11, LS.labelWide), textTransform: 'uppercase' },
   solBalanceRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: 4 },
-  solAmount: { fontFamily: Fonts.display, fontSize: 40, color: Colors.accent, letterSpacing: ls(40, LS.displayTight), lineHeight: 46 },
+  solAmount: { fontFamily: Fonts.display, fontSize: 40, color: Colors.chain, letterSpacing: ls(40, LS.displayTight), lineHeight: 46 },
 
   sectionLabel: {
     fontFamily: Fonts.mono,
@@ -178,7 +178,7 @@ const s = StyleSheet.create({
   },
 
   tokenList: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
     overflow: 'hidden',
   },

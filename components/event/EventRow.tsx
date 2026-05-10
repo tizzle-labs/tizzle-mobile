@@ -56,7 +56,7 @@ export function EventRow({ event, onPress }: EventRowProps) {
             {event.organizationName ?? shortAddress(event.organizerAddress)}
           </Text>
         </View>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
           {event.title}
         </Text>
         <View style={styles.bottom}>

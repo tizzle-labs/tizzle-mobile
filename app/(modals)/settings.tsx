@@ -228,7 +228,7 @@ const s = StyleSheet.create({
   },
 
   group: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
     overflow: 'hidden',
   },

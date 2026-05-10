@@ -271,7 +271,7 @@ const s = StyleSheet.create({
   },
   inputWrap: { position: 'relative' },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
     paddingVertical: 13,

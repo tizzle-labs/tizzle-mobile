@@ -35,8 +35,6 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   backBtn: {
     width: 38,
@@ -45,8 +43,6 @@ const s = StyleSheet.create({
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
   },
   title: { fontFamily: Fonts.display, fontSize: 18, color: Colors.text1, letterSpacing: ls(18, LS.displaySubtle) },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.xl },
