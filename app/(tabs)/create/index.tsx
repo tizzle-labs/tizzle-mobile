@@ -352,7 +352,7 @@ export default function Create() {
       locationDetail: locationDetail.trim() || undefined,
       latitude: locationLat || undefined,
       longitude: locationLng || undefined,
-      category: category ?? 'others',
+      category: category && category !== 'Others' ? category : undefined,
       capacity,
       stakeAmount: parsedStake,
       stakeTokenMint,

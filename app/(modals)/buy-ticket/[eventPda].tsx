@@ -9,7 +9,9 @@ import { useRegisterEvent } from '@/hooks/api/use-register-event'
 import { useWalletBalance } from '@/hooks/solana/use-wallet-balance'
 import { showErrorFeedback } from '@/lib/app-feedback'
 import { Ionicons } from '@expo/vector-icons'
+import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
+import { useState } from 'react'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -26,6 +28,7 @@ export default function BuyTicketModal() {
   const registerMutation = useRegisterEvent()
   const { data: balance } = useWalletBalance(event?.stakeTokenMint ?? SOL_MINT)
   const insets = useSafeAreaInsets()
+  const [imageVisible, setImageVisible] = useState(false)
 
   if (isLoading || !event) {
     return (
@@ -65,47 +68,86 @@ export default function BuyTicketModal() {
         contentContainerStyle={[s.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Event info */}
+        {/* Event card */}
         <View style={s.eventCard}>
-          <Text style={s.eventTitle} numberOfLines={2}>
-            {event.title}
-          </Text>
-          <View style={s.eventMeta}>
-            <View style={s.metaRow}>
-              <Ionicons name="calendar-outline" size={13} color={Colors.text3} />
-              <Text style={s.metaText}>{fmtDate(event.startTime)}</Text>
-            </View>
-            <View style={s.metaRow}>
-              <Ionicons name="time-outline" size={13} color={Colors.text3} />
-              <Text style={s.metaText}>
-                {fmtTime(event.startTime)} – {fmtTime(event.endTime)}
-              </Text>
-            </View>
-            {!!event.location && (
-              <View style={s.metaRow}>
-                <Ionicons name="location-outline" size={13} color={Colors.text3} />
-                <Text style={s.metaText} numberOfLines={1}>
-                  {event.location}
-                </Text>
+          {!!event.imageUrl && (
+            <Image
+              source={{ uri: event.imageUrl }}
+              style={[s.eventImage, !imageVisible && s.imageHidden]}
+              contentFit="cover"
+              onLoad={() => setImageVisible(true)}
+              onError={() => setImageVisible(false)}
+            />
+          )}
+          <View style={s.eventBody}>
+            {/* Org badge */}
+            {(event.organizationAvatarUrl || event.organizationName) && (
+              <View style={s.orgBadge}>
+                {!!event.organizationAvatarUrl && (
+                  <Image source={{ uri: event.organizationAvatarUrl }} style={s.orgAvatar} contentFit="cover" />
+                )}
+                {!!event.organizationName && (
+                  <Text style={s.orgName} numberOfLines={1}>
+                    {event.organizationName}
+                  </Text>
+                )}
               </View>
             )}
+
+            <Text style={s.eventTitle} numberOfLines={3}>
+              {event.title}
+            </Text>
+
+            <View style={s.metaGrid}>
+              <View style={s.metaRow}>
+                <View style={s.metaIcon}>
+                  <Ionicons name="calendar-outline" size={13} color={Colors.text3} />
+                </View>
+                <Text style={s.metaText}>{fmtDate(event.startTime)}</Text>
+              </View>
+              <View style={s.metaRow}>
+                <View style={s.metaIcon}>
+                  <Ionicons name="time-outline" size={13} color={Colors.text3} />
+                </View>
+                <Text style={s.metaText}>
+                  {fmtTime(event.startTime)} – {fmtTime(event.endTime)}
+                </Text>
+              </View>
+              {!!event.location && (
+                <View style={s.metaRow}>
+                  <View style={s.metaIcon}>
+                    <Ionicons name="location-outline" size={13} color={Colors.text3} />
+                  </View>
+                  <Text style={s.metaText} numberOfLines={1}>
+                    {event.location}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
         {/* Stake required */}
-        <View style={s.stakeCard}>
-          <Text style={s.sectionLabel}>REQUIRED STAKE</Text>
-          <TokenAmount
-            amount={event.stakeAmount}
-            mint={event.stakeTokenMint}
-            symbol={event.stakeTokenSymbol}
-            decimals={event.stakeTokenDecimals}
-            size="lg"
-          />
+        <View style={s.card}>
+          <Text style={s.cardLabel}>REQUIRED STAKE</Text>
+          <View style={s.stakeAmount}>
+            <TokenAmount
+              amount={event.stakeAmount}
+              mint={event.stakeTokenMint}
+              symbol={event.stakeTokenSymbol}
+              decimals={event.stakeTokenDecimals}
+              size="lg"
+            />
+          </View>
           <View style={s.divider} />
           <View style={s.balanceRow}>
             <Text style={s.balanceLabel}>YOUR BALANCE</Text>
-            <WalletBalance mint={event.stakeTokenMint} symbol={event.stakeTokenSymbol} />
+            <View style={s.balanceRight}>
+              {!hasEnoughBalance && (
+                <Ionicons name="warning-outline" size={12} color={Colors.error} style={{ marginRight: 4 }} />
+              )}
+              <WalletBalance mint={event.stakeTokenMint} symbol={event.stakeTokenSymbol} />
+            </View>
           </View>
           {!isSOL && (
             <Text style={s.mintAddress} numberOfLines={1} ellipsizeMode="middle">
@@ -115,40 +157,40 @@ export default function BuyTicketModal() {
         </View>
 
         {/* Summary */}
-        <View style={s.summaryCard}>
-          <Text style={s.sectionLabel}>SUMMARY</Text>
+        <View style={s.card}>
+          <Text style={s.cardLabel}>TRANSACTION SUMMARY</Text>
           <View style={s.summaryRow}>
             <Text style={s.summaryKey}>Stake deposit</Text>
             <Text style={s.summaryVal}>
               {formatTokenAmount(event.stakeAmount, event.stakeTokenDecimals)} {event.stakeTokenSymbol}
             </Text>
           </View>
-          <View style={s.summaryDivider} />
+          <View style={s.divider} />
           <View style={s.summaryRow}>
             <Text style={s.summaryKey}>Network fee</Text>
             <Text style={s.summaryVal}>~0.000005 SOL</Text>
           </View>
-          <View style={s.summaryDivider} />
+          <View style={s.divider} />
           <View style={s.summaryRow}>
-            <Text style={s.summaryKey}>Capacity</Text>
+            <Text style={s.summaryKey}>Registered</Text>
             <Text style={s.summaryVal}>
               {event.totalRegistered} / {event.capacity}
             </Text>
           </View>
         </View>
 
-        {/* Stake explanation */}
+        {/* Stake notice */}
         <View style={s.noticeRow}>
-          <Ionicons name="information-circle-outline" size={15} color={Colors.text3} />
+          <Ionicons name="shield-checkmark-outline" size={15} color={Colors.text3} />
           <Text style={s.noticeText}>
             Your stake is locked on-chain and returned after you check in. No-shows forfeit their stake.
           </Text>
         </View>
 
         {!hasEnoughBalance && (
-          <View style={s.errorRow}>
+          <View style={s.errorBanner}>
             <Ionicons name="warning-outline" size={14} color={Colors.error} />
-            <Text style={s.errorText}>Insufficient {event.stakeTokenSymbol} balance</Text>
+            <Text style={s.errorText}>Insufficient {event.stakeTokenSymbol} balance to register</Text>
           </View>
         )}
       </ScrollView>
@@ -173,8 +215,6 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   backBtn: {
     width: 38,
@@ -183,8 +223,6 @@ const s = StyleSheet.create({
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
   },
   headerTitle: {
     fontFamily: Fonts.display,
@@ -198,41 +236,67 @@ const s = StyleSheet.create({
 
   // Event card
   eventCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  eventImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+  },
+  imageHidden: { height: 0, aspectRatio: undefined },
+  eventBody: {
     padding: Spacing.md,
     gap: Spacing.sm,
+  },
+  orgBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  orgAvatar: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.surface,
+  },
+  orgName: {
+    fontFamily: Fonts.body,
+    fontSize: 12,
+    color: Colors.text2,
   },
   eventTitle: {
     fontFamily: Fonts.display,
-    fontSize: 22,
+    fontSize: 24,
     color: Colors.text1,
-    letterSpacing: ls(22, LS.displaySubtle),
-    lineHeight: 28,
+    letterSpacing: ls(24, LS.displaySubtle),
+    lineHeight: 30,
   },
-  eventMeta: { gap: 6 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text2, flex: 1 },
+  metaGrid: { gap: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  metaIcon: { width: 16, alignItems: 'center' },
+  metaText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text1, flex: 1 },
 
-  // Stake card
-  stakeCard: {
-    backgroundColor: Colors.surface,
+  // Generic card
+  card: {
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
     padding: Spacing.md,
     gap: Spacing.sm,
   },
-  sectionLabel: {
+  cardLabel: {
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.text3,
     letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
+  stakeAmount: {
+    paddingVertical: Spacing.xs,
+  },
   divider: { height: 1, backgroundColor: Colors.border },
+
+  // Balance row
   balanceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   balanceLabel: {
     fontFamily: Fonts.mono,
@@ -241,23 +305,11 @@ const s = StyleSheet.create({
     letterSpacing: ls(9, LS.labelWide),
     textTransform: 'uppercase',
   },
-  mintAddress: {
-    fontFamily: Fonts.mono,
-    fontSize: 10,
-    color: Colors.text3,
-  },
+  balanceRight: { flexDirection: 'row', alignItems: 'center' },
+  mintAddress: { fontFamily: Fonts.mono, fontSize: 10, color: Colors.text3 },
 
-  // Summary card
-  summaryCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  summaryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  summaryDivider: { height: 1, backgroundColor: Colors.border },
+  // Summary rows
+  summaryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 2 },
   summaryKey: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2 },
   summaryVal: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text1 },
 
@@ -270,19 +322,22 @@ const s = StyleSheet.create({
   },
   noticeText: { flex: 1, fontFamily: Fonts.body, fontSize: 12, color: Colors.text3, lineHeight: 18 },
 
-  // Error
-  errorRow: {
+  // Error banner
+  errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    backgroundColor: 'rgba(255,59,48,0.1)',
+    borderRadius: 10,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
   },
   errorText: {
     fontFamily: Fonts.mono,
     fontSize: 11,
     color: Colors.error,
     letterSpacing: ls(11, LS.labelNarrow),
-    textTransform: 'uppercase',
   },
 
   // CTA

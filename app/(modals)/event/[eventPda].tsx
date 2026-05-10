@@ -93,10 +93,13 @@ export default function EventDetailModal() {
   }
 
   const status = deriveEventStatus(event.startTime, event.endTime, event.unlockTime)
-  const isGatekeeper = !!walletAddress && walletAddress === event.gatekeeperAddress
+  const isGatekeeper =
+    !!walletAddress &&
+    walletAddress === event.gatekeeperAddress &&
+    event.gatekeeperAddress !== event.organizerAddress
   const stakeDisplay = (Number(event.stakeAmount) / Math.pow(10, event.stakeTokenDecimals)).toString()
   const categoryEntry = EVENT_CATEGORIES.find((c) => c.label === event.category)
-  const categoryDisplay = categoryEntry ? `${categoryEntry.icon} ${categoryEntry.label}` : event.category || '—'
+  const categoryDisplay = categoryEntry ? `${categoryEntry.icon} ${categoryEntry.label}` : event.category || '🌐 Others'
 
   return (
     <GestureHandlerRootView style={s.container}>
