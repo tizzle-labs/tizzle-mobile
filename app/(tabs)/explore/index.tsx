@@ -58,7 +58,7 @@ export default function Explore() {
           )}
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Explore</Text>
-        <TouchableOpacity hitSlop={8} style={styles.searchBtn}>
+        <TouchableOpacity hitSlop={8} style={styles.searchBtn} onPress={() => router.push('/(modals)/search')}>
           <Ionicons name="search-outline" size={22} color={Colors.text1} />
         </TouchableOpacity>
       </View>
