@@ -6,10 +6,10 @@ import { useTrackLocations } from '@/hooks/use-track-locations'
 import { PortalHost } from '@rn-primitives/portal'
 import { useFonts } from 'expo-font'
 import * as NavigationBar from 'expo-navigation-bar'
-import { Stack } from 'expo-router'
+import { router, Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import 'react-native-reanimated'
@@ -65,6 +65,16 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { isAuthenticated, isReady } = useAuth()
+  const prevIsAuthenticated = useRef<boolean | null>(null)
+
+  useEffect(() => {
+    if (!isReady) return
+    // Navigate to index (profile check) only when transitioning from signed-out → signed-in
+    if (prevIsAuthenticated.current === false && isAuthenticated) {
+      router.replace('/')
+    }
+    prevIsAuthenticated.current = isAuthenticated
+  }, [isAuthenticated, isReady])
 
   if (!isReady) return null
 

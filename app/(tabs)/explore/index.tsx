@@ -29,14 +29,15 @@ const COLUMN_WIDTH = 320
 export default function Explore() {
   const { data: events, isLoading, refetch, isRefetching } = useEvents()
   const { data: forYouEvents = [], refetch: refetchForYou, isRefetching: isRefetchingForYou } = useForYouEvents()
-  const { data: profile } = useMyProfile()
+  const { data: profile, refetch: refetchProfile } = useMyProfile()
   const insets = useSafeAreaInsets()
 
   useFocusEffect(
     useCallback(() => {
       refetch()
       refetchForYou()
-    }, [refetch, refetchForYou]),
+      refetchProfile()
+    }, [refetch, refetchForYou, refetchProfile]),
   )
 
   const forYouChunks = chunkArray(forYouEvents.slice(0, 6), 3)

@@ -1,13 +1,15 @@
 import { generateNonce, verifySignature } from '@/lib/api/auth'
 import { setLogoutCallback } from '@/lib/api/client'
+import { getMyProfile } from '@/lib/api/users'
 import { Storage } from '@/lib/storage'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   MobileWalletProviderContext,
   useAuthorization,
   useMobileWallet,
 } from '@wallet-ui/react-native-web3js'
 import bs58 from 'bs58'
-import { createContext, type PropsWithChildren, use, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, type PropsWithChildren, use, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 export interface AuthState {
   isReady: boolean
@@ -33,15 +35,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const { chain, identity, store } = useContext(MobileWalletProviderContext as any)
   const { authorizeSession } = useAuthorization({ chain, identity, store })
 
+  const queryClient = useQueryClient()
   const walletAddress = accounts?.[0]?.address?.toString() ?? null
   const [hasJwt, setHasJwt] = useState(false)
   const [isReady, setIsReady] = useState(false)
+  const prevWalletRef = useRef<string | null>(null)
 
   useEffect(() => {
     Storage.getAccessToken()
       .then((token) => setHasJwt(!!token))
       .finally(() => setIsReady(true))
   }, [])
+
+  useEffect(() => {
+    if (prevWalletRef.current !== null && walletAddress !== prevWalletRef.current) {
+      queryClient.clear()
+    }
+    prevWalletRef.current = walletAddress
+  }, [walletAddress, queryClient])
 
   const signIn = useCallback(async () => {
     try {
@@ -61,8 +72,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
         })
         const signature = bs58.encode(signedPayloads[0])
 
-        // 4. Verify with backend → stores JWT
+        // 4. Verify with backend → JWT is now in Storage (in-memory + SecureStore)
         await verifySignature({ walletAddress: address, signature, message })
+        // 5. Clear stale cache, then pre-warm with the new user's profile so the
+        //    UI never briefly renders the previous wallet's data.
+        queryClient.clear()
+        try {
+          const profile = await getMyProfile()
+          queryClient.setQueryData(['users', 'me'], profile)
+        } catch {
+          // Non-fatal: profile will be fetched on demand
+        }
         setHasJwt(true)
       })
     } catch (error: any) {
@@ -81,18 +101,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
       throw error
     }
-  }, [connectAnd, authorizeSession])
+  }, [connectAnd, authorizeSession, queryClient])
 
   const signOut = useCallback(async () => {
     await disconnect()
     await Storage.clearTokens()
+    queryClient.clear()
     setHasJwt(false)
-  }, [disconnect])
+  }, [disconnect, queryClient])
 
   useEffect(() => {
-    setLogoutCallback(() => setHasJwt(false))
+    setLogoutCallback(() => {
+      queryClient.clear()
+      setHasJwt(false)
+    })
     return () => setLogoutCallback(null)
-  }, [])
+  }, [queryClient])
 
   const value: AuthState = useMemo(
     () => ({

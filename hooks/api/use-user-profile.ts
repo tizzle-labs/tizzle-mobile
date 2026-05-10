@@ -12,5 +12,6 @@ export function useMyProfile() {
     queryKey: userKeys.me,
     queryFn: getMyProfile,
     enabled: isAuthenticated,
+    staleTime: 0,
   })
 }

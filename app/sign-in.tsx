@@ -3,22 +3,15 @@ import { Button } from '@/components/ui/Button'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { getMyProfile } from '@/lib/api/users'
 import { showErrorFeedback } from '@/lib/app-feedback'
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
 import { Image } from 'expo-image'
-import { router } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const PHRASES = [
-  'discover events.',
-  'connect with people.',
-  'get your tickets.',
-  'experience more.',
-]
+const PHRASES = ['discover events.', 'connect with people.', 'get your tickets.', 'experience more.']
 
 function TypewriterText() {
   const [text, setText] = useState('')
@@ -75,12 +68,6 @@ export default function SignIn() {
     setLoading(true)
     try {
       await signIn()
-      try {
-        const profile = await getMyProfile()
-        router.replace(profile.username?.trim() ? '/(tabs)/explore' : '/onboarding')
-      } catch {
-        router.replace('/onboarding')
-      }
     } catch (e: any) {
       const errorMessage = String(e?.message ?? '').toLowerCase()
       if (
