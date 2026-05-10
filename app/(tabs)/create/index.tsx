@@ -472,98 +472,117 @@ export default function Create() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Create Event</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.createOrgHeader}>
-            <Text style={styles.createOrgTitle}>Create Organization</Text>
-            <Text style={styles.createOrgSubtitle}>You need an organization before hosting events on Tizzle.</Text>
-          </View>
-          <TouchableOpacity style={styles.orgAvatarPicker} onPress={() => pickImage('org')} activeOpacity={0.7}>
-            {orgImageUri ? (
-              <Image source={{ uri: orgImageUri }} style={styles.orgAvatarImg} contentFit="cover" />
-            ) : (
-              <View style={styles.orgAvatarFallback}>
-                <Ionicons name="business-outline" size={32} color={Colors.text2} />
-              </View>
-            )}
-            <View style={styles.orgAvatarBadge}>
-              <Text style={styles.orgAvatarBadgeText}>+</Text>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 16 }]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.createOrgHeader}>
+              <Text style={styles.createOrgTitle}>Create Organization</Text>
+              <Text style={styles.createOrgSubtitle}>You need an organization before hosting events on Tizzle.</Text>
             </View>
-          </TouchableOpacity>
-          <Text style={styles.orgAvatarHint}>Organization logo (optional)</Text>
-          <View style={styles.orgFields}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>ORGANIZATION NAME *</Text>
+
+            {/* Avatar */}
+            <TouchableOpacity style={styles.orgAvatarPicker} onPress={() => pickImage('org')} activeOpacity={0.7}>
+              {orgImageUri ? (
+                <Image source={{ uri: orgImageUri }} style={styles.orgAvatarImg} contentFit="cover" />
+              ) : (
+                <View style={styles.orgAvatarFallback}>
+                  <Ionicons name="business-outline" size={32} color={Colors.text2} />
+                </View>
+              )}
+              <View style={styles.orgAvatarBadge}>
+                <Ionicons name="camera-outline" size={13} color={Colors.bg} />
+              </View>
+            </TouchableOpacity>
+
+            {/* Name */}
+            <View style={styles.card}>
               <TextInput
-                style={styles.input}
-                placeholder="e.g. Tizzle Events"
+                style={styles.titleInput}
+                placeholder="Organization Name"
                 placeholderTextColor={Colors.text2}
                 value={orgName}
                 onChangeText={setOrgName}
                 maxLength={50}
               />
             </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>DESCRIPTION</Text>
-              <TextInput
-                style={[styles.input, styles.multiline]}
-                placeholder="What does your organization do?"
-                placeholderTextColor={Colors.text2}
-                value={orgDesc}
-                onChangeText={setOrgDesc}
-                multiline
-                numberOfLines={4}
-                maxLength={200}
-                textAlignVertical="top"
-              />
+
+            {/* Description */}
+            <View style={styles.card}>
+              <View style={[styles.iconRow, styles.iconRowTop]}>
+                <Ionicons name="reorder-four-outline" size={18} color={Colors.text2} style={[styles.rowIcon, styles.rowIconTop]} />
+                <TextInput
+                  style={[styles.rowInput, { minHeight: 72 }]}
+                  placeholder="What does your organization do?"
+                  placeholderTextColor={Colors.text2}
+                  value={orgDesc}
+                  onChangeText={setOrgDesc}
+                  multiline
+                  maxLength={200}
+                  textAlignVertical="top"
+                />
+              </View>
             </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>X / TWITTER USERNAME</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="@yourhandle"
-                placeholderTextColor={Colors.text2}
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={orgTwitter}
-                onChangeText={setOrgTwitter}
-                maxLength={50}
-              />
+
+            {/* Socials */}
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Socials</Text>
+              <View style={styles.card}>
+                <View style={styles.iconRow}>
+                  <Ionicons name="logo-twitter" size={18} color={Colors.text2} style={styles.rowIcon} />
+                  <TextInput
+                    style={styles.rowInput}
+                    placeholder="@yourhandle"
+                    placeholderTextColor={Colors.text2}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={orgTwitter}
+                    onChangeText={setOrgTwitter}
+                    maxLength={50}
+                  />
+                </View>
+                <View style={styles.cardDivider} />
+                <View style={styles.iconRow}>
+                  <Ionicons name="logo-discord" size={18} color={Colors.text2} style={styles.rowIcon} />
+                  <TextInput
+                    style={styles.rowInput}
+                    placeholder="discord.gg/yourserver"
+                    placeholderTextColor={Colors.text2}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={orgDiscord}
+                    onChangeText={setOrgDiscord}
+                    maxLength={100}
+                  />
+                </View>
+              </View>
             </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>DISCORD</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="discord.gg/yourserver"
-                placeholderTextColor={Colors.text2}
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={orgDiscord}
-                onChangeText={setOrgDiscord}
-                maxLength={100}
-              />
-            </View>
-          </View>
-          <Button
-            onPress={async () => {
-              try {
-                await createOrg.mutateAsync({
-                  name: orgName.trim(),
-                  description: orgDesc.trim(),
-                  imageUri: orgImageUri ?? undefined,
-                  twitter: orgTwitter.trim() || undefined,
-                  discord: orgDiscord.trim() || undefined,
-                })
-              } catch (e) {
-                showErrorFeedback(e, 'Organization Creation Failed', 'We could not create your organization.')
-              }
-            }}
-            loading={createOrg.isPending}
-            disabled={!orgName.trim()}
-          >
-            {createOrg.isPending ? 'Creating on Solana…' : 'Create Organization'}
-          </Button>
-          <Text style={styles.orgNote}>This will create an on-chain organization on Solana.</Text>
-        </ScrollView>
+
+            <Button
+              onPress={async () => {
+                try {
+                  await createOrg.mutateAsync({
+                    name: orgName.trim(),
+                    description: orgDesc.trim(),
+                    imageUri: orgImageUri ?? undefined,
+                    twitter: orgTwitter.trim() || undefined,
+                    discord: orgDiscord.trim() || undefined,
+                  })
+                } catch (e) {
+                  showErrorFeedback(e, 'Organization Creation Failed', 'We could not create your organization.')
+                }
+              }}
+              loading={createOrg.isPending}
+              disabled={!orgName.trim()}
+            >
+              {createOrg.isPending ? 'Creating on Solana…' : 'Create Organization'}
+            </Button>
+            <Text style={styles.orgNote}>This will create an on-chain organization on Solana.</Text>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
     )
   }
@@ -1475,15 +1494,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.bg,
   },
-  orgAvatarBadgeText: { color: Colors.bg, fontSize: 16, fontFamily: Fonts.display, lineHeight: 20 },
-  orgAvatarHint: {
-    fontFamily: Fonts.body,
-    fontSize: 12,
-    color: Colors.text2,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
-  },
-  orgFields: { gap: Spacing.md, marginBottom: Spacing.lg },
   orgNote: {
     fontFamily: Fonts.mono,
     fontSize: 9,
