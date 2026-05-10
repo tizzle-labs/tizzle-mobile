@@ -1,85 +1,57 @@
 import { useAuth } from '@/components/auth/auth-provider'
-import { deriveEventStatus } from '@/components/event/EventStatusChip'
+import { EventRow } from '@/components/event/EventRow'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { useEvents } from '@/hooks/api/use-events'
+import { useEvents, useEventsByOrg } from '@/hooks/api/use-events'
+import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
 import type { Event } from '@/lib/api/events'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
-import { useMemo } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useMemo, useState } from 'react'
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-function formatEventDate(iso: string): string {
-  const date = new Date(iso)
-  const now = new Date()
-  const tomorrow = new Date(now)
-  tomorrow.setDate(now.getDate() + 1)
-  const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-  if (date.toDateString() === now.toDateString()) return `Today, ${time}`
-  if (date.toDateString() === tomorrow.toDateString()) return `Tomorrow, ${time}`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + `, ${time}`
+const COLUMN_WIDTH = 320
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size))
+  return chunks
 }
 
 function shortAddr(addr: string) {
   return !addr || addr.length < 10 ? addr : `${addr.slice(0, 4)}...${addr.slice(-4)}`
 }
 
-function HistoryEventRow({ event, onPress }: { event: Event; onPress: () => void }) {
-  const status = deriveEventStatus(event.startTime, event.endTime, event.unlockTime)
-  const statusColor = status === 'Available' || status === 'Ongoing' ? Colors.accent : Colors.warning
-  return (
-    <TouchableOpacity style={s.eventRow} onPress={onPress} activeOpacity={0.75}>
-      <Image source={{ uri: event.imageUrl }} style={s.eventThumb} contentFit="cover" />
-      <View style={s.eventInfo}>
-        <View style={s.eventTopRow}>
-          {event.organizationAvatarUrl ? (
-            <Image source={{ uri: event.organizationAvatarUrl }} style={s.orgAvatarImg} contentFit="cover" />
-          ) : (
-            <View style={s.orgAvatar}>
-              <Ionicons name="business-outline" size={10} color={Colors.text3} />
-            </View>
-          )}
-          <Text style={s.orgName} numberOfLines={1}>
-            {event.organizationName ?? shortAddr(event.organizerAddress)}
-          </Text>
-        </View>
-        <Text style={s.eventTitle} numberOfLines={2}>
-          {event.title}
-        </Text>
-        <View style={s.eventBottomRow}>
-          <View style={s.eventDateRow}>
-            <Ionicons name="time-outline" size={11} color={Colors.text3} />
-            <Text style={s.eventDate}>{formatEventDate(event.startTime)}</Text>
-          </View>
-          <Text style={[s.statusText, { color: statusColor }]}>{status.toUpperCase()}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  )
-}
-
 export default function ProfileModal() {
   const { walletAddress } = useAuth()
-  const { data: profile, isLoading } = useMyProfile()
-  const { data: registrations } = useMyRegistrations()
-  const { data: events } = useEvents()
+  const { data: profile, isLoading, refetch: refetchProfile } = useMyProfile()
+  const { data: registrations, refetch: refetchRegistrations } = useMyRegistrations()
+  const { data: events, refetch: refetchEvents } = useEvents()
+  const { data: orgs, refetch: refetchOrgs } = useMyOrganizations()
+  const { data: myEvents, refetch: refetchMyEvents } = useEventsByOrg(orgs?.[0]?.organizationPda)
   const insets = useSafeAreaInsets()
+  const [refreshing, setRefreshing] = useState(false)
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    await Promise.all([refetchProfile(), refetchRegistrations(), refetchEvents(), refetchOrgs(), refetchMyEvents()])
+    setRefreshing(false)
+  }
 
   const eventsByPda = useMemo(() => new Map((events ?? []).map((e) => [e.eventPda, e])), [events])
 
   const attendedCount = registrations?.filter((r) => r.checkedIn).length ?? 0
-  // TODO: Replace with real hosted events count once organizer API is available
-  const hostedCount = 0
+  const hostedCount = myEvents?.length ?? 0
 
-  // History: events the user has registered for
   const historyEvents = useMemo(() => {
     return (registrations ?? []).map((r) => eventsByPda.get(r.eventPda)).filter((e): e is Event => !!e)
   }, [registrations, eventsByPda])
+  const historyChunks = chunkArray(historyEvents.slice(0, 6), 3)
 
   const displayName = profile?.name || profile?.username || shortAddr(walletAddress ?? '')
   const joinedDate = 'Mar 2025' // TODO: Replace with real joinedAt field once backend provides it
@@ -101,6 +73,9 @@ export default function ProfileModal() {
           { paddingTop: insets.top + Spacing.sm, paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.accent} colors={[Colors.accent]} progressBackgroundColor={Colors.bg} />
+        }
       >
         {/* ── Header ── */}
         <View style={s.header}>
@@ -136,25 +111,65 @@ export default function ProfileModal() {
         </View>
         {/* ── Stats ── */}
         <View style={s.statsRow}>
-          <View style={s.statItem}>
+          <TouchableOpacity
+            style={s.statItem}
+            activeOpacity={orgs?.[0] ? 0.6 : 1}
+            onPress={() => {
+              if (orgs?.[0]) router.push({ pathname: '/(modals)/events', params: { type: 'organization', organizationPda: orgs[0].organizationPda, organizationName: orgs[0].name } })
+            }}
+          >
             <Text style={s.statNum}>{hostedCount}</Text>
             <Text style={s.statLabel}>Hosted</Text>
-          </View>
+          </TouchableOpacity>
           <View style={s.statDivider} />
           <View style={s.statItem}>
             <Text style={s.statNum}>{attendedCount}</Text>
             <Text style={s.statLabel}>Attended</Text>
           </View>
           <View style={s.statDivider} />
-          <View style={s.statItem}>
+          <TouchableOpacity
+            style={s.statItem}
+            activeOpacity={0.6}
+            onPress={() => router.navigate('/(tabs)/tickets')}
+          >
             <Text style={s.statNum}>{registrations?.length ?? 0}</Text>
             <Text style={s.statLabel}>Tickets</Text>
-          </View>
+          </TouchableOpacity>
         </View>
+        {/* ── Organization ── */}
+        {orgs?.[0] && (
+          <View style={s.section}>
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>Organization</Text>
+            </View>
+            <TouchableOpacity
+              style={s.orgCard}
+              onPress={() => router.push(`/(modals)/organization/${orgs[0].organizationPda}`)}
+              activeOpacity={0.75}
+            >
+              {orgs[0].avatarUrl ? (
+                <Image source={{ uri: orgs[0].avatarUrl }} style={s.orgCardAvatar} contentFit="cover" />
+              ) : (
+                <View style={[s.orgCardAvatar, s.orgCardAvatarFallback]}>
+                  <Ionicons name="business-outline" size={18} color={Colors.text3} />
+                </View>
+              )}
+              <View style={s.orgCardInfo}>
+                <Text style={s.orgCardName} numberOfLines={1}>{orgs[0].name}</Text>
+                {!!orgs[0].description && (
+                  <Text style={s.orgCardDesc} numberOfLines={1}>{orgs[0].description}</Text>
+                )}
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={Colors.text2} />
+            </TouchableOpacity>
+          </View>
+        )}
         {/* ── Badges ── */}
         {/* TODO: Replace with real badges once backend provides badge/achievement API */}
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Badges</Text>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>Badges</Text>
+          </View>
           <View style={s.badgesPlaceholder}>
             <Ionicons name="ribbon-outline" size={24} color={Colors.text3} />
             <Text style={s.placeholderText}>Badges coming soon</Text>
@@ -162,19 +177,40 @@ export default function ProfileModal() {
         </View>
         {/* ── Event History ── */}
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Event History</Text>
-          {historyEvents.length > 0 ? (
-            historyEvents.map((event) => (
-              <HistoryEventRow
-                key={event.eventPda}
-                event={event}
-                onPress={() => router.push(`/(modals)/event/${event.eventPda}`)}
-              />
-            ))
-          ) : (
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>Event History</Text>
+            <TouchableOpacity
+              style={s.seeAllBtn}
+              onPress={() => router.push({ pathname: '/(modals)/events', params: { type: 'history' } })}
+              hitSlop={8}
+            >
+              <Text style={s.seeAllText}>View All</Text>
+              <Ionicons name="chevron-forward" size={14} color={Colors.text2} />
+            </TouchableOpacity>
+          </View>
+          {historyEvents.length === 0 ? (
             <View style={s.emptyInline}>
               <Text style={s.emptyText}>No events attended yet.</Text>
             </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={s.hScroll}
+              contentContainerStyle={s.hScrollContent}
+            >
+              {historyChunks.map((chunk, ci) => (
+                <View key={ci} style={s.column}>
+                  {chunk.map((event) => (
+                    <EventRow
+                      key={event.eventPda}
+                      event={event}
+                      onPress={() => router.push(`/(modals)/event/${event.eventPda}`)}
+                    />
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
           )}
         </View>
       </ScrollView>
@@ -233,12 +269,42 @@ const s = StyleSheet.create({
   statDivider: { width: 1, height: 32, backgroundColor: Colors.border2 },
 
   section: { marginBottom: Spacing.xl, gap: Spacing.md },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
   sectionTitle: {
     fontFamily: Fonts.display,
-    fontSize: 18,
+    fontSize: 20,
     color: Colors.text1,
-    letterSpacing: ls(18, LS.displaySubtle),
+    letterSpacing: ls(20, LS.displaySubtle),
   },
+  seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 4 },
+  seeAllText: { fontFamily: Fonts.mono, fontSize: 13, color: Colors.text2 },
+
+  orgCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: Spacing.md,
+  },
+  orgCardAvatar: { width: 48, height: 48, borderRadius: 12 },
+  orgCardAvatarFallback: {
+    backgroundColor: Colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orgCardInfo: { flex: 1, gap: 2 },
+  orgCardName: {
+    fontFamily: Fonts.display,
+    fontSize: 16,
+    color: Colors.text1,
+    letterSpacing: ls(16, LS.displaySubtle),
+  },
+  orgCardDesc: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text2 },
 
   badgesPlaceholder: {
     height: 80,
@@ -251,47 +317,9 @@ const s = StyleSheet.create({
   },
   placeholderText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text3 },
 
-  eventRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    alignItems: 'flex-start',
-  },
-  eventThumb: { width: 80, height: 80, borderRadius: 10, backgroundColor: Colors.surface2 },
-  eventInfo: { flex: 1, gap: 5 },
-  eventTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  orgAvatar: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border2,
-  },
-  orgAvatarImg: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.surface2,
-    borderWidth: 1,
-    borderColor: Colors.border2,
-  },
-  orgName: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1, flex: 1 },
-  eventTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 15,
-    color: Colors.text1,
-    letterSpacing: ls(15, LS.displaySubtle),
-    lineHeight: 20,
-  },
-  eventBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  eventDateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  eventDate: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1 },
-  statusText: { fontFamily: Fonts.mono, fontSize: 10, letterSpacing: ls(10, LS.labelNarrow) },
+  hScroll: { marginHorizontal: -Spacing.md },
+  hScrollContent: { paddingHorizontal: Spacing.md, gap: Spacing.md },
+  column: { width: COLUMN_WIDTH },
 
   emptyInline: {
     paddingVertical: Spacing.lg,

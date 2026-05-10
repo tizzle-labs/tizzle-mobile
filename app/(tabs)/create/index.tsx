@@ -512,7 +512,7 @@ export default function Create() {
 
             {/* Description */}
             <View style={styles.card}>
-              <View style={[styles.iconRow, styles.iconRowTop]}>
+              <View style={styles.iconRow}>
                 <Ionicons name="reorder-four-outline" size={18} color={Colors.text2} style={[styles.rowIcon, styles.rowIconTop]} />
                 <TextInput
                   style={[styles.rowInput, { minHeight: 72 }]}

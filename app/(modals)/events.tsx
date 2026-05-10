@@ -5,7 +5,8 @@ import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { eventKeys, useInfiniteEvents, useInfiniteForYouEvents, useInfiniteEventsByCategory } from '@/hooks/api/use-events'
+import { eventKeys, useEvents, useInfiniteEvents, useInfiniteForYouEvents, useInfiniteEventsByCategory, useInfiniteEventsByOrg } from '@/hooks/api/use-events'
+import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
 import { useUpdateProfile } from '@/hooks/api/use-update-profile'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
 import type { Event } from '@/lib/api/events'
@@ -37,7 +38,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const W = Dimensions.get('window').width
 
-type EventListType = 'for-you' | 'recently-added' | 'category'
+type EventListType = 'for-you' | 'recently-added' | 'category' | 'organization' | 'history'
 
 // ─── Interests bottom sheet ───────────────────────────────────────────────────
 
@@ -125,19 +126,53 @@ function InterestsSheet({
 
 export default function EventsScreen() {
   const insets = useSafeAreaInsets()
-  const { type, category } = useLocalSearchParams<{ type: EventListType; category?: string }>()
+  const { type, category, organizationPda, organizationName } = useLocalSearchParams<{
+    type: EventListType
+    category?: string
+    organizationPda?: string
+    organizationName?: string
+  }>()
   const queryClient = useQueryClient()
 
-  const title = type === 'for-you' ? 'For You' : type === 'recently-added' ? 'Recently Added' : (category ?? 'Events')
-  const subtitle = type === 'for-you' ? 'Based on your interests' : type === 'recently-added' ? 'Fresh on the platform' : 'Events in this category'
+  const title =
+    type === 'for-you' ? 'For You'
+    : type === 'recently-added' ? 'Recently Added'
+    : type === 'organization' ? (organizationName ?? 'Events')
+    : type === 'history' ? 'Event History'
+    : (category ?? 'Events')
+  const subtitle =
+    type === 'for-you' ? 'Based on your interests'
+    : type === 'recently-added' ? 'Fresh on the platform'
+    : type === 'organization' ? 'All events by this organization'
+    : type === 'history' ? 'Events you have registered for'
+    : 'Events in this category'
 
   const allEventsQuery = useInfiniteEvents('created_at')
   const forYouQuery = useInfiniteForYouEvents()
   const categoryQuery = useInfiniteEventsByCategory(category ?? '')
-  const query = type === 'for-you' ? forYouQuery : type === 'category' ? categoryQuery : allEventsQuery
+  const orgQuery = useInfiniteEventsByOrg(organizationPda ?? '')
+  const isHistory = type === 'history'
+  const query =
+    type === 'for-you' ? forYouQuery
+    : type === 'category' ? categoryQuery
+    : type === 'organization' ? orgQuery
+    : allEventsQuery
 
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch, isRefetching } = query
-  const events: Event[] = query.data?.pages.flatMap((page) => page) ?? []
+  const paginatedEvents: Event[] = query.data?.pages.flatMap((page) => page) ?? []
+
+  // History: derive from registrations mapped to all events
+  const { data: registrations, isLoading: regsLoading, refetch: refetchRegs, isRefetching: isRefetchingRegs } = useMyRegistrations()
+  const { data: allEvents, isLoading: allEventsLoading, refetch: refetchAllEvents, isRefetching: isRefetchingAllEvents } = useEvents()
+  const eventsByPda = useMemo(() => new Map((allEvents ?? []).map((e) => [e.eventPda, e])), [allEvents])
+  const historyEvents = useMemo(
+    () => (registrations ?? []).map((r) => eventsByPda.get(r.eventPda)).filter((e): e is Event => !!e),
+    [registrations, eventsByPda],
+  )
+
+  const events = isHistory ? historyEvents : paginatedEvents
+  const historyLoading = isHistory && (regsLoading || allEventsLoading)
+  const historyRefreshing = isHistory && (isRefetchingRegs || isRefetchingAllEvents)
 
   const { data: profile } = useMyProfile()
   const currentInterests = useMemo(() => (profile?.interests ?? []) as string[], [profile?.interests])
@@ -167,8 +202,13 @@ export default function EventsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      refetch()
-    }, [refetch]),
+      if (isHistory) {
+        refetchRegs()
+        refetchAllEvents()
+      } else {
+        refetch()
+      }
+    }, [isHistory, refetch, refetchRegs, refetchAllEvents]),
   )
 
   useFocusEffect(
@@ -205,7 +245,7 @@ export default function EventsScreen() {
           )}
         </View>
 
-        {isLoading ? (
+        {isLoading || historyLoading ? (
           <View style={styles.center}>
             <ActivityIndicator color={Colors.accent} />
           </View>
@@ -219,20 +259,20 @@ export default function EventsScreen() {
             contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + Spacing.lg }]}
             showsVerticalScrollIndicator={false}
             onEndReached={() => {
-              if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+              if (!isHistory && hasNextPage && !isFetchingNextPage) fetchNextPage()
             }}
             onEndReachedThreshold={0.4}
             refreshControl={
               <RefreshControl
-                refreshing={isRefetching}
-                onRefresh={refetch}
+                refreshing={isHistory ? historyRefreshing : isRefetching}
+                onRefresh={isHistory ? () => { refetchRegs(); refetchAllEvents() } : refetch}
                 tintColor={Colors.accent}
                 colors={[Colors.accent]}
                 progressBackgroundColor={Colors.bg}
               />
             }
             ListFooterComponent={
-              isFetchingNextPage ? (
+              !isHistory && isFetchingNextPage ? (
                 <ActivityIndicator color={Colors.accent} style={styles.footerLoader} />
               ) : events.length > 0 ? (
                 <Divider />
@@ -241,7 +281,9 @@ export default function EventsScreen() {
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Ionicons name="calendar-outline" size={40} color={Colors.text3} />
-                <Text style={styles.emptyText}>No events for your interests yet.</Text>
+                <Text style={styles.emptyText}>
+                  {isHistory ? 'No events in your history yet.' : 'No events found.'}
+                </Text>
               </View>
             }
           />

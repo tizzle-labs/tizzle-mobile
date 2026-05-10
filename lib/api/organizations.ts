@@ -16,6 +16,11 @@ export async function getMyOrganizations(): Promise<Organization[]> {
   return data
 }
 
+export async function getOrganizationByPda(organizationPda: string): Promise<Organization> {
+  const { data } = await apiClient.get(`/v1/organizations/${organizationPda}`)
+  return data
+}
+
 export async function createOrganization(payload: {
   name: string
   description: string
