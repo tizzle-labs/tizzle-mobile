@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
+import { PulsingIcon } from '@/components/ui/LoadingScreen'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -168,7 +169,7 @@ export default function ClaimScreen() {
       {/* Content */}
       {isLoading ? (
         <View style={s.center}>
-          <ActivityIndicator color={Colors.accent} />
+          <PulsingIcon />
         </View>
       ) : (
         <FlatList

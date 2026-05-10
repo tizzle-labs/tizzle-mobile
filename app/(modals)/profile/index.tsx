@@ -1,5 +1,6 @@
 import { useAuth } from '@/components/auth/auth-provider'
 import { EventRow } from '@/components/event/EventRow'
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -12,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const COLUMN_WIDTH = 320
@@ -57,11 +58,7 @@ export default function ProfileModal() {
   const joinedDate = 'Mar 2025' // TODO: Replace with real joinedAt field once backend provides it
 
   if (isLoading) {
-    return (
-      <View style={s.loading}>
-        <ActivityIndicator color={Colors.accent} />
-      </View>
-    )
+    return <LoadingScreen />
   }
 
   return (
@@ -74,7 +71,13 @@ export default function ProfileModal() {
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.accent} colors={[Colors.accent]} progressBackgroundColor={Colors.bg} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.accent}
+            colors={[Colors.accent]}
+            progressBackgroundColor={Colors.bg}
+          />
         }
       >
         {/* ── Header ── */}
@@ -115,7 +118,15 @@ export default function ProfileModal() {
             style={s.statItem}
             activeOpacity={orgs?.[0] ? 0.6 : 1}
             onPress={() => {
-              if (orgs?.[0]) router.push({ pathname: '/(modals)/events', params: { type: 'organization', organizationPda: orgs[0].organizationPda, organizationName: orgs[0].name } })
+              if (orgs?.[0])
+                router.push({
+                  pathname: '/(modals)/events',
+                  params: {
+                    type: 'organization',
+                    organizationPda: orgs[0].organizationPda,
+                    organizationName: orgs[0].name,
+                  },
+                })
             }}
           >
             <Text style={s.statNum}>{hostedCount}</Text>
@@ -127,11 +138,7 @@ export default function ProfileModal() {
             <Text style={s.statLabel}>Attended</Text>
           </View>
           <View style={s.statDivider} />
-          <TouchableOpacity
-            style={s.statItem}
-            activeOpacity={0.6}
-            onPress={() => router.navigate('/(tabs)/tickets')}
-          >
+          <TouchableOpacity style={s.statItem} activeOpacity={0.6} onPress={() => router.navigate('/(tabs)/tickets')}>
             <Text style={s.statNum}>{registrations?.length ?? 0}</Text>
             <Text style={s.statLabel}>Tickets</Text>
           </TouchableOpacity>
@@ -155,9 +162,13 @@ export default function ProfileModal() {
                 </View>
               )}
               <View style={s.orgCardInfo}>
-                <Text style={s.orgCardName} numberOfLines={1}>{orgs[0].name}</Text>
+                <Text style={s.orgCardName} numberOfLines={1}>
+                  {orgs[0].name}
+                </Text>
                 {!!orgs[0].description && (
-                  <Text style={s.orgCardDesc} numberOfLines={1}>{orgs[0].description}</Text>
+                  <Text style={s.orgCardDesc} numberOfLines={1}>
+                    {orgs[0].description}
+                  </Text>
                 )}
               </View>
               <Ionicons name="chevron-forward" size={16} color={Colors.text2} />

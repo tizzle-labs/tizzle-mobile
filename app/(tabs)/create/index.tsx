@@ -1,5 +1,6 @@
 import { BottomSheet, type BottomSheetRef } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
+import { PulsingIcon } from '@/components/ui/LoadingScreen'
 import { SOL_MINT } from '@/components/ui/TokenAmount'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
@@ -13,8 +14,8 @@ import { showErrorFeedback } from '@/lib/app-feedback'
 import { registerCreateDiscardHandler, setCreateFormDirty } from '@/lib/create-dirty-store'
 import { setDescriptionCallback } from '@/lib/description-callback-store'
 import { setEventPreview } from '@/lib/event-preview-store'
-import { setLocationCallback, type LocationData } from '@/lib/location-callback-store'
 import { formatSol } from '@/lib/format'
+import { setLocationCallback, type LocationData } from '@/lib/location-callback-store'
 import { Ionicons } from '@expo/vector-icons'
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
@@ -24,7 +25,6 @@ import * as ImagePicker from 'expo-image-picker'
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  ActivityIndicator,
   BackHandler,
   KeyboardAvoidingView,
   Linking,
@@ -397,7 +397,7 @@ export default function Create() {
           <Text style={styles.headerTitle}>Create Event</Text>
         </View>
         <View style={styles.center}>
-          <ActivityIndicator color={Colors.accent} />
+          <PulsingIcon />
         </View>
       </View>
     )
@@ -521,7 +521,12 @@ export default function Create() {
             {/* Description */}
             <View style={styles.card}>
               <View style={styles.iconRow}>
-                <Ionicons name="reorder-four-outline" size={18} color={Colors.text2} style={[styles.rowIcon, styles.rowIconTop]} />
+                <Ionicons
+                  name="reorder-four-outline"
+                  size={18}
+                  color={Colors.text2}
+                  style={[styles.rowIcon, styles.rowIconTop]}
+                />
                 <TextInput
                   style={[styles.rowInput, { minHeight: 72 }]}
                   placeholder="What does your organization do?"
@@ -971,8 +976,7 @@ export default function Create() {
             <View style={styles.balanceWarning}>
               <Ionicons name="warning-outline" size={14} color={Colors.error} />
               <Text style={styles.balanceWarningText}>
-                Insufficient SOL balance. Need ~{formatSol(requiredSol)} SOL, have{' '}
-                {formatSol(solBalance ?? 0)} SOL.
+                Insufficient SOL balance. Need ~{formatSol(requiredSol)} SOL, have {formatSol(solBalance ?? 0)} SOL.
               </Text>
             </View>
           )}
@@ -1210,9 +1214,7 @@ export default function Create() {
             )}
             <View style={styles.orgSheetInfo}>
               <Text style={styles.orgSheetName}>{org.name}</Text>
-              {!!org.description && (
-                <Text style={styles.orgSheetDesc}>{org.description}</Text>
-              )}
+              {!!org.description && <Text style={styles.orgSheetDesc}>{org.description}</Text>}
             </View>
           </View>
           {(org.twitter || org.discord || org.website) && (
@@ -1224,13 +1226,17 @@ export default function Create() {
                   activeOpacity={0.7}
                 >
                   <Ionicons name="logo-twitter" size={16} color={Colors.text2} />
-                  <Text style={styles.orgSheetLinkText}>{org.twitter.startsWith('@') ? org.twitter : `@${org.twitter}`}</Text>
+                  <Text style={styles.orgSheetLinkText}>
+                    {org.twitter.startsWith('@') ? org.twitter : `@${org.twitter}`}
+                  </Text>
                 </TouchableOpacity>
               )}
               {!!org.discord && (
                 <TouchableOpacity
                   style={styles.orgSheetLinkRow}
-                  onPress={() => Linking.openURL(org.discord.startsWith('http') ? org.discord : `https://discord.gg/${org.discord}`)}
+                  onPress={() =>
+                    Linking.openURL(org.discord.startsWith('http') ? org.discord : `https://discord.gg/${org.discord}`)
+                  }
                   activeOpacity={0.7}
                 >
                   <Ionicons name="logo-discord" size={16} color={Colors.text2} />
@@ -1251,7 +1257,9 @@ export default function Create() {
           )}
           <View style={styles.orgSheetPda}>
             <Text style={styles.orgSheetPdaLabel}>ON-CHAIN ADDRESS</Text>
-            <Text style={styles.orgSheetPdaValue} numberOfLines={1}>{org.organizationPda}</Text>
+            <Text style={styles.orgSheetPdaValue} numberOfLines={1}>
+              {org.organizationPda}
+            </Text>
           </View>
         </View>
       </BottomSheet>

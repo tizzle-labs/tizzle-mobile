@@ -1,4 +1,5 @@
 import { EventRow } from '@/components/event/EventRow'
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -9,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
-import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const COLUMN_WIDTH = 320
@@ -34,11 +35,7 @@ export default function OrganizationDetailModal() {
   }
 
   if (isLoading) {
-    return (
-      <View style={s.loading}>
-        <ActivityIndicator color={Colors.accent} />
-      </View>
-    )
+    return <LoadingScreen />
   }
 
   if (!org) {
@@ -65,7 +62,13 @@ export default function OrganizationDetailModal() {
         contentContainerStyle={[s.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.accent} colors={[Colors.accent]} progressBackgroundColor={Colors.bg} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.accent}
+            colors={[Colors.accent]}
+            progressBackgroundColor={Colors.bg}
+          />
         }
       >
         {/* Identity */}
@@ -96,7 +99,9 @@ export default function OrganizationDetailModal() {
               {!!org.discord && (
                 <TouchableOpacity
                   style={s.socialBtn}
-                  onPress={() => Linking.openURL(org.discord.startsWith('http') ? org.discord : `https://${org.discord}`)}
+                  onPress={() =>
+                    Linking.openURL(org.discord.startsWith('http') ? org.discord : `https://${org.discord}`)
+                  }
                   activeOpacity={0.7}
                 >
                   <Ionicons name="logo-discord" size={15} color={Colors.text2} />
@@ -121,7 +126,12 @@ export default function OrganizationDetailModal() {
             <Text style={s.sectionTitle}>Events</Text>
             <TouchableOpacity
               style={s.seeAllBtn}
-              onPress={() => router.push({ pathname: '/(modals)/events', params: { type: 'organization', organizationPda, organizationName: org.name } })}
+              onPress={() =>
+                router.push({
+                  pathname: '/(modals)/events',
+                  params: { type: 'organization', organizationPda, organizationName: org.name },
+                })
+              }
               hitSlop={8}
             >
               <Text style={s.seeAllText}>View All</Text>

@@ -2,6 +2,7 @@ import { useAuth } from '@/components/auth/auth-provider'
 import { EventMap } from '@/components/event/EventMap'
 import { EventStatusChip, deriveEventStatus } from '@/components/event/EventStatusChip'
 import { Button } from '@/components/ui/Button'
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
@@ -16,17 +17,7 @@ import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Image } from 'expo-image'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import {
-  ActivityIndicator,
-  Dimensions,
-  LayoutChangeEvent,
-  Linking,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+import { Dimensions, LayoutChangeEvent, Linking, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -86,18 +77,12 @@ export default function EventDetailModal() {
   }
 
   if (isLoading || !event) {
-    return (
-      <View style={s.loading}>
-        <ActivityIndicator color={Colors.accent} />
-      </View>
-    )
+    return <LoadingScreen />
   }
 
   const status = deriveEventStatus(event.startTime, event.endTime, event.unlockTime)
   const isGatekeeper =
-    !!walletAddress &&
-    walletAddress === event.gatekeeperAddress &&
-    event.gatekeeperAddress !== event.organizerAddress
+    !!walletAddress && walletAddress === event.gatekeeperAddress && event.gatekeeperAddress !== event.organizerAddress
   const stakeDisplay = (Number(event.stakeAmount) / Math.pow(10, event.stakeTokenDecimals)).toString()
   const categoryEntry = EVENT_CATEGORIES.find((c) => c.label === event.category)
   const categoryDisplay = categoryEntry ? `${categoryEntry.icon} ${categoryEntry.label}` : event.category || '🌐 Others'
@@ -163,7 +148,9 @@ export default function EventDetailModal() {
               <Text style={s.metaText}>{fmtDate(event.startTime)}</Text>
               <Text style={s.metaDot}>·</Text>
               <Ionicons name="time-outline" size={16} color={Colors.text3} />
-              <Text style={s.metaText}>{fmtTime(event.startTime)} – {fmtTime(event.endTime)}</Text>
+              <Text style={s.metaText}>
+                {fmtTime(event.startTime)} – {fmtTime(event.endTime)}
+              </Text>
             </View>
           ) : (
             <>

@@ -1,24 +1,30 @@
+import { ClusterNetwork } from '@/components/cluster/cluster-network'
+import { useCluster } from '@/components/cluster/cluster-provider'
 import { Button } from '@/components/ui/Button'
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
-import { useCluster } from '@/components/cluster/cluster-provider'
-import { ClusterNetwork } from '@/components/cluster/cluster-network'
 import { useTicketLifecycle } from '@/hooks/api/use-ticket-lifecycle'
 import { showErrorFeedback } from '@/lib/app-feedback'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import QRCode from 'react-qr-code'
 
 const NOTCH = 16
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 function formatTime(iso: string) {
@@ -47,18 +53,16 @@ export default function TicketDetail() {
 
   function getSolscanUrl(sig: string) {
     const param =
-      selectedCluster.network === ClusterNetwork.Devnet ? '?cluster=devnet'
-      : selectedCluster.network === ClusterNetwork.Testnet ? '?cluster=testnet'
-      : ''
+      selectedCluster.network === ClusterNetwork.Devnet
+        ? '?cluster=devnet'
+        : selectedCluster.network === ClusterNetwork.Testnet
+          ? '?cluster=testnet'
+          : ''
     return `https://solscan.io/tx/${sig}${param}`
   }
 
   if (regsLoading || eventLoading || !reg || !ev) {
-    return (
-      <View style={s.loading}>
-        <ActivityIndicator color={Colors.accent} />
-      </View>
-    )
+    return <LoadingScreen />
   }
 
   const stake = `${Number(reg.stakeAmount) / Math.pow(10, ev.stakeTokenDecimals)} ${ev.stakeTokenSymbol}`
@@ -80,11 +84,7 @@ export default function TicketDetail() {
           <Ionicons name="arrow-back" size={20} color={Colors.text1} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>Ticket Detail</Text>
-        <TouchableOpacity
-          onPress={() => router.push(`/(modals)/event/${reg.eventPda}`)}
-          style={s.backBtn}
-          hitSlop={12}
-        >
+        <TouchableOpacity onPress={() => router.push(`/(modals)/event/${reg.eventPda}`)} style={s.backBtn} hitSlop={12}>
           <Ionicons name="calendar-outline" size={20} color={Colors.text1} />
         </TouchableOpacity>
       </View>
@@ -212,15 +212,11 @@ export default function TicketDetail() {
               {isClaimingRefund ? 'Claiming on Solana…' : 'Claim Stake'}
             </Button>
           )}
-          {status === 'valid' && (
-            <Text style={s.notice}>Your stake is locked on-chain until the event ends.</Text>
-          )}
+          {status === 'valid' && <Text style={s.notice}>Your stake is locked on-chain until the event ends.</Text>}
           {status === 'no-show' && (
             <Text style={s.notice}>You did not check in. Your staked amount has been forfeited.</Text>
           )}
-          {status === 'refunded' && (
-            <Text style={s.notice}>Your stake has been returned to your wallet.</Text>
-          )}
+          {status === 'refunded' && <Text style={s.notice}>Your stake has been returned to your wallet.</Text>}
         </View>
       </ScrollView>
     </View>

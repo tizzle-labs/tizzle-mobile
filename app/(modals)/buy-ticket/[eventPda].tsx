@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/Button'
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { SOL_MINT, TokenAmount, formatTokenAmount } from '@/components/ui/TokenAmount'
 import { WalletBalance } from '@/components/wallet/WalletBalance'
 import { Colors } from '@/constants/colors'
@@ -12,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 function fmtDate(iso: string) {
@@ -31,11 +32,7 @@ export default function BuyTicketModal() {
   const [imageVisible, setImageVisible] = useState(false)
 
   if (isLoading || !event) {
-    return (
-      <View style={s.loading}>
-        <ActivityIndicator color={Colors.accent} />
-      </View>
-    )
+    return <LoadingScreen />
   }
 
   const stakeNum = Number(event.stakeAmount) / Math.pow(10, event.stakeTokenDecimals)

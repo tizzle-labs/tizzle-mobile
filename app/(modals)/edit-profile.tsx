@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/Button'
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -112,11 +113,7 @@ export default function EditProfileScreen() {
   }
 
   if (isLoading) {
-    return (
-      <View style={s.loading}>
-        <ActivityIndicator color={Colors.accent} />
-      </View>
-    )
+    return <LoadingScreen />
   }
 
   const avatarSource = avatarUri ?? profile?.avatarUrl

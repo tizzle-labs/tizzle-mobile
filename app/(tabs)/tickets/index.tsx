@@ -1,3 +1,4 @@
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
@@ -10,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useMemo } from 'react'
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 function ticketStatus(reg: Registration, event?: Event): TicketStatus {
@@ -128,9 +129,7 @@ export default function Tickets() {
   return (
     <View style={s.container}>
       {isLoading ? (
-        <View style={s.center}>
-          <ActivityIndicator color={Colors.accent} />
-        </View>
+        <LoadingScreen />
       ) : (
         <ScrollView
           style={s.scroll}
@@ -218,7 +217,16 @@ const s = StyleSheet.create({
   },
   stamp: { position: 'absolute', top: 8, right: 8, width: 100, height: 100, opacity: 0.9, zIndex: 10 },
   ticketTop: { flexDirection: 'row', padding: Spacing.md, gap: Spacing.md, alignItems: 'flex-start' },
-  ticketImg: { width: 68, height: 68, borderRadius: 10, backgroundColor: Colors.surface, flexShrink: 0, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  ticketImg: {
+    width: 68,
+    height: 68,
+    borderRadius: 10,
+    backgroundColor: Colors.surface,
+    flexShrink: 0,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   ticketInfo: { flex: 1, gap: 4, minWidth: 0 },
   ticketTitle: {
     fontFamily: Fonts.display,

@@ -1,15 +1,16 @@
 import { EventRow } from '@/components/event/EventRow'
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { Colors } from '@/constants/colors'
+import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
-import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { useEvents, useForYouEvents } from '@/hooks/api/use-events'
 import { useMyProfile } from '@/hooks/api/use-user-profile'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback } from 'react'
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 function openEvent(eventPda: string) {
@@ -64,9 +65,7 @@ export default function Explore() {
       </View>
 
       {isLoading && !events ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={Colors.accent} />
-        </View>
+        <LoadingScreen />
       ) : (
         <ScrollView
           style={styles.scroll}
@@ -75,7 +74,10 @@ export default function Explore() {
           refreshControl={
             <RefreshControl
               refreshing={isRefetching || isRefetchingForYou}
-              onRefresh={() => { refetch(); refetchForYou() }}
+              onRefresh={() => {
+                refetch()
+                refetchForYou()
+              }}
               tintColor={Colors.accent}
               colors={[Colors.accent]}
               progressBackgroundColor={Colors.bg}
@@ -132,7 +134,14 @@ export default function Explore() {
               <View style={styles.catRows}>
                 <View style={styles.catRow}>
                   {BROWSE_CATEGORIES.slice(0, 5).map((cat) => (
-                    <TouchableOpacity key={cat.label} style={styles.categoryTile} activeOpacity={0.7} onPress={() => router.push({ pathname: '/(modals)/events', params: { type: 'category', category: cat.label } })}>
+                    <TouchableOpacity
+                      key={cat.label}
+                      style={styles.categoryTile}
+                      activeOpacity={0.7}
+                      onPress={() =>
+                        router.push({ pathname: '/(modals)/events', params: { type: 'category', category: cat.label } })
+                      }
+                    >
                       <Text style={styles.categoryTileIcon}>{cat.icon}</Text>
                       <Text style={styles.categoryTileLabel}>{cat.label}</Text>
                     </TouchableOpacity>
@@ -140,7 +149,14 @@ export default function Explore() {
                 </View>
                 <View style={styles.catRow}>
                   {BROWSE_CATEGORIES.slice(5).map((cat) => (
-                    <TouchableOpacity key={cat.label} style={styles.categoryTile} activeOpacity={0.7} onPress={() => router.push({ pathname: '/(modals)/events', params: { type: 'category', category: cat.label } })}>
+                    <TouchableOpacity
+                      key={cat.label}
+                      style={styles.categoryTile}
+                      activeOpacity={0.7}
+                      onPress={() =>
+                        router.push({ pathname: '/(modals)/events', params: { type: 'category', category: cat.label } })
+                      }
+                    >
                       <Text style={styles.categoryTileIcon}>{cat.icon}</Text>
                       <Text style={styles.categoryTileLabel}>{cat.label}</Text>
                     </TouchableOpacity>
