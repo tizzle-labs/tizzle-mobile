@@ -8,6 +8,7 @@ import { Spacing } from '@/constants/spacing'
 import { PLATFORM_FEE_SOL, useCreateEvent, type CreateEventInput } from '@/hooks/api/use-create-event'
 import { useCreateOrganization } from '@/hooks/api/use-create-organization'
 import { useMyOrganizations } from '@/hooks/api/use-my-organizations'
+import { useWalletBalance } from '@/hooks/solana/use-wallet-balance'
 import { showErrorFeedback } from '@/lib/app-feedback'
 import { registerCreateDiscardHandler, setCreateFormDirty } from '@/lib/create-dirty-store'
 import { setDescriptionCallback } from '@/lib/description-callback-store'
@@ -75,6 +76,7 @@ export default function Create() {
   const { data: orgs, isLoading: orgsLoading } = useMyOrganizations()
   const createOrg = useCreateOrganization()
   const createEvent = useCreateEvent()
+  const { data: solBalance } = useWalletBalance(SOL_MINT)
 
   // ── Org form ──────────────────────────────────────────────────────────────
   const [orgName, setOrgName] = useState('')
@@ -153,6 +155,10 @@ export default function Create() {
   const hostFeeValid = feeMode === 'free' || (!isNaN(parsedHostFee) && parsedHostFee >= 1 && parsedHostFee <= 100)
   const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
   const gatekeeperValid = gatekeeperAddress.trim() === '' || BASE58_RE.test(gatekeeperAddress.trim())
+  // SOL required: platform fee × capacity + 0.003 SOL buffer for rent + tx fee
+  const MIN_RENT_BUFFER = 0.003
+  const requiredSol = capacityValid ? PLATFORM_FEE_SOL * capacity + MIN_RENT_BUFFER : MIN_RENT_BUFFER
+  const hasEnoughSol = (solBalance ?? 0) >= requiredSol
   const canSubmit =
     eventTitle.trim().length > 0 &&
     location.trim().length > 0 &&
@@ -162,7 +168,8 @@ export default function Create() {
     stakeValid &&
     hostFeeValid &&
     gatekeeperValid &&
-    capacityValid
+    capacityValid &&
+    hasEnoughSol
 
   // ── Dirty tracking ────────────────────────────────────────────────────────
   const isDirty =
@@ -959,6 +966,17 @@ export default function Create() {
             Platform fee: {formatSol(PLATFORM_FEE_SOL)} SOL × {capacityValue || '—'} = {platformFeeTotal} SOL
           </Text>
 
+          {/* Insufficient balance warning */}
+          {!hasEnoughSol && capacityValid && (
+            <View style={styles.balanceWarning}>
+              <Ionicons name="warning-outline" size={14} color={Colors.error} />
+              <Text style={styles.balanceWarningText}>
+                Insufficient SOL balance. Need ~{formatSol(requiredSol)} SOL, have{' '}
+                {formatSol(solBalance ?? 0)} SOL.
+              </Text>
+            </View>
+          )}
+
           {/* Preview button */}
           <Button onPress={handlePreview} disabled={!canSubmit}>
             Preview Event
@@ -1453,6 +1471,22 @@ const styles = StyleSheet.create({
     color: Colors.text2,
     letterSpacing: ls(10, LS.labelNarrow),
     textAlign: 'center',
+  },
+  balanceWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,59,48,0.1)',
+    borderRadius: 10,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  balanceWarningText: {
+    flex: 1,
+    fontFamily: Fonts.body,
+    fontSize: 13,
+    color: Colors.error,
+    lineHeight: 18,
   },
 
   // Category rows (inside BottomSheet)

@@ -55,6 +55,16 @@ export function useCreateEvent() {
       const organizerPubkey = accounts?.[0]?.publicKey
       if (!organizerPubkey) throw new Error('Wallet not connected')
 
+      // Guard: verify SOL balance before attempting the transaction
+      const lamports = await connection.getBalance(organizerPubkey)
+      const solBalance = lamports / LAMPORTS_PER_SOL
+      const requiredSol = PLATFORM_FEE_SOL * input.capacity + 0.003
+      if (solBalance < requiredSol) {
+        throw new Error(
+          `Insufficient SOL balance. Need at least ${requiredSol.toFixed(4)} SOL, have ${solBalance.toFixed(4)} SOL.`,
+        )
+      }
+
       const organizationPda = new PublicKey(input.organizationPda)
       const eventIdKeypair = Keypair.generate()
       const eventId = eventIdKeypair.publicKey
