@@ -4,73 +4,101 @@ import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import { useEventDetail } from '@/hooks/api/use-event-detail'
 import { useMyRegistrations } from '@/hooks/api/use-my-registrations'
+import { useCluster } from '@/components/cluster/cluster-provider'
+import { ClusterNetwork } from '@/components/cluster/cluster-network'
 import { useTicketLifecycle } from '@/hooks/api/use-ticket-lifecycle'
 import { showErrorFeedback } from '@/lib/app-feedback'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import QRCode from 'react-qr-code'
-const TBG = '#f0efeb',
-  TT = '#1A1200',
-  N = 16
-function fd(iso: string) {
-  const d = new Date(iso),
-    n = new Date(),
-    t = new Date(n)
-  t.setDate(n.getDate() + 1)
-  if (d.toDateString() === n.toDateString()) return 'Today'
-  if (d.toDateString() === t.toDateString()) return 'Tomorrow'
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
+
+const NOTCH = 16
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 }
-function ft(iso: string) {
+
+function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
-function sa(a: string) {
-  return !a || a.length < 10 ? a : `${a.slice(0, 6)}…${a.slice(-4)}`
+
+function shortenAddress(addr: string) {
+  return !addr || addr.length < 10 ? addr : `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
+
+const STATUS_COLOR: Record<string, string> = {
+  valid: Colors.accent,
+  claimable: Colors.warning,
+  'no-show': Colors.error,
+  refunded: Colors.text2,
+}
+
 export default function TicketDetail() {
   const { registrationPda } = useLocalSearchParams<{ registrationPda: string }>()
-  const { data: regs, isLoading: rl } = useMyRegistrations()
+  const { data: regs, isLoading: regsLoading } = useMyRegistrations()
   const reg = regs?.find((r) => r.registrationPda === registrationPda)
-  const { data: ev, isLoading: el } = useEventDetail(reg?.eventPda ?? '')
+  const { data: ev, isLoading: eventLoading } = useEventDetail(reg?.eventPda ?? '')
   const { status, claimRefund, isClaimingRefund } = useTicketLifecycle(reg, ev)
-  const ins = useSafeAreaInsets()
-  if (rl || el || !reg || !ev)
+  const { selectedCluster } = useCluster()
+  const insets = useSafeAreaInsets()
+
+  function getSolscanUrl(sig: string) {
+    const param =
+      selectedCluster.network === ClusterNetwork.Devnet ? '?cluster=devnet'
+      : selectedCluster.network === ClusterNetwork.Testnet ? '?cluster=testnet'
+      : ''
+    return `https://solscan.io/tx/${sig}${param}`
+  }
+
+  if (regsLoading || eventLoading || !reg || !ev) {
     return (
-      <View style={s.ld}>
+      <View style={s.loading}>
         <ActivityIndicator color={Colors.accent} />
       </View>
     )
+  }
+
   const stake = `${Number(reg.stakeAmount) / Math.pow(10, ev.stakeTokenDecimals)} ${ev.stakeTokenSymbol}`
-  async function claim() {
+  const statusColor = STATUS_COLOR[status] ?? Colors.text2
+
+  async function handleClaim() {
     try {
       await claimRefund()
     } catch (e: any) {
       showErrorFeedback(e, 'Claim Failed', 'Could not claim your stake refund')
     }
   }
+
   return (
-    <View style={s.c}>
+    <View style={s.container}>
+      {/* Header — fixed outside scroll */}
+      <View style={[s.header, { paddingTop: insets.top + Spacing.sm }]}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn} hitSlop={12}>
+          <Ionicons name="arrow-back" size={20} color={Colors.text1} />
+        </TouchableOpacity>
+        <Text style={s.headerTitle}>Ticket Detail</Text>
+        <View style={{ width: 38 }} />
+      </View>
+
       <ScrollView
-        style={s.sc}
-        contentContainerStyle={[s.scc, { paddingTop: ins.top + Spacing.sm, paddingBottom: ins.bottom + 40 }]}
+        style={s.scroll}
+        contentContainerStyle={[s.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={s.hd}>
-          <TouchableOpacity onPress={() => router.back()} style={s.bb} hitSlop={12}>
-            <Ionicons name="arrow-back" size={20} color={Colors.text1} />
-          </TouchableOpacity>
-          <Text style={s.ht}>Ticket Detail</Text>
-          <View style={{ width: 38 }} />
-        </View>
-        <View style={s.tk}>
-          <View style={s.qrs}>
-            <Text style={s.qrl}>SCAN TO CHECK IN</Text>
+        {/* Ticket stub card */}
+        <View style={s.ticket}>
+          {/* QR section */}
+          <View style={s.qrSection}>
+            <View style={s.qrLabelRow}>
+              <Ionicons name="scan-outline" size={13} color={Colors.text2} />
+              <Text style={s.qrLabel}>SCAN TO CHECK IN</Text>
+            </View>
             <View style={s.qrWrap}>
-              <View style={s.qrb}>
-                <QRCode value={registrationPda} size={180} />
+              <View style={s.qrBox}>
+                <QRCode value={registrationPda} size={200} />
               </View>
               {reg.checkedIn && (
                 <Image
@@ -80,149 +108,229 @@ export default function TicketDetail() {
                 />
               )}
             </View>
-            <Text style={s.qrp}>{sa(registrationPda)}</Text>
           </View>
-          <View style={s.is}>
-            <Text style={s.et} numberOfLines={2}>
+
+          {/* Perforated tear line */}
+          <View style={s.tearLine}>
+            <View style={s.notchLeft} />
+            <View style={s.dashedLine}>
+              {Array.from({ length: 40 }).map((_, i) => (
+                <View key={i} style={s.dash} />
+              ))}
+            </View>
+            <View style={s.notchRight} />
+          </View>
+
+          {/* Event info */}
+          <View style={s.infoSection}>
+            <Text style={s.eventTitle} numberOfLines={2}>
               {ev.title}
             </Text>
-            <View style={s.ig}>
-              <View style={s.ic}>
-                <Text style={s.il}>DATE</Text>
-                <Text style={s.iv}>{fd(ev.startTime)}</Text>
+
+            <View style={s.infoDivider} />
+
+            <View style={s.infoGrid}>
+              <View style={s.infoCell}>
+                <Text style={s.infoLabel}>DATE</Text>
+                <Text style={s.infoValue}>{formatDate(ev.startTime)}</Text>
               </View>
-              <View style={s.ic}>
-                <Text style={s.il}>TIME</Text>
-                <Text style={s.iv}>
-                  {ft(ev.startTime)} - {ft(ev.endTime)}
+              <View style={s.infoCell}>
+                <Text style={s.infoLabel}>TIME</Text>
+                <Text style={s.infoValue}>
+                  {formatTime(ev.startTime)} – {formatTime(ev.endTime)}
                 </Text>
               </View>
             </View>
-            <View style={s.ig}>
-              <View style={s.ic}>
-                <Text style={s.il}>LOCATION</Text>
-                <Text style={s.iv} numberOfLines={2}>
+
+            <View style={s.infoDivider} />
+
+            <View style={s.infoGrid}>
+              <View style={s.infoCell}>
+                <Text style={s.infoLabel}>LOCATION</Text>
+                <Text style={s.infoValue} numberOfLines={2}>
                   {ev.location || 'TBA'}
                 </Text>
               </View>
-              <View style={s.ic}>
-                <Text style={s.il}>STATUS</Text>
-                <Text style={s.iv}>{status.toUpperCase()}</Text>
+              <View style={s.infoCell}>
+                <Text style={s.infoLabel}>STATUS</Text>
+                <Text style={[s.infoValue, { color: statusColor }]}>{status.replace('-', ' ').toUpperCase()}</Text>
               </View>
             </View>
-            <View style={s.ig}>
-              <View style={s.ic}>
-                <Text style={s.il}>STAKED</Text>
-                <Text style={s.iv}>{stake}</Text>
+
+            <View style={s.infoDivider} />
+
+            <View style={s.infoGrid}>
+              <View style={s.infoCell}>
+                <Text style={s.infoLabel}>STAKED</Text>
+                <Text style={s.infoValue}>{stake}</Text>
               </View>
-              <View style={s.ic}>
-                <Text style={s.il}>REGISTERED</Text>
-                <Text style={s.iv}>{fd(reg.registeredAt)}</Text>
+              <View style={s.infoCell}>
+                <Text style={s.infoLabel}>REGISTERED</Text>
+                <Text style={s.infoValue}>{formatDate(reg.registeredAt)}</Text>
               </View>
             </View>
+
             {reg.checkedInAt && (
-              <View style={s.ig}>
-                <View style={s.ic}>
-                  <Text style={s.il}>CHECKED IN</Text>
-                  <Text style={s.iv}>{fd(reg.checkedInAt)}</Text>
+              <>
+                <View style={s.infoDivider} />
+                <View style={s.infoGrid}>
+                  <View style={s.infoCell}>
+                    <Text style={s.infoLabel}>CHECKED IN</Text>
+                    <Text style={s.infoValue}>{formatDate(reg.checkedInAt)}</Text>
+                  </View>
                 </View>
-              </View>
+              </>
             )}
           </View>
-          <View style={s.tr}>
-            <View style={s.nl} />
-            <View style={s.td} />
-            <View style={s.nr} />
-          </View>
-          <View style={s.ss}>
-            <View style={s.sr}>
-              <Text style={s.sl}>TX HASH</Text>
-              <Text style={s.sv}>{sa(reg.transactionSignature)}</Text>
-            </View>
-            <View style={s.sr}>
-              <Text style={s.sl}>ON-CHAIN</Text>
-              <View style={s.cb}>
-                <View style={s.cd} />
-                <Text style={s.ct}>VERIFIED</Text>
-              </View>
+
+          {/* Stub footer */}
+          <View style={s.stubFooter}>
+            <View style={s.stubRow}>
+              <Text style={s.stubLabel}>TX HASH</Text>
+              <TouchableOpacity
+                style={s.txHashBtn}
+                onPress={() => Linking.openURL(getSolscanUrl(reg.transactionSignature))}
+                hitSlop={8}
+              >
+                <Text style={s.stubValue}>{shortenAddress(reg.transactionSignature)}</Text>
+                <Ionicons name="open-outline" size={12} color={Colors.text1} />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
-        <View style={s.ac}>
+
+        {/* Actions below card */}
+        <View style={s.actions}>
           {status === 'claimable' && (
-            <Button onPress={claim} loading={isClaimingRefund}>
+            <Button onPress={handleClaim} loading={isClaimingRefund}>
               {isClaimingRefund ? 'Claiming on Solana…' : 'Claim Stake'}
             </Button>
           )}
-          {status === 'valid' && <Text style={s.nt}>Your stake is locked on-chain until the event ends.</Text>}
-          {status === 'no-show' && (
-            <Text style={s.nt}>You did not check in. Your staked amount has been forfeited.</Text>
+          {status === 'valid' && (
+            <Text style={s.notice}>Your stake is locked on-chain until the event ends.</Text>
           )}
-          {status === 'refunded' && <Text style={s.nt}>Your stake has been returned to your wallet.</Text>}
+          {status === 'no-show' && (
+            <Text style={s.notice}>You did not check in. Your staked amount has been forfeited.</Text>
+          )}
+          {status === 'refunded' && (
+            <Text style={s.notice}>Your stake has been returned to your wallet.</Text>
+          )}
         </View>
       </ScrollView>
     </View>
   )
 }
+
 const s = StyleSheet.create({
-  c: { flex: 1, backgroundColor: Colors.bg },
-  ld: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
-  sc: { flex: 1 },
-  scc: { paddingHorizontal: Spacing.md },
-  hd: {
+  container: { flex: 1, backgroundColor: Colors.bg },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: Spacing.md },
+
+  // Header
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+    backgroundColor: Colors.bg,
   },
-  bb: {
+  backBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
   },
-  ht: { fontFamily: Fonts.display, fontSize: 18, color: Colors.text1, letterSpacing: ls(18, LS.displaySubtle) },
-  tk: { backgroundColor: TBG, borderRadius: 20, overflow: 'visible' },
-  stamp: { position: 'absolute', width: 220, height: 220, opacity: 0.92, zIndex: 10 },
-  qrWrap: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  qrs: {
+  headerTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 18,
+    color: Colors.text1,
+    letterSpacing: ls(18, LS.displaySubtle),
+  },
+
+  // Ticket card
+  ticket: {
+    backgroundColor: Colors.surface2,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+
+  // QR section
+  qrSection: {
     alignItems: 'center',
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.lg,
     paddingHorizontal: Spacing.md,
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
-  qrl: { fontFamily: Fonts.mono, fontSize: 10, color: TT, letterSpacing: ls(10, LS.labelWide), opacity: 0.6 },
-  qrb: { backgroundColor: '#FFFFFF', padding: 12, borderRadius: 12 },
-  qrp: { fontFamily: Fonts.mono, fontSize: 10, color: TT, opacity: 0.5 },
-  tr: { flexDirection: 'row', alignItems: 'center', height: N, overflow: 'hidden' },
-  nl: { width: N, height: N, borderRadius: N / 2, backgroundColor: Colors.bg, marginLeft: -(N / 2), flexShrink: 0 },
-  nr: { width: N, height: N, borderRadius: N / 2, backgroundColor: Colors.bg, marginRight: -(N / 2), flexShrink: 0 },
-  td: { flex: 1, borderStyle: 'dashed', borderWidth: 1, height: 0 },
-  is: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, gap: Spacing.md },
-  et: {
+  qrLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  qrLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 11,
+    color: Colors.text2,
+    letterSpacing: ls(11, LS.labelWide),
+  },
+  qrWrap: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
+  qrBox: { backgroundColor: '#FFFFFF', padding: 14, borderRadius: 14 },
+  stamp: { position: 'absolute', width: 240, height: 240, opacity: 0.92, zIndex: 10 },
+
+  // Perforated tear line
+  tearLine: { flexDirection: 'row', alignItems: 'center', height: NOTCH, overflow: 'hidden' },
+  notchLeft: {
+    width: NOTCH,
+    height: NOTCH,
+    borderRadius: NOTCH / 2,
+    backgroundColor: Colors.bg,
+    marginLeft: -(NOTCH / 2),
+    flexShrink: 0,
+  },
+  dashedLine: { flex: 1, flexDirection: 'row', gap: 5, overflow: 'hidden', alignItems: 'center' },
+  dash: { width: 4, height: 1.5, backgroundColor: Colors.border2, flexShrink: 0 },
+  notchRight: {
+    width: NOTCH,
+    height: NOTCH,
+    borderRadius: NOTCH / 2,
+    backgroundColor: Colors.bg,
+    marginRight: -(NOTCH / 2),
+    flexShrink: 0,
+  },
+
+  // Info section
+  infoSection: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.lg, gap: Spacing.md },
+  eventTitle: {
     fontFamily: Fonts.display,
-    fontSize: 22,
-    color: TT,
-    letterSpacing: ls(22, LS.display),
-    lineHeight: 28,
-    marginBottom: Spacing.xs,
+    fontSize: 24,
+    color: Colors.text1,
+    letterSpacing: ls(24, LS.display),
+    lineHeight: 30,
   },
-  ig: { flexDirection: 'row', gap: Spacing.lg },
-  ic: { flex: 1, gap: 2 },
-  il: { fontFamily: Fonts.mono, fontSize: 8, color: TT, opacity: 0.5, letterSpacing: ls(8, LS.labelWide) },
-  iv: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: TT, lineHeight: 18 },
-  ss: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, gap: Spacing.sm },
-  sr: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sl: { fontFamily: Fonts.mono, fontSize: 8, color: TT, opacity: 0.5, letterSpacing: ls(8, LS.labelWide) },
-  sv: { fontFamily: Fonts.mono, fontSize: 11, color: TT, opacity: 0.7 },
-  cb: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  cd: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#2E7D32' },
-  ct: { fontFamily: Fonts.mono, fontSize: 9, color: '#2E7D32', letterSpacing: ls(9, LS.label) },
-  ac: { marginTop: Spacing.lg, gap: Spacing.md },
-  nt: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text3, textAlign: 'center', lineHeight: 20 },
+  infoDivider: { height: 1, backgroundColor: Colors.border },
+  infoGrid: { flexDirection: 'row', gap: Spacing.lg },
+  infoCell: { flex: 1, gap: 5 },
+  infoLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text2,
+    letterSpacing: ls(9, LS.labelWide),
+  },
+  infoValue: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.text1, lineHeight: 20 },
+
+  // Stub footer (below tear line)
+  stubFooter: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm, paddingBottom: Spacing.md, gap: Spacing.sm },
+  stubRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  stubLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+  },
+  stubValue: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text1 },
+  txHashBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+
+  // Actions
+  actions: { marginTop: Spacing.lg, gap: Spacing.md },
+  notice: { fontFamily: Fonts.body, fontSize: 13, color: Colors.text3, textAlign: 'center', lineHeight: 20 },
 })
