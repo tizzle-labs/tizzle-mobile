@@ -123,6 +123,7 @@ export default function Create() {
   const stakeSheetRef = useRef<BottomSheetRef>(null)
   const feeSheetRef = useRef<BottomSheetRef>(null)
   const unlockInfoSheetRef = useRef<BottomSheetRef>(null)
+  const orgSheetRef = useRef<BottomSheetRef>(null)
 
   // ── Input refs ────────────────────────────────────────────────────────────
   const gatekeeperRef = useRef<TextInput>(null)
@@ -599,7 +600,7 @@ export default function Create() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Create Event</Text>
-        <View style={styles.headerOrg}>
+        <TouchableOpacity style={styles.headerOrg} onPress={() => orgSheetRef.current?.present()} activeOpacity={0.7}>
           {org.avatarUrl ? (
             <Image source={{ uri: org.avatarUrl }} style={styles.headerOrgAvatar} contentFit="cover" />
           ) : (
@@ -611,13 +612,13 @@ export default function Create() {
             {org.name}
           </Text>
           <Ionicons name="chevron-down" size={14} color={Colors.text2} />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 16 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 90 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -1178,6 +1179,65 @@ export default function Create() {
         </View>
       </BottomSheet>
 
+      {/* ── Org info ────────────────────────────────────────────────────── */}
+      <BottomSheet ref={orgSheetRef} title="Organization" dynamicSizing>
+        <View style={styles.orgSheet}>
+          <View style={styles.orgSheetProfile}>
+            {org.avatarUrl ? (
+              <Image source={{ uri: org.avatarUrl }} style={styles.orgSheetAvatar} contentFit="cover" />
+            ) : (
+              <View style={styles.orgSheetAvatarFallback}>
+                <Ionicons name="business-outline" size={28} color={Colors.text2} />
+              </View>
+            )}
+            <View style={styles.orgSheetInfo}>
+              <Text style={styles.orgSheetName}>{org.name}</Text>
+              {!!org.description && (
+                <Text style={styles.orgSheetDesc}>{org.description}</Text>
+              )}
+            </View>
+          </View>
+          {(org.twitter || org.discord || org.website) && (
+            <View style={styles.orgSheetLinks}>
+              {!!org.twitter && (
+                <TouchableOpacity
+                  style={styles.orgSheetLinkRow}
+                  onPress={() => Linking.openURL(`https://twitter.com/${org.twitter.replace('@', '')}`)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-twitter" size={16} color={Colors.text2} />
+                  <Text style={styles.orgSheetLinkText}>{org.twitter.startsWith('@') ? org.twitter : `@${org.twitter}`}</Text>
+                </TouchableOpacity>
+              )}
+              {!!org.discord && (
+                <TouchableOpacity
+                  style={styles.orgSheetLinkRow}
+                  onPress={() => Linking.openURL(org.discord.startsWith('http') ? org.discord : `https://discord.gg/${org.discord}`)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-discord" size={16} color={Colors.text2} />
+                  <Text style={styles.orgSheetLinkText}>{org.discord}</Text>
+                </TouchableOpacity>
+              )}
+              {!!org.website && (
+                <TouchableOpacity
+                  style={styles.orgSheetLinkRow}
+                  onPress={() => Linking.openURL(org.website)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="globe-outline" size={16} color={Colors.text2} />
+                  <Text style={styles.orgSheetLinkText}>{org.website}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+          <View style={styles.orgSheetPda}>
+            <Text style={styles.orgSheetPdaLabel}>ON-CHAIN ADDRESS</Text>
+            <Text style={styles.orgSheetPdaValue} numberOfLines={1}>{org.organizationPda}</Text>
+          </View>
+        </View>
+      </BottomSheet>
+
       {/* ── Discard confirmation ────────────────────────────────────────── */}
       <BottomSheet ref={discardSheetRef} dynamicSizing onDismiss={handleDiscardSheetDismiss}>
         <View style={styles.discardSheet}>
@@ -1600,4 +1660,43 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     letterSpacing: ls(11, LS.labelNarrow),
   },
+
+  // Org info sheet
+  orgSheet: { gap: Spacing.lg, paddingBottom: Spacing.sm },
+  orgSheetProfile: { flexDirection: 'row', gap: Spacing.md, alignItems: 'flex-start' },
+  orgSheetAvatar: { width: 56, height: 56, borderRadius: 28, flexShrink: 0 },
+  orgSheetAvatarFallback: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  orgSheetInfo: { flex: 1, gap: 4 },
+  orgSheetName: {
+    fontFamily: Fonts.display,
+    fontSize: 18,
+    color: Colors.text1,
+    letterSpacing: ls(18, LS.displaySubtle),
+  },
+  orgSheetDesc: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text2, lineHeight: 20 },
+  orgSheetLinks: {
+    gap: Spacing.xs,
+    backgroundColor: Colors.surface2,
+    borderRadius: 12,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  orgSheetLinkRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 6 },
+  orgSheetLinkText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text1, flex: 1 },
+  orgSheetPda: { gap: 4 },
+  orgSheetPdaLabel: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: Colors.text3,
+    letterSpacing: ls(9, LS.labelWide),
+  },
+  orgSheetPdaValue: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text2 },
 })

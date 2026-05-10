@@ -2,6 +2,7 @@ import { useAuth } from '@/components/auth/auth-provider'
 import { EventMap } from '@/components/event/EventMap'
 import { EventStatusChip, deriveEventStatus } from '@/components/event/EventStatusChip'
 import { Button } from '@/components/ui/Button'
+import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { Fonts, LS, ls } from '@/constants/fonts'
@@ -222,7 +223,7 @@ export default function EventDetailModal() {
           {!!event.description && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>About</Text>
-              <Text style={s.description}>{event.description}</Text>
+              <RichTextRenderer html={event.description} backgroundColor={Colors.surface} />
             </View>
           )}
 
@@ -403,8 +404,6 @@ const s = StyleSheet.create({
     letterSpacing: ls(28, LS.displayTight),
     lineHeight: 34,
   },
-
-  description: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text1, lineHeight: 22 },
 
   settlementRow: {
     flexDirection: 'row',

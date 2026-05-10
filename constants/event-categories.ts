@@ -9,7 +9,6 @@ export const EVENT_CATEGORIES = [
   { label: 'Sports', icon: '🏃' },
   { label: 'Business & Professional', icon: '💼' },
   { label: 'Education', icon: '📚' },
-  { label: 'Others', icon: '🌐' },
 ] as const
 
 export type EventCategoryLabel = (typeof EVENT_CATEGORIES)[number]['label']

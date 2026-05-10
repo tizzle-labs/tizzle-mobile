@@ -1,5 +1,6 @@
 import { EventMap } from '@/components/event/EventMap'
 import { Button } from '@/components/ui/Button'
+import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import { Colors } from '@/constants/colors'
 import { EVENT_CATEGORIES } from '@/constants/event-categories'
 import { Fonts, LS, ls } from '@/constants/fonts'
@@ -22,9 +23,6 @@ function fmtDate(d: Date) {
 }
 function fmtTime(d: Date) {
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-}
-function stripHtml(html: string) {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 export default function EventPreview() {
@@ -53,7 +51,6 @@ export default function EventPreview() {
   const categoryEntry = EVENT_CATEGORIES.find((c) => c.label === data.category)
   const categoryDisplay = categoryEntry ? `${categoryEntry.icon} ${categoryEntry.label}` : '🌐 Others'
   const capacityDisplay = data.capacity >= 10000 ? 'Unlimited' : `${data.capacity}`
-  const descriptionText = stripHtml(data.description)
 
   return (
     <GestureHandlerRootView style={s.container}>
@@ -174,10 +171,10 @@ export default function EventPreview() {
           </View>
 
           {/* About */}
-          {!!descriptionText && (
+          {!!data.description && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>About</Text>
-              <Text style={s.description}>{descriptionText}</Text>
+              <RichTextRenderer html={data.description} backgroundColor={Colors.surface} />
             </View>
           )}
         </BottomSheetScrollView>
@@ -325,8 +322,6 @@ const s = StyleSheet.create({
     letterSpacing: ls(28, LS.displayTight),
     lineHeight: 34,
   },
-
-  description: { fontFamily: Fonts.body, fontSize: 14, color: Colors.text1, lineHeight: 22 },
 
   cta: {
     position: 'absolute',
