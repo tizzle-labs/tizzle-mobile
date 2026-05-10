@@ -104,7 +104,13 @@ export default function EventDetailModal() {
 
   return (
     <GestureHandlerRootView style={s.container}>
-      <Image source={{ uri: event.imageUrl }} style={s.hero} contentFit="cover" />
+      {event.imageUrl ? (
+        <Image source={{ uri: event.imageUrl }} style={s.hero} contentFit="cover" />
+      ) : (
+        <View style={[s.hero, s.heroFallback]}>
+          <Ionicons name="calendar-outline" size={56} color={Colors.border2} />
+        </View>
+      )}
 
       <View style={[s.floatRow, { top: insets.top + Spacing.sm }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.floatBtn} hitSlop={8}>
@@ -310,6 +316,7 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
   hero: { position: 'absolute', top: 0, left: 0, width, height: HERO_H },
+  heroFallback: { backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
 
   floatRow: {
     position: 'absolute',

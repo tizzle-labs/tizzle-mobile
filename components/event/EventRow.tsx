@@ -36,7 +36,13 @@ export function EventRow({ event, onPress }: EventRowProps) {
 
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.75}>
-      <Image source={{ uri: event.imageUrl }} style={styles.thumb} contentFit="cover" />
+      {event.imageUrl ? (
+        <Image source={{ uri: event.imageUrl }} style={styles.thumb} contentFit="cover" />
+      ) : (
+        <View style={[styles.thumb, styles.thumbFallback]}>
+          <Ionicons name="calendar-outline" size={28} color={Colors.border2} />
+        </View>
+      )}
       <View style={styles.info}>
         <View style={styles.top}>
           {event.organizationAvatarUrl ? (
@@ -75,6 +81,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   thumb: { width: 80, height: 80, borderRadius: 10, backgroundColor: Colors.surface2 },
+  thumbFallback: { alignItems: 'center', justifyContent: 'center' },
   info: { flex: 1, gap: 5 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   bottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

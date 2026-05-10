@@ -2,6 +2,7 @@ import { Colors } from '@/constants/colors'
 import { Fonts, LS, ls } from '@/constants/fonts'
 import { Spacing } from '@/constants/spacing'
 import type { Event } from '@/lib/api/events'
+import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { EventStatusChip, deriveEventStatus } from './EventStatusChip'
@@ -26,7 +27,13 @@ export function EventCard({ event, onPress, variant = 'compact' }: EventCardProp
   if (variant === 'featured') {
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.featured}>
+        {event.imageUrl ? (
         <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, styles.imageFallback]}>
+          <Ionicons name="calendar-outline" size={48} color={Colors.border2} />
+        </View>
+      )}
         <View style={styles.featuredOverlay}>
           <EventStatusChip status={status} />
           <View style={styles.featuredBottom}>
@@ -43,7 +50,13 @@ export function EventCard({ event, onPress, variant = 'compact' }: EventCardProp
   if (variant === 'grid') {
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.grid}>
-        <Image source={{ uri: event.imageUrl }} style={styles.gridImage} contentFit="cover" />
+        {event.imageUrl ? (
+          <Image source={{ uri: event.imageUrl }} style={styles.gridImage} contentFit="cover" />
+        ) : (
+          <View style={[styles.gridImage, styles.imageFallback]}>
+            <Ionicons name="calendar-outline" size={32} color={Colors.border2} />
+          </View>
+        )}
         <View style={styles.gridOverlay}>
           <EventStatusChip status={status} />
         </View>
@@ -59,7 +72,13 @@ export function EventCard({ event, onPress, variant = 'compact' }: EventCardProp
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.75} style={styles.compact}>
-      <Image source={{ uri: event.imageUrl }} style={styles.thumb} contentFit="cover" />
+      {event.imageUrl ? (
+        <Image source={{ uri: event.imageUrl }} style={styles.thumb} contentFit="cover" />
+      ) : (
+        <View style={[styles.thumb, styles.imageFallback]}>
+          <Ionicons name="calendar-outline" size={24} color={Colors.border2} />
+        </View>
+      )}
       <View style={styles.compactInfo}>
         <Text style={styles.compactDate}>{formatEventDate(event.startTime)}</Text>
         <Text style={styles.compactTitle} numberOfLines={1}>
@@ -72,6 +91,7 @@ export function EventCard({ event, onPress, variant = 'compact' }: EventCardProp
 }
 
 const styles = StyleSheet.create({
+  imageFallback: { backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   featured: {
     aspectRatio: 16 / 9,
     borderRadius: 12,
