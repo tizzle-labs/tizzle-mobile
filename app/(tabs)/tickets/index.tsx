@@ -58,7 +58,13 @@ function TicketCard({ registration: reg, event }: { registration: Registration; 
       )}
       {/* Top section */}
       <View style={s.ticketTop}>
-        <Image source={{ uri: event?.imageUrl }} style={s.ticketImg} contentFit="cover" />
+        <View style={s.ticketImg}>
+          {event?.imageUrl ? (
+            <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+          ) : (
+            <Ionicons name="calendar-outline" size={26} color={Colors.border2} />
+          )}
+        </View>
         <View style={s.ticketInfo}>
           <Text style={s.ticketTitle} numberOfLines={2}>
             {event?.title ?? 'Untitled Event'}
@@ -212,7 +218,7 @@ const s = StyleSheet.create({
   },
   stamp: { position: 'absolute', top: 8, right: 8, width: 100, height: 100, opacity: 0.9, zIndex: 10 },
   ticketTop: { flexDirection: 'row', padding: Spacing.md, gap: Spacing.md, alignItems: 'flex-start' },
-  ticketImg: { width: 68, height: 68, borderRadius: 10, backgroundColor: Colors.surface, flexShrink: 0 },
+  ticketImg: { width: 68, height: 68, borderRadius: 10, backgroundColor: Colors.surface, flexShrink: 0, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   ticketInfo: { flex: 1, gap: 4, minWidth: 0 },
   ticketTitle: {
     fontFamily: Fonts.display,
