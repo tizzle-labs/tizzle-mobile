@@ -1,3 +1,5 @@
+import { ClusterNetwork } from '@/components/cluster/cluster-network'
+import { useCluster } from '@/components/cluster/cluster-provider'
 import { BottomSheet, type BottomSheetRef } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
 import { PulsingIcon } from '@/components/ui/LoadingScreen'
@@ -73,10 +75,26 @@ interface SuccessData {
 
 export default function Create() {
   const insets = useSafeAreaInsets()
+  const { selectedCluster } = useCluster()
   const { data: orgs, isLoading: orgsLoading } = useMyOrganizations()
   const createOrg = useCreateOrganization()
   const createEvent = useCreateEvent()
   const { data: solBalance } = useWalletBalance(SOL_MINT)
+
+  function getSolscanAccountUrl(address: string) {
+    const param =
+      selectedCluster.network === ClusterNetwork.Devnet
+        ? '?cluster=devnet'
+        : selectedCluster.network === ClusterNetwork.Testnet
+          ? '?cluster=testnet'
+          : ''
+    return `https://solscan.io/account/${address}${param}`
+  }
+
+  function shortenAddress(addr: string) {
+    if (!addr || addr.length < 10) return addr
+    return `${addr.slice(0, 6)}…${addr.slice(-4)}`
+  }
 
   // ── Org form ──────────────────────────────────────────────────────────────
   const [orgName, setOrgName] = useState('')
@@ -480,7 +498,7 @@ export default function Create() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Create Event</Text>
         </View>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView style={{ flex: 1, backgroundColor: Colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 16 }]}
@@ -627,7 +645,7 @@ export default function Create() {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: Colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 90 }]}
@@ -1257,9 +1275,15 @@ export default function Create() {
           )}
           <View style={styles.orgSheetPda}>
             <Text style={styles.orgSheetPdaLabel}>ON-CHAIN ADDRESS</Text>
-            <Text style={styles.orgSheetPdaValue} numberOfLines={1}>
-              {org.organizationPda}
-            </Text>
+            <TouchableOpacity
+              style={styles.orgSheetPdaRow}
+              onPress={() => Linking.openURL(getSolscanAccountUrl(org.organizationPda))}
+              activeOpacity={0.7}
+              hitSlop={8}
+            >
+              <Text style={styles.orgSheetPdaValue}>{shortenAddress(org.organizationPda)}</Text>
+              <Ionicons name="open-outline" size={13} color={Colors.text2} />
+            </TouchableOpacity>
           </View>
         </View>
       </BottomSheet>
@@ -1740,5 +1764,6 @@ const styles = StyleSheet.create({
     color: Colors.text3,
     letterSpacing: ls(9, LS.labelWide),
   },
+  orgSheetPdaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   orgSheetPdaValue: { fontFamily: Fonts.mono, fontSize: 12, color: Colors.text2 },
 })
