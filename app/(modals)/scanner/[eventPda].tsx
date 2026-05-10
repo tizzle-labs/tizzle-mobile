@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { useCheckIn } from '@/hooks/api/use-check-in'
 import { getEventByPda } from '@/lib/api/events'
 import { getRegistrationByPda } from '@/lib/api/registrations'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function Scanner() {
   const { eventPda } = useLocalSearchParams<{ eventPda: string }>()
@@ -116,7 +117,10 @@ export default function Scanner() {
       />
       {/* Overlay */}
       <View style={styles.overlay}>
-        <SafeAreaView edges={['top']}>
+        <SafeAreaView edges={['top']} style={styles.topBar}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
+            <Ionicons name="arrow-back" size={20} color={Colors.text1} />
+          </TouchableOpacity>
           <Text style={styles.title}>SCANNER</Text>
         </SafeAreaView>
         <View style={styles.frameContainer}>
@@ -143,12 +147,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'space-between',
   },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontFamily: Fonts.display,
     fontSize: 24,
     color: Colors.text1,
     letterSpacing: ls(24, LS.display),
-    padding: Spacing.md,
   },
   frameContainer: {
     alignItems: 'center',

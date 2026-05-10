@@ -80,7 +80,13 @@ export default function TicketDetail() {
           <Ionicons name="arrow-back" size={20} color={Colors.text1} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>Ticket Detail</Text>
-        <View style={{ width: 38 }} />
+        <TouchableOpacity
+          onPress={() => router.push(`/(modals)/event/${reg.eventPda}`)}
+          style={s.backBtn}
+          hitSlop={12}
+        >
+          <Ionicons name="calendar-outline" size={20} color={Colors.text1} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
