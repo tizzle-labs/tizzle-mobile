@@ -60,13 +60,22 @@ export default function OrganizationDetailModal() {
           <Ionicons name="arrow-back" size={20} color={Colors.text1} />
         </TouchableOpacity>
         {isOwner && (
-          <TouchableOpacity
-            style={s.iconBtn}
-            hitSlop={8}
-            onPress={() => router.push({ pathname: '/(modals)/organization/edit-organization', params: { organizationPda } })}
-          >
-            <Ionicons name="create-outline" size={20} color={Colors.text1} />
-          </TouchableOpacity>
+          <View style={s.headerActions}>
+            <TouchableOpacity
+              style={s.iconBtn}
+              hitSlop={8}
+              onPress={() => router.push({ pathname: '/(modals)/organization/edit-organization', params: { organizationPda } })}
+            >
+              <Ionicons name="create-outline" size={20} color={Colors.text1} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.iconBtn}
+              hitSlop={8}
+              onPress={() => router.push({ pathname: '/(modals)/organization/manage', params: { organizationPda } })}
+            >
+              <Ionicons name="bar-chart-outline" size={20} color={Colors.text1} />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -196,6 +205,7 @@ const s = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
   },
+  headerActions: { flexDirection: 'row', gap: Spacing.xs },
   iconBtn: {
     width: 38,
     height: 38,
