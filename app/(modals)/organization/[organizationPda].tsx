@@ -1,3 +1,4 @@
+import { useAuth } from '@/components/auth/auth-provider'
 import { EventRow } from '@/components/event/EventRow'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { Colors } from '@/constants/colors'
@@ -25,8 +26,11 @@ export default function OrganizationDetailModal() {
   const { organizationPda } = useLocalSearchParams<{ organizationPda: string }>()
   const { data: org, isLoading, refetch: refetchOrg } = useOrganization(organizationPda)
   const { data: events = [], refetch: refetchEvents } = useEventsByOrg(organizationPda)
+  const { walletAddress } = useAuth()
   const insets = useSafeAreaInsets()
   const [refreshing, setRefreshing] = useState(false)
+
+  const isOwner = !!walletAddress && !!org && org.treasuryAddress === walletAddress
 
   async function handleRefresh() {
     setRefreshing(true)
@@ -55,6 +59,15 @@ export default function OrganizationDetailModal() {
         <TouchableOpacity onPress={() => router.back()} style={s.iconBtn} hitSlop={8}>
           <Ionicons name="arrow-back" size={20} color={Colors.text1} />
         </TouchableOpacity>
+        {isOwner && (
+          <TouchableOpacity
+            style={s.iconBtn}
+            hitSlop={8}
+            onPress={() => router.push({ pathname: '/(modals)/organization/edit-organization', params: { organizationPda } })}
+          >
+            <Ionicons name="create-outline" size={20} color={Colors.text1} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView
@@ -179,6 +192,7 @@ const s = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
   },

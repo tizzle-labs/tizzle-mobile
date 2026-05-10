@@ -38,6 +38,6 @@ export async function updateOrganization(
   organizationPda: string,
   payload: Partial<Pick<Organization, 'name' | 'description' | 'avatarUrl' | 'twitter' | 'discord'>>,
 ): Promise<Organization> {
-  const { data } = await apiClient.patch(`/v1/organizations/${organizationPda}`, payload)
+  const { data } = await apiClient.put(`/v1/organizations/${organizationPda}`, payload)
   return data
 }
