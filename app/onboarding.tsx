@@ -42,8 +42,7 @@ const CARDS_B = [
 
 function EventCard({ label, sublabel, bg, accent }: (typeof CARDS_A)[0]) {
   return (
-    <View style={[cs.card, { backgroundColor: bg }]}>
-      <View style={[cs.cardAccentBar, { backgroundColor: accent }]} />
+    <View style={[cs.card, { backgroundColor: bg, borderTopColor: accent }]}>
       <Text style={cs.cardSublabel}>{sublabel}</Text>
       <Text style={[cs.cardLabel, { color: accent }]}>{label}</Text>
     </View>
@@ -266,6 +265,7 @@ export default function Onboarding() {
           contentFit="cover"
           contentPosition={{ top: '40%', left: '5%' }}
         />
+        <View style={s.bgOverlay} pointerEvents="none" />
         {/* Logo */}
         <View style={[s.logoWrap, { paddingTop: insets.top + Spacing.xl }]}>
           <Image source={require('../assets/images/tizzle-logo.png')} style={s.logo} contentFit="contain" />
@@ -331,6 +331,14 @@ const s = StyleSheet.create({
     right: 0,
     bottom: 0,
     transform: [{ translateY: -20 }, { scale: 1 }],
+  },
+  bgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(10, 10, 10, 0.3)',
   },
 
   logoWrap: { alignItems: 'center' },
@@ -408,27 +416,10 @@ const cs = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: 14,
+    borderTopWidth: 3,
     padding: 12,
     marginHorizontal: 4,
     justifyContent: 'flex-end',
-    overflow: 'hidden',
-    borderRightWidth: 4,
-    borderBottomWidth: 4,
-    borderRightColor: 'rgba(0,0,0,0.4)',
-    borderBottomColor: 'rgba(0,0,0,0.4)',
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.15)',
-    borderLeftColor: 'rgba(255,255,255,0.15)',
-  },
-  cardAccentBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
   },
   cardSublabel: {
     fontFamily: Fonts.mono,

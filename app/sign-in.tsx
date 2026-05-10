@@ -7,7 +7,7 @@ import { showErrorFeedback } from '@/lib/app-feedback'
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
 import { Image } from 'expo-image'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Linking, StyleSheet, Text, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -92,6 +92,7 @@ export default function SignIn() {
         contentFit="cover"
         contentPosition={{ top: '40%', left: '5%' }}
       />
+      <View style={styles.bgOverlay} pointerEvents="none" />
       <View style={[styles.logoWrap, { paddingTop: insets.top + Spacing.xl }]}>
         <Image source={require('../assets/images/tizzle-logo.png')} style={styles.logo} contentFit="contain" />
       </View>
@@ -128,7 +129,12 @@ export default function SignIn() {
             <Button onPress={handleConnect} loading={loading}>
               Connect Wallet
             </Button>
-            <Text style={styles.note}>Powered by Solana</Text>
+            <Text style={styles.note}>
+              By continuing, you agree to our{' '}
+              <Text style={styles.noteLink} onPress={() => Linking.openURL('https://tizzle.app/terms-of-service')}>
+                Terms of Service
+              </Text>
+            </Text>
           </View>
         </BottomSheetView>
       </BottomSheet>
@@ -145,6 +151,14 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     transform: [{ translateY: -20 }, { scale: 1 }],
+  },
+  bgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(10, 10, 10, 0.3)',
   },
   logoWrap: { alignItems: 'center' },
   logo: { width: 200, height: 68 },
@@ -166,7 +180,7 @@ const styles = StyleSheet.create({
   },
   cursor: { color: Colors.accent },
   sheetBg: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
@@ -201,13 +215,17 @@ const styles = StyleSheet.create({
     color: Colors.text2,
     lineHeight: 20,
   },
-  footer: { gap: 12, marginTop: Spacing.sm },
+  footer: { gap: Spacing.lg, marginTop: Spacing.sm },
   note: {
     fontFamily: Fonts.mono,
     fontSize: 10,
     color: Colors.text3,
     textAlign: 'center',
-    textTransform: 'uppercase',
     letterSpacing: ls(10, LS.label),
+    paddingBottom: Spacing.md,
+  },
+  noteLink: {
+    color: Colors.text2,
+    textDecorationLine: 'underline',
   },
 })
