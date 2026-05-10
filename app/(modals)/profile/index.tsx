@@ -143,6 +143,14 @@ export default function ProfileModal() {
             <Text style={s.statLabel}>Tickets</Text>
           </TouchableOpacity>
         </View>
+        {/* ── Badges ── */}
+        {/* TODO: Replace with real badges once backend provides badge/achievement API */}
+        <View style={s.section}>
+          <View style={s.badgesPlaceholder}>
+            <Ionicons name="ribbon-outline" size={24} color={Colors.text3} />
+            <Text style={s.placeholderText}>Badges coming soon</Text>
+          </View>
+        </View>
         {/* ── Organization ── */}
         {orgs?.[0] && (
           <View style={s.section}>
@@ -175,17 +183,6 @@ export default function ProfileModal() {
             </TouchableOpacity>
           </View>
         )}
-        {/* ── Badges ── */}
-        {/* TODO: Replace with real badges once backend provides badge/achievement API */}
-        <View style={s.section}>
-          <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>Badges</Text>
-          </View>
-          <View style={s.badgesPlaceholder}>
-            <Ionicons name="ribbon-outline" size={24} color={Colors.text3} />
-            <Text style={s.placeholderText}>Badges coming soon</Text>
-          </View>
-        </View>
         {/* ── Event History ── */}
         <View style={s.section}>
           <View style={s.sectionHeader}>
@@ -269,14 +266,14 @@ const s = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
     padding: Spacing.md,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.sm,
   },
   statItem: { flex: 1, alignItems: 'center', gap: 2 },
   statNum: { fontFamily: Fonts.display, fontSize: 22, color: Colors.text1, letterSpacing: ls(22, LS.display) },
-  statLabel: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text3, letterSpacing: ls(11, LS.labelWide) },
+  statLabel: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text2, letterSpacing: ls(11, LS.labelWide) },
   statDivider: { width: 1, height: 32, backgroundColor: Colors.border2 },
 
   section: { marginBottom: Spacing.xl, gap: Spacing.md },
@@ -298,7 +295,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
     padding: Spacing.md,
   },
@@ -319,7 +316,7 @@ const s = StyleSheet.create({
 
   badgesPlaceholder: {
     height: 80,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

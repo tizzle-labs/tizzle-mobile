@@ -50,6 +50,9 @@ export default function OrganizationDetailModal() {
     )
   }
 
+  const totalRegistered = events.reduce((sum, e) => sum + e.totalRegistered, 0)
+  const totalAttended = events.reduce((sum, e) => sum + e.totalCheckedIn, 0)
+
   const previewEvents = events.slice(0, 6)
   const eventChunks = chunkArray(previewEvents, 3)
 
@@ -139,6 +142,16 @@ export default function OrganizationDetailModal() {
           <View style={s.statItem}>
             <Text style={s.statNum}>{events.length}</Text>
             <Text style={s.statLabel}>Events</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{totalRegistered}</Text>
+            <Text style={s.statLabel}>Registered</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{totalAttended}</Text>
+            <Text style={s.statLabel}>Attended</Text>
           </View>
         </View>
 
@@ -250,14 +263,15 @@ const s = StyleSheet.create({
 
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surface2,
     borderRadius: 16,
     padding: Spacing.md,
     marginBottom: Spacing.xl,
   },
   statItem: { flex: 1, alignItems: 'center', gap: 2 },
+  statDivider: { width: 1, backgroundColor: Colors.border, marginVertical: 4 },
   statNum: { fontFamily: Fonts.display, fontSize: 22, color: Colors.text1, letterSpacing: ls(22, LS.display) },
-  statLabel: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text3, letterSpacing: ls(11, LS.labelWide) },
+  statLabel: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.text2, letterSpacing: ls(11, LS.labelWide) },
 
   section: { marginBottom: Spacing.xl },
   sectionHeader: {
