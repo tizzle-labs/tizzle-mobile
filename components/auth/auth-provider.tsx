@@ -3,13 +3,19 @@ import { setLogoutCallback } from '@/lib/api/client'
 import { getMyProfile } from '@/lib/api/users'
 import { Storage } from '@/lib/storage'
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  MobileWalletProviderContext,
-  useAuthorization,
-  useMobileWallet,
-} from '@wallet-ui/react-native-web3js'
+import { MobileWalletProviderContext, useAuthorization, useMobileWallet } from '@wallet-ui/react-native-web3js'
 import bs58 from 'bs58'
-import { createContext, type PropsWithChildren, use, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createContext,
+  type PropsWithChildren,
+  use,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 export interface AuthState {
   isReady: boolean
@@ -32,7 +38,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const { accounts, connectAnd, disconnect } = useMobileWallet()
 
   // Access the shared reactive store so authorizeSession updates accounts everywhere
-  const { chain, identity, store } = useContext(MobileWalletProviderContext as any)
+  const { chain, identity, store } = useContext(MobileWalletProviderContext)
   const { authorizeSession } = useAuthorization({ chain, identity, store })
 
   const queryClient = useQueryClient()
@@ -65,8 +71,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const { message } = await generateNonce(address)
 
         // 3. Sign the message — no second MWA open, same session
+        // wallet is AuthorizeAPI at compile time but MobileWallet at runtime (includes SignMessagesAPI)
+        type SignableWallet = { signMessages(p: { addresses: string[]; payloads: Uint8Array[] }): Promise<Uint8Array[]> }
         const encoded = new TextEncoder().encode(message)
-        const signedPayloads = await wallet.signMessages({
+        const signedPayloads = await (wallet as unknown as SignableWallet).signMessages({
           addresses: [account.addressBase64],
           payloads: [encoded],
         })

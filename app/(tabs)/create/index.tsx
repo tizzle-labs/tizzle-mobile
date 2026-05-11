@@ -28,6 +28,7 @@ import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   BackHandler,
+  Image as RNImage,
   KeyboardAvoidingView,
   Linking,
   Modal,
@@ -37,6 +38,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -75,6 +77,8 @@ interface SuccessData {
 
 export default function Create() {
   const insets = useSafeAreaInsets()
+  const { width: screenWidth } = useWindowDimensions()
+  const coverSize = screenWidth - Spacing.md * 2
   const { selectedCluster } = useCluster()
   const { data: orgs, isLoading: orgsLoading } = useMyOrganizations()
   const createOrg = useCreateOrganization()
@@ -291,7 +295,7 @@ export default function Create() {
       aspect: [1, 1],
       quality: 0.8,
     })
-    if (!result.canceled) {
+    if (!result.canceled && result.assets?.[0]?.uri) {
       const asset = result.assets[0]
       if (target === 'org') setOrgImageUri(asset.uri)
       else if (target === 'venue') {
@@ -659,7 +663,9 @@ export default function Create() {
             activeOpacity={0.85}
           >
             {eventImageUri ? (
-              <Image source={{ uri: eventImageUri }} style={styles.imagePreview} contentFit="cover" />
+              <View style={{ width: coverSize, height: coverSize, borderRadius: 16, overflow: 'hidden' }}>
+                <RNImage source={{ uri: eventImageUri }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              </View>
             ) : (
               <View style={styles.imagePlaceholder}>
                 <Ionicons name="image-outline" size={32} color={Colors.text2} />
@@ -1374,14 +1380,13 @@ const styles = StyleSheet.create({
   headerOrgName: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.text2, flex: 1 },
 
   // Event cover image
-  imagePicker: { borderRadius: 16, overflow: 'hidden' },
+  imagePicker: { borderRadius: 16 },
   imagePickerEmpty: {
     borderRadius: 16,
     borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: Colors.border2,
   },
-  imagePreview: { width: '100%', aspectRatio: 1 },
   imagePlaceholder: {
     width: '100%',
     aspectRatio: 1,

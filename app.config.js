@@ -23,6 +23,7 @@ module.exports = {
     softwareKeyboardLayoutMode: 'pan',
     package: 'app.tizzle',
     permissions: ['android.permission.CAMERA', 'android.permission.RECORD_AUDIO'],
+    usesCleartextTraffic: IS_DEV,
   },
   web: {
     bundler: 'metro',
@@ -48,6 +49,12 @@ module.exports = {
     'expo-font',
     'expo-secure-store',
     [
+      'expo-image-picker',
+      {
+        photosPermission: 'Tizzle needs access to your photos to set event cover images.',
+      },
+    ],
+    [
       'expo-camera',
       {
         cameraPermission: 'Tizzle needs camera access to scan ticket QR codes.',
@@ -61,6 +68,8 @@ module.exports = {
   },
   extra: {
     router: {},
-    eas: {},
+    eas: {
+      projectId: '15cf149f-041a-4d0f-9fe8-1b81708244a8',
+    },
   },
 }

@@ -17,7 +17,7 @@ import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Image } from 'expo-image'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { Dimensions, LayoutChangeEvent, Linking, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Dimensions, LayoutChangeEvent, Linking, Modal, Share, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -49,6 +49,7 @@ export default function EventDetailModal() {
   const bottomSheetRef = useRef<BottomSheet>(null)
   const snapPoints = useMemo(() => ['55%', '90%'], [])
   const [ctaHeight, setCtaHeight] = useState(100)
+  const [venuePreview, setVenuePreview] = useState(false)
 
   const isRegistered = myRegistrations?.some((r) => r.eventPda === eventPda)
   const myRegistration = myRegistrations?.find((r) => r.eventPda === eventPda)
@@ -204,7 +205,9 @@ export default function EventDetailModal() {
           {!!event.venueImageUrl && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>Venue</Text>
-              <Image source={{ uri: event.venueImageUrl }} style={s.venueImage} contentFit="cover" />
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setVenuePreview(true)}>
+                <Image source={{ uri: event.venueImageUrl }} style={s.venueImage} contentFit="cover" />
+              </TouchableOpacity>
             </View>
           )}
 
@@ -295,6 +298,21 @@ export default function EventDetailModal() {
           <Button onPress={handleGetTicket}>Get Ticket</Button>
         ) : null}
       </View>
+
+      {/* Venue image lightbox */}
+      <Modal visible={venuePreview} transparent animationType="fade" onRequestClose={() => setVenuePreview(false)}>
+        <StatusBar backgroundColor="#000" barStyle="light-content" />
+        <View style={s.lightboxBackdrop}>
+          <TouchableOpacity style={s.lightboxClose} onPress={() => setVenuePreview(false)} hitSlop={12}>
+            <Ionicons name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: event.venueImageUrl ?? '' }}
+            style={s.lightboxImage}
+            contentFit="contain"
+          />
+        </View>
+      </Modal>
     </GestureHandlerRootView>
   )
 }
@@ -453,5 +471,28 @@ const s = StyleSheet.create({
     fontSize: 18,
     color: Colors.accent,
     letterSpacing: ls(18, LS.displaySubtle),
+  },
+
+  lightboxBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lightboxClose: {
+    position: 'absolute',
+    top: 48,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  lightboxImage: {
+    width: width,
+    height: height * 0.8,
   },
 })
